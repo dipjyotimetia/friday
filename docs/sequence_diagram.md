@@ -1,4 +1,4 @@
-# Mermaid Sequence Diagram for FRIDAY Project
+# Sequence Diagram for FRIDAY Project
 
 This document contains the mermaid sequence diagram for the FRIDAY project. The diagram illustrates the interaction between different components of the system during the process of generating test cases from Jira and Confluence.
 

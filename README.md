@@ -15,6 +15,31 @@ A Python-based tool that uses Google's Vertex AI and LangChain to automatically 
 - 🔄 Uses LangChain for prompt engineering and chain management
 - 💾 Outputs structured test cases in JSON format
 
+## Sequence diagram 
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Main
+    participant JiraConnector
+    participant ConfluenceConnector
+    participant TestCaseGenerator
+    participant PromptBuilder
+
+    User->>Main: Run main.py with issue-key and confluence-id
+    Main->>JiraConnector: Fetch issue details
+    JiraConnector-->>Main: Return issue details
+    Main->>JiraConnector: Extract acceptance criteria
+    JiraConnector-->>Main: Return acceptance criteria
+    Main->>ConfluenceConnector: Fetch Confluence page content
+    ConfluenceConnector-->>Main: Return page content
+    Main->>PromptBuilder: Build prompt with details
+    PromptBuilder-->>Main: Return prompt
+    Main->>TestCaseGenerator: Generate test cases
+    TestCaseGenerator-->>Main: Return test cases
+    Main->>User: Save test cases to output file
+```
+
 ## Prerequisites
 
 - Python 3.13+
@@ -67,6 +92,3 @@ Format Code:
 poetry run ruff format
 ```
 
-## Documentation
-
-For more details, refer to the [Mermaid Sequence Diagram](docs/sequence_diagram.md) which illustrates the interaction between different components of the system.
