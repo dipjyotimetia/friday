@@ -66,3 +66,7 @@ Format Code:
 ```bash
 poetry run ruff format
 ```
+
+## Documentation
+
+For more details, refer to the [Mermaid Sequence Diagram](docs/mermaid_sequence_diagram.md) which illustrates the interaction between different components of the system.
