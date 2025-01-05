@@ -107,7 +107,7 @@
 
   <!-- Subtitle -->
   <text x="400" 
-        y="180" 
+        y="195" 
         font-family="Inter, system-ui, sans-serif" 
         font-size="14" 
         fill="rgba(255,255,255,0.6)" 
