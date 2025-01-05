@@ -1,7 +1,12 @@
+import json
+import logging
 import uuid
-from typing import Dict, List
+from pathlib import Path
+from typing import Any, Dict, List
 
 from friday.models.test_case import TestCase, TestPriority, TestStep, TestType
+
+logger = logging.getLogger(__name__)
 
 
 def generate_test_id(prefix: str = "TC") -> str:
@@ -67,3 +72,36 @@ def validate_test_case(test_case: TestCase) -> List[str]:
         errors.append("Test case title exceeds maximum length of 200 characters")
 
     return errors
+
+
+def save_test_cases(test_cases: Dict[str, Any], output_path: str) -> None:
+    """Save generated test cases to a JSON file."""
+    logger.info("Saving test cases...")
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(test_cases, f, indent=2, ensure_ascii=False)
+    logger.info(f"Test cases saved to {output_file}")
+
+
+def save_test_cases_as_markdown(test_cases: str, output_path: str) -> None:
+    """Save generated test cases to a Markdown file.
+
+    Args:
+        test_cases: String containing generated test cases
+        output_path: Path to save the markdown file
+    """
+    from pathlib import Path
+
+    # Ensure output directory exists
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Add markdown header
+    markdown_content = "# Generated Test Cases\n\n"
+    markdown_content += test_cases
+
+    # Write to file
+    with open(output_file.with_suffix(".md"), "w", encoding="utf-8") as f:
+        f.write(markdown_content)

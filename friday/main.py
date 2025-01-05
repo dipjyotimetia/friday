@@ -1,20 +1,18 @@
 import argparse
-import json
 import logging
 import sys
 from contextlib import contextmanager
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 from friday.config.config import GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_REGION
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.jira_client import JiraConnector
 from friday.services.prompt_builder import PromptBuilder
 from friday.services.test_generator import TestCaseGenerator
+from friday.utils.helpers import save_test_cases_as_markdown
 
-# Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
@@ -60,17 +58,6 @@ def initialize_services() -> Tuple[JiraConnector, TestCaseGenerator, PromptBuild
     prompt = PromptBuilder()
 
     return (jira, test_gen, prompt)
-
-
-def save_test_cases(test_cases: Dict[str, Any], output_path: str) -> None:
-    """Save generated test cases to a JSON file."""
-    logger.info("Saving test cases...")
-    output_file = Path(output_path)
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(test_cases, f, indent=2, ensure_ascii=False)
-    logger.info(f"Test cases saved to {output_file}")
 
 
 def get_confluence_content(
@@ -120,7 +107,7 @@ def main() -> int:
                 acceptance_criteria=acceptance_criteria,
             )
 
-        save_test_cases(test_cases, args.output)
+        save_test_cases_as_markdown(test_cases, args.output)
         return 0
 
     except Exception as e:

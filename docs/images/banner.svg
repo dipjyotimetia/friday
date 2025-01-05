@@ -1,0 +1,117 @@
+<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a"/>
+      <stop offset="100%" style="stop-color:#2d2d2d"/>
+    </linearGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <linearGradient id="iconGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4285f4"/>
+      <stop offset="100%" style="stop-color:#34a853"/>
+    </linearGradient>
+
+    <linearGradient id="iconGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0052cc"/>
+      <stop offset="100%" style="stop-color:#0065ff"/>
+    </linearGradient>
+
+    <linearGradient id="iconGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#43a047"/>
+      <stop offset="100%" style="stop-color:#66bb6a"/>
+    </linearGradient>
+
+    <marker id="arrow" markerHeight="6" markerWidth="6" orient="auto-start-reverse" refX="9" refY="5" viewBox="0 0 10 10">
+      <path d="M0 0l10 5-10 5z" fill="rgba(255,255,255,0.3)"/>
+    </marker>
+
+    <filter id="dropShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background with gradient -->
+  <rect width="800" height="200" fill="url(#bgGradient)"/>
+  
+  <!-- Decorative background elements -->
+  <path d="M0 100 Q 200 80, 400 100 T 800 100" 
+        stroke="rgba(255,255,255,0.05)" 
+        fill="none" 
+        stroke-width="40"/>
+  
+  <!-- Title -->
+  <text x="400" 
+        y="70" 
+        font-family="Inter, system-ui, sans-serif" 
+        font-size="36" 
+        fill="#ffffff" 
+        text-anchor="middle" 
+        font-weight="bold" 
+        filter="url(#glow)">
+    FRIDAY
+  </text>
+
+  <!-- Feature Icons Row -->
+  <g transform="translate(100, 120)">
+    <!-- Vertex AI -->
+    <g transform="translate(0,0)" filter="url(#dropShadow)">
+      <circle r="28" fill="url(#iconGradient1)" opacity="0.9"/>
+      <text x="0" y="8" font-family="system-ui" font-size="24" text-anchor="middle" fill="#fff">🤖</text>
+      <text x="0" y="45" font-family="Inter, system-ui" font-size="12" text-anchor="middle" fill="#fff" font-weight="500">AI</text>
+    </g>
+    
+    <!-- Connecting line -->
+    <path d="M40 0h60" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow)"/>
+    
+    <!-- Jira -->
+    <g transform="translate(120,0)" filter="url(#dropShadow)">
+      <circle r="28" fill="url(#iconGradient2)" opacity="0.9"/>
+      <text x="0" y="8" font-family="system-ui" font-size="24" text-anchor="middle" fill="#fff">📝</text>
+      <text x="0" y="45" font-family="Inter, system-ui" font-size="12" text-anchor="middle" fill="#fff" font-weight="500">Jira</text>
+    </g>
+    
+    <path d="M160 0h60" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow)"/>
+    
+    <!-- Confluence -->
+    <g transform="translate(240,0)" filter="url(#dropShadow)">
+      <circle r="28" fill="url(#iconGradient2)" opacity="0.9"/>
+      <text x="0" y="8" font-family="system-ui" font-size="24" text-anchor="middle" fill="#fff">📚</text>
+      <text x="0" y="45" font-family="Inter, system-ui" font-size="12" text-anchor="middle" fill="#fff" font-weight="500">Confluence</text>
+    </g>
+    
+    <path d="M280 0h60" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow)"/>
+    
+    <!-- LangChain -->
+    <g transform="translate(360,0)" filter="url(#dropShadow)">
+      <circle r="28" fill="url(#iconGradient3)" opacity="0.9"/>
+      <text x="0" y="8" font-family="system-ui" font-size="24" text-anchor="middle" fill="#fff">🔄</text>
+      <text x="0" y="45" font-family="Inter, system-ui" font-size="12" text-anchor="middle" fill="#fff" font-weight="500">LangChain</text>
+    </g>
+    
+    <path d="M400 0h60" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow)"/>
+    
+    <!-- JSON Output -->
+    <g transform="translate(480,0)" filter="url(#dropShadow)">
+      <circle r="28" fill="url(#iconGradient1)" opacity="0.9"/>
+      <text x="0" y="8" font-family="system-ui" font-size="24" text-anchor="middle" fill="#fff">💾</text>
+      <text x="0" y="45" font-family="Inter, system-ui" font-size="12" text-anchor="middle" fill="#fff" font-weight="500">Output</text>
+    </g>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="400" 
+        y="180" 
+        font-family="Inter, system-ui, sans-serif" 
+        font-size="14" 
+        fill="rgba(255,255,255,0.6)" 
+        text-anchor="middle">
+    Powered by LLM &amp; LangChain
+  </text>
+</svg>

@@ -1,7 +1,7 @@
 # FRIDAY - AI Test Case Generator
 
 <p align="center">
-  <img src="docs/images/friday-logo.jpeg" width="250" height="250" alt="FRIDAY Logo">
+  <img src="docs/images/banner.svg" alt="Auto Test Case Generator Banner">
 </p>
 
 
@@ -66,3 +66,7 @@ Format Code:
 ```bash
 poetry run ruff format
 ```
+
+## Documentation
+
+For more details, refer to the [Mermaid Sequence Diagram](docs/sequence_diagram.md) which illustrates the interaction between different components of the system.
