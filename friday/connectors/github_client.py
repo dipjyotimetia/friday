@@ -210,4 +210,4 @@ class GitHubClient:
 
             return linked_issues
         except Exception as e:
-            raise Exception(f"Error fetching linked issues: {str(e)}")
+            raise Exception(f"Error fetching linked issues for repo '{repo_name}' and PR '{pr_number}': {str(e)}")
