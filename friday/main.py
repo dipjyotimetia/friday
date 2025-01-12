@@ -48,16 +48,18 @@ def setup_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def initialize_services() -> Tuple[JiraConnector, TestCaseGenerator, PromptBuilder]:
+def initialize_services() -> Tuple[
+    JiraConnector, ConfluenceConnector, TestCaseGenerator, PromptBuilder
+]:
     """Initialize all required services and connectors."""
     logger.info("Initializing services...")
 
     jira = JiraConnector()
-    # confluence = ConfluenceConnector()
+    confluence = ConfluenceConnector()
     test_gen = TestCaseGenerator()
     prompt = PromptBuilder()
 
-    return (jira, test_gen, prompt)
+    return (jira, confluence, test_gen, prompt)
 
 
 def get_confluence_content(
@@ -79,19 +81,17 @@ def main() -> int:
     args = setup_args()
 
     try:
-        jira, test_generator, prompt_builder = initialize_services()
+        jira, confluence, test_generator, prompt_builder = initialize_services()
 
         with error_handler("fetching Jira details"):
             logger.info(f"Fetching Jira issue: {args.issue_key}")
             issue_details = jira.get_issue_details(args.issue_key)
-            acceptance_criteria = jira.extract_acceptance_criteria(args.issue_key)
 
-        # additional_context = get_confluence_content(confluence, args.confluence_id)
+        additional_context = get_confluence_content(confluence, args.confluence_id)
 
         variables = {
             "story_description": issue_details["fields"]["description"],
-            "acceptance_criteria": acceptance_criteria,
-            # "confluence_content": additional_context,
+            "confluence_content": additional_context,
             "unique_id": args.issue_key,
         }
 
@@ -104,7 +104,6 @@ def main() -> int:
             logger.info("Generating test cases...")
             test_cases = test_generator.generate_test_cases(
                 requirement=issue_details["fields"]["description"],
-                acceptance_criteria=acceptance_criteria,
             )
 
         save_test_cases_as_markdown(test_cases, args.output)

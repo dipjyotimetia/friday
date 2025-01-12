@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from atlassian import Jira
 from retrying import retry
@@ -20,17 +20,27 @@ class JiraConnector:
         self, issue_key: str, expand: str = "changelog,renderedFields"
     ) -> Dict:
         """Get detailed issue information"""
+        if not issue_key:
+            raise ValueError("Issue key cannot be empty")
         try:
             return self.client.issue(issue_key, expand=expand)
         except Exception as e:
             logger.error(f"Error fetching issue {issue_key}: {str(e)}")
             raise
 
-    def get_acceptance_criteria(self, issue_key: str) -> str:
-        """Get acceptance criteria from custom field"""
+    def get_acceptance_criteria(self, issue_key: str) -> Optional[str]:
+        """
+        Get acceptance criteria from custom field
+        Returns None if no criteria found
+        """
         try:
             issue = self.get_issue_details(issue_key)
-            return issue.get("fields", {}).get("customfield_10016", "")
+            print(issue.get("fields", {}))
+            ac = issue.get("fields", {}).get("customfield_10016")
+            if not ac:
+                logger.info(f"No acceptance criteria found for {issue_key}")
+                return None
+            return ac
         except Exception as e:
             logger.error(
                 f"Error fetching acceptance criteria for {issue_key}: {str(e)}"
@@ -43,13 +53,12 @@ class JiraConnector:
         Args:
             issue_key: Jira issue key (e.g. 'PROJ-123')
         Returns:
-            List of acceptance criteria items
+            List of acceptance criteria items. Empty list if no criteria found.
         """
         try:
             # Get raw AC text from custom field
             ac_text = self.get_acceptance_criteria(issue_key)
             if not ac_text:
-                logger.warning(f"No acceptance criteria found for {issue_key}")
                 return []
 
             # Split into lines and clean up
@@ -60,6 +69,8 @@ class JiraConnector:
                 if line:
                     criteria.append(line)
 
+            if not criteria:
+                logger.info(f"Parsed acceptance criteria is empty for {issue_key}")
             return criteria
 
         except Exception as e:

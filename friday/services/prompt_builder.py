@@ -14,18 +14,17 @@ class PromptBuilder:
             "test_case": PromptTemplate(
                 version="1.0",
                 template="""
-                System: You are a QA expert who specializes in creating comprehensive test cases.
+                System: You are a Quality Enginner who specializes in creating comprehensive test scenarios.
                 
-                Context:
+                Input:
                 JIRA Story: {story_description}
-                Acceptance Criteria: {acceptance_criteria}
                 Additional Context: {confluence_content}
                 
-                Task: Generate detailed test cases covering:
-                1. Happy path scenarios
-                2. Edge cases
-                3. Error scenarios
-                4. Integration points
+                Instructions:
+                1. Generate detailed test cases following this structure:
+                2. Include all specified test types
+                3. Ensure each test case has clear steps
+                4. Prioritize based on business impact
                 
                 Format each test case as follows:
                 Test ID: TC-{unique_id}
@@ -55,6 +54,47 @@ class PromptBuilder:
                 - System state variations
                 - Integration points
                 - Performance conditions
+                """,
+            ),
+            "exploratory_testing": PromptTemplate(
+                version="1.0",
+                template="""
+                System: You are a User Acceptance Tester responsible for exploratory testing.
+                
+                Feature Description: {feature_description}
+                Technical Implementation: {technical_details}
+                
+                Approach:
+                - Identify test scenarios based on feature functionality
+                - Execute test cases manually
+                - Document defects and observations
+                - Provide feedback on usability and user experience
+                """,
+            ),
+            "security_testing": PromptTemplate(
+                version="1.0",
+                template="""
+                System: You are a Security Tester responsible for conducting security testing.
+                
+                System Description: {system_description}
+                Security Requirements: {security_requirements}
+                
+                Objectives:
+                - Identify security vulnerabilities
+                """,
+            ),
+            "performance_testing": PromptTemplate(
+                version="1.0",
+                template="""
+                System: You are a Performance Test Engineer responsible for conducting performance testing.
+                
+                System Description: {system_description}
+                Performance Requirements: {performance_requirements}
+                
+                Objectives:
+                - Identify performance bottlenecks
+                - Measure system response times
+                - Analyze system resource utilization
                 """,
             ),
         }

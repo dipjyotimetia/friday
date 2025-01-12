@@ -2,6 +2,7 @@ import logging
 from typing import Dict
 
 from atlassian import Confluence
+from bs4 import BeautifulSoup
 from retrying import retry
 
 from friday.config.config import (
@@ -13,6 +14,13 @@ from friday.config.config import (
 logger = logging.getLogger(__name__)
 
 
+class HTMLConverter:
+    def handle(self, html_content: str) -> str:
+        """Convert Confluence storage format HTML to plain text"""
+        soup = BeautifulSoup(html_content, "html.parser")
+        return soup.get_text()
+
+
 class ConfluenceConnector:
     def __init__(self):
         self.client = Confluence(
@@ -20,6 +28,7 @@ class ConfluenceConnector:
             username=CONFLUENCE_USERNAME,
             password=CONFLUENCE_API_TOKEN,
         )
+        self.html_converter = HTMLConverter()
 
     @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def get_page_content(self, page_id: str, format: str = "storage") -> str:
