@@ -58,7 +58,9 @@ sequenceDiagram
     
     box rgba(66, 133, 244, 0.1) Core System
     participant Main
+    participant IssueConnector
     participant JiraConnector
+    participant GitHubConnector
     participant ConfluenceConnector
     participant TestCaseGenerator
     participant PromptBuilder
@@ -66,13 +68,30 @@ sequenceDiagram
 
     Note over User,PromptBuilder: Test Case Generation Flow
 
-    User->>+Main: Run main.py with issue-key<br/>and confluence-id
+    User->>+Main: Run main.py with issue-key/number<br/>and confluence-id
     
-    rect rgba(67, 160, 71, 0.1)
-        Main->>+JiraConnector: Fetch issue details
-        JiraConnector-->>-Main: Return issue details
-        Main->>+JiraConnector: Extract acceptance criteria
-        JiraConnector-->>-Main: Return acceptance criteria
+    alt Jira Issue
+        rect rgba(67, 160, 71, 0.1)
+            Main->>+IssueConnector: Get issue details
+            IssueConnector->>+JiraConnector: Fetch Jira issue
+            JiraConnector-->>-IssueConnector: Return issue details
+            IssueConnector-->>-Main: Return issue details
+            Main->>+IssueConnector: Extract acceptance criteria
+            IssueConnector->>JiraConnector: Extract from Jira
+            JiraConnector-->>IssueConnector: Return criteria
+            IssueConnector-->>-Main: Return acceptance criteria
+        end
+    else GitHub Issue
+        rect rgba(67, 160, 71, 0.1)
+            Main->>+IssueConnector: Get issue details
+            IssueConnector->>+GitHubConnector: Fetch GitHub issue
+            GitHubConnector-->>-IssueConnector: Return issue details
+            IssueConnector-->>-Main: Return issue details
+            Main->>+IssueConnector: Extract acceptance criteria
+            IssueConnector->>GitHubConnector: Extract from GitHub
+            GitHubConnector-->>IssueConnector: Return criteria
+            IssueConnector-->>-Main: Return acceptance criteria
+        end
     end
     
     rect rgba(255, 152, 0, 0.1)

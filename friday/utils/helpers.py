@@ -105,3 +105,21 @@ def save_test_cases_as_markdown(test_cases: str, output_path: str) -> None:
     # Write to file
     with open(output_file.with_suffix(".md"), "w", encoding="utf-8") as f:
         f.write(markdown_content)
+
+
+def format_issue_data(issue):
+    """Format the issue data for display."""
+    return {
+        "title": issue.title,
+        "body": issue.body,
+        "comments": issue.get_comments(),
+        "labels": [label.name for label in issue.labels],
+    }
+
+
+def handle_api_response(response):
+    """Handle the API response and return the JSON data."""
+    if response.status_code == 200:
+        return response.json()
+    else:
+        response.raise_for_status()
