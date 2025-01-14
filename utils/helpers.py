@@ -4,7 +4,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List
 
-from friday.models.test_case import TestCase, TestPriority, TestStep, TestType
+from models.test_case import TestCase, TestPriority, TestStep, TestType
 
 logger = logging.getLogger(__name__)
 

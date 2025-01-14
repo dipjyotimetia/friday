@@ -4,12 +4,12 @@ import sys
 from contextlib import contextmanager
 from typing import Optional, Tuple
 
-from friday.config.config import GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_REGION
-from friday.connectors.confluence_client import ConfluenceConnector
-from friday.connectors.jira_client import JiraConnector
-from friday.services.prompt_builder import PromptBuilder
-from friday.services.test_generator import TestCaseGenerator
-from friday.utils.helpers import save_test_cases_as_markdown
+from config.config import GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_REGION
+from connectors.confluence_client import ConfluenceConnector
+from connectors.jira_client import JiraConnector
+from services.prompt_builder import PromptBuilder
+from services.test_generator import TestCaseGenerator
+from utils.helpers import save_test_cases_as_markdown
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -58,6 +58,14 @@ def initialize_services() -> Tuple[
     confluence = ConfluenceConnector()
     test_gen = TestCaseGenerator()
     prompt = PromptBuilder()
+
+    test_gen.initialize_context(
+        [
+            "Test case generation guidelines",
+            "Best practices for testing",
+            "Common test scenarios",
+        ]
+    )
 
     return (jira, confluence, test_gen, prompt)
 

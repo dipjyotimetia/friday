@@ -3,7 +3,7 @@ from typing import List
 from langchain_core.prompts import PromptTemplate
 from langchain_google_vertexai import VertexAI
 
-from friday.services.embeddings import EmbeddingsService
+from services.embeddings import EmbeddingsService
 
 
 class TestCaseGenerator:
@@ -39,9 +39,9 @@ class TestCaseGenerator:
         """Initialize the vector database with context documents"""
         self.embeddings_service.create_database(documents)
 
-    def generate_test_cases(self, requirement: str, acceptance_criteria: str) -> str:
+    def generate_test_cases(self, requirement: str) -> str:
         # Combine requirement and acceptance criteria for search
-        search_query = f"{requirement} {acceptance_criteria}"
+        search_query = f"{requirement}"
 
         # Get relevant context using similarity search
         relevant_contexts = self.embeddings_service.similarity_search(search_query)

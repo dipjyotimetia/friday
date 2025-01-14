@@ -4,7 +4,7 @@ from typing import Dict, Generator, List
 
 import pytest
 
-from friday.services.embeddings import EmbeddingsService
+from services.embeddings import EmbeddingsService
 
 
 @pytest.fixture(scope="function")

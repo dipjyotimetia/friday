@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from friday.connectors.github_client import GitHubClient
+from connectors.github_client import GitHubClient
 
 
 @pytest.fixture
