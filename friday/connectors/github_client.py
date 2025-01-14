@@ -137,7 +137,9 @@ class GitHubClient:
                 "diff_url": pr.diff_url,
             }
         except Exception as e:
-            raise Exception(f"Error fetching PR diff for {repo_name} PR #{pr_number}: {str(e)}")
+            raise Exception(
+                f"Error fetching PR diff for {repo_name} PR #{pr_number}: {str(e)}"
+            )
 
     def get_linked_issues_from_pr(self, repo_name: str, pr_number: int) -> List[Dict]:
         """
@@ -210,4 +212,6 @@ class GitHubClient:
 
             return linked_issues
         except Exception as e:
-            raise Exception(f"Error fetching linked issues for repo '{repo_name}' and PR '{pr_number}': {str(e)}")
+            raise Exception(
+                f"Error fetching linked issues for repo '{repo_name}' and PR '{pr_number}': {str(e)}"
+            )
