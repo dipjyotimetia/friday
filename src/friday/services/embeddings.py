@@ -5,12 +5,24 @@ from typing import Any, Dict, List, Optional
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_google_vertexai import VertexAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 
 class EmbeddingsService:
-    def __init__(self, persist_directory: str = "./data/chroma"):
+    def __init__(
+        self, provider: str = "vertex", persist_directory: str = "./data/chroma"
+    ):
         """Initialize the embeddings service with configurable persistence directory"""
-        self.embeddings = VertexAIEmbeddings(model_name="text-embedding-005")
+        if provider == "vertex":
+            self.embeddings = VertexAIEmbeddings(
+                model_name="text-embedding-005"  # Vertex AI embedding model
+            )
+        elif provider == "openai":
+            self.embeddings = OpenAIEmbeddings(
+                model="text-embedding-3-small"  # OpenAI embedding model
+            )
+        else:
+            raise ValueError("Unsupported provider. Use 'vertex' or 'openai'")
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000, chunk_overlap=200
         )
