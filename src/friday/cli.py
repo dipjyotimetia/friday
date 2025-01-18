@@ -52,6 +52,8 @@ def generate(
         jira = JiraConnector()
         confluence = ConfluenceConnector()
         github = GitHubConnector()
+        # for openai provider
+        # test_generator = TestCaseGenerator(provider="openai")
         test_generator = TestCaseGenerator()
         prompt_builder = PromptBuilder()
 
