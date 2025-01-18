@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from atlassian import Jira
 from retrying import retry
 
-from friday.config.config import JIRA_API_TOKEN, JIRA_URL, JIRA_USERNAME
+from config.config import JIRA_API_TOKEN, JIRA_URL, JIRA_USERNAME
 
 logger = logging.getLogger(__name__)
 
