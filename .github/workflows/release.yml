@@ -20,9 +20,9 @@ jobs:
         python-version: '3.13'
 
     - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install toml
+      run: |
+        python -m pip install --upgrade pip
+        pip install toml
           
     - name: Update version
       run: python scripts/update_version.py
