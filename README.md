@@ -5,15 +5,16 @@
 </p>
 
 
-A Python-based tool that uses Google's Vertex AI and LangChain to automatically generate test cases from Jira and Confluence documentation.
+A Python-based tool that uses Google's Vertex AI and LangChain to automatically generate test cases from Jira/Github and Confluence documentation.
 
 ## Features
 
 - 🤖 Leverages Google Vertex AI for test case generation
-- 📝 Pulls requirements from Jira tickets
-- 📚 Extracts context from Confluence pages
+- 📝 Pulls requirements from Jira tickets or github issue
+- 📚 Extracts additional context from Confluence pages
 - 🔄 Uses LangChain for prompt engineering and chain management
-- 💾 Outputs structured test cases in JSON format
+- 💾 Use ChromaDb for Embeddings, vector search, document storage
+- { } Outputs structured test cases in JSON/MarkDown format
 
 ## Prerequisites
 
@@ -136,19 +137,22 @@ cp .env.example .env
 ## Usage
 Run the tool with:
 ```bash
-poetry run python friday/main.py --issue-key PROJ-123 --confluence-id 12345 --output test_cases.json
+poetry run python main.py --jira-key "FRID-1" --confluence-id "1540097" --output test_cases.md
+poetry run python main.py --gh-issue 5 --gh-repo dipjyotimetia/FRIDAY --confluence-id "1540097" --output test_cases.md
 ```
 
 Parameters
-* `--issue-key`: Jira issue key (required)
+* `--jira-key`: Jira issue key (required)
 * `--confluence-id`: Confluence page ID (optional)
+* `--gh-issue`: Github Issue key
+* `--gh-repo`: Github User/Repo
 * `--output`: Output file path for generated test cases (default: test_cases.json)
 
 ## Development
 Run tests:
 
 ```bash
-poetry run pytest
+poetry run pytest tests/ -v
 ```
 
 Format Code:

@@ -2,6 +2,7 @@
 install:
     poetry install
     poetry shell
+    cp .env.example .env
 
 .PHONY:clean
 clean:
