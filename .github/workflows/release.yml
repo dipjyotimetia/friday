@@ -43,6 +43,18 @@ jobs:
     - name: Install dependencies
       run: poetry install --no-interaction
 
+    - name: Install poetry-dynamic-versioning
+      run: |
+        poetry self add "poetry-dynamic-versioning[plugin]"
+        poetry dynamic-versioning enable  
+
+    - name: Update version from tag
+      run: |
+        TAG=$(git describe --tags --abbrev=0)
+        VERSION=${TAG#v}  # Remove 'v' prefix
+        poetry version $VERSION
+      shell: bash
+
     - name: Build and publish
       run: |
         poetry build
