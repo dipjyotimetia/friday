@@ -5,13 +5,13 @@ description = "AI-powered test case generator CLI"
 license = "MIT"
 authors = ["Dipjyoti Metia <dipjyotimetia@gmail.com>"]
 readme = ["README.md", "LICENSE"]
-keywords = ["atlassian", "jira", "google", "vertexai", "genai"]
+keywords = ["atlassian", "jira", "google", "github", "vertexai", "genai", "chroma", "openai", "anthropic", "cli"]
 packages = [
     { include = "friday", from = "src" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Intended Audience :: Testers & Developers",
+    "Intended Audience :: Developers and Testers",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Testing"
