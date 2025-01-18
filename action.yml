@@ -1,0 +1,72 @@
+name: 'Friday Test Generator'
+description: 'AI-powered test case generator for pull requests'
+branding:
+  icon: 'book-open'
+  color: 'blue'
+inputs:
+  github_token:
+    description: 'GitHub token'
+    required: true
+  confluence_url:
+    description: 'Confluence URL'
+    required: true
+  confluence_user:
+    description: 'Confluence username'
+    required: true
+  confluence_token:
+    description: 'Confluence API token'
+    required: true
+  jira_url:
+    description: 'Jira URL'
+    required: true
+  jira_user:
+    description: 'Jira username'
+    required: true
+  jira_token:
+    description: 'Jira API token'
+    required: true
+  confluence_id:
+    description: 'Confluence ID'
+    required: true
+  jira_id:
+    description: 'Jira ID'
+    required: true
+  google_cloud_project:
+    description: 'Google Cloud project'
+    required: true
+  google_cloud_region:
+    description: 'Google Cloud region'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    
+    - uses: abatilo/actions-poetry@v4
+      with:
+        poetry-version: 'latest'
+    
+    - run: |
+        poetry install
+        poetry run friday --gh-issue ${{ github.event.pull_request.number }} \
+                         --gh-repo ${{ github.repository }} \
+                         --output test_cases.md
+      shell: bash
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ inputs.github_token }}
+        GITHUB_USERNAME: ${{ github.actor }}
+        CONFLUENCE_URL: ${{ inputs.confluence_url }}
+        CONFLUENCE_USERNAME: ${{ inputs.confluence_user }}
+        CONFLUENCE_API_TOKEN: ${{ inputs.confluence_token }}
+        JIRA_URL: ${{ inputs.jira_url }}
+        JIRA_USERNAME: ${{ inputs.jira_user }}
+        JIRA_API_TOKEN: ${{ inputs.jira_token }}
+        CONFLUENCE_ID: ${{ inputs.confluence_id }}
+        JIRA_TOKEN: ${{ inputs.jira_token }}
+        JIRA_ID: ${{ inputs.jira_id }}
+        GOOGLE_CLOUD_PROJECT: ${{ inputs.google_cloud_project }}
+        GOOGLE_CLOUD_REGION: ${{ inputs.google_cloud_region }}
+        
+
