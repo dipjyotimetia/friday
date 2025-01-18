@@ -4,7 +4,7 @@ from typing import Dict, List
 from github import Github
 from retrying import retry
 
-from config.config import GITHUB_ACCESS_TOKEN
+from friday.config.config import GITHUB_ACCESS_TOKEN
 
 
 class GitHubConnector:

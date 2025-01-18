@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install poetry
+      uses: abatilo/actions-poetry@v4
+      with:
+        poetry-version: 'latest'
+  
+    - name: Cache poetry dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pypoetry
+          .venv
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+    
+    - name: Configure poetry
+      run: |
+        poetry config virtualenvs.create true --local
+        poetry config virtualenvs.in-project true --local
+    
+    - name: Install dependencies
+      run: poetry install --no-interaction
+
+    - name: Build package
+      run: poetry build
+
+    - name: Verify CLI
+      run: |
+        poetry install
+        poetry run friday --help
+        poetry run friday version
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: friday-dist-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: dist/

@@ -2,7 +2,7 @@ from typing import Dict
 
 import pytest
 
-from services.prompt_builder import PromptBuilder, PromptTemplate
+from friday.services.prompt_builder import PromptBuilder, PromptTemplate
 
 
 @pytest.fixture
