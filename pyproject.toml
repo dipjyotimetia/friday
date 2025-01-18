@@ -6,7 +6,9 @@ license = "MIT"
 authors = ["Dipjyoti Metia <dipjyotimetia@gmail.com>"]
 readme = ["README.md", "LICENSE"]
 keywords = ["atlassian", "jira", "google", "vertexai", "genai"]
-
+packages = [
+    { include = "friday", from = "src" }
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -19,7 +21,7 @@ classifiers = [
 "Bug Tracker" = "https://github.com/dipjyotimetia/friday/issues"
 
 [tool.poetry.scripts]
-friday = "cli:main"
+friday = "friday.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.13"

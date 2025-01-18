@@ -5,13 +5,13 @@ from typing import Optional
 import typer
 from rich import print
 
-from config.config import validate_config
-from connectors.confluence_client import ConfluenceConnector
-from connectors.github_client import GitHubConnector
-from connectors.jira_client import JiraConnector
-from services.prompt_builder import PromptBuilder
-from services.test_generator import TestCaseGenerator
-from utils.helpers import save_test_cases_as_markdown
+from friday.config.config import validate_config
+from friday.connectors.confluence_client import ConfluenceConnector
+from friday.connectors.github_client import GitHubConnector
+from friday.connectors.jira_client import JiraConnector
+from friday.services.prompt_builder import PromptBuilder
+from friday.services.test_generator import TestCaseGenerator
+from friday.utils.helpers import save_test_cases_as_markdown
 
 app = typer.Typer(name="friday", help="AI-powered test case generator CLI")
 logging.basicConfig(level=logging.INFO)

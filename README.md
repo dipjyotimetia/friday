@@ -137,8 +137,21 @@ cp .env.example .env
 ## Usage
 Run the tool with:
 ```bash
-poetry run python main.py --jira-key "FRID-1" --confluence-id "1540097" --output test_cases.md
-poetry run python main.py --gh-issue 5 --gh-repo dipjyotimetia/FRIDAY --confluence-id "1540097" --output test_cases.md
+# Install the package
+poetry install
+
+# Generate test cases from a Jira issue
+friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
+
+# Generate test cases from a GitHub issue 
+friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o test_cases.md
+
+# Show version
+friday version
+
+# Show help
+friday --help
+friday generate --help
 ```
 
 Parameters

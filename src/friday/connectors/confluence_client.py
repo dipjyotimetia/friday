@@ -5,7 +5,7 @@ from atlassian import Confluence
 from bs4 import BeautifulSoup
 from retrying import retry
 
-from config.config import (
+from friday.config.config import (
     CONFLUENCE_API_TOKEN,
     CONFLUENCE_URL,
     CONFLUENCE_USERNAME,

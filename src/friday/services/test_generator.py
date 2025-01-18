@@ -3,7 +3,7 @@ from typing import List
 from langchain_core.prompts import PromptTemplate
 from langchain_google_vertexai import VertexAI
 
-from services.embeddings import EmbeddingsService
+from friday.services.embeddings import EmbeddingsService
 
 
 class TestCaseGenerator:
