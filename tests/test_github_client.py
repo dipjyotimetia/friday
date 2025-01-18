@@ -8,9 +8,9 @@ from connectors.github_client import GitHubConnector
 
 @pytest.fixture
 def github_client():
-    """Fixture that creates a GitHubClient instance with mock token"""
+    """Fixture that creates a GitHubClient instance"""
     with patch("github.Github"):
-        client = GitHubConnector("fake-token")
+        client = GitHubConnector()
         return client
 
 
@@ -171,3 +171,140 @@ class TestGitHubClient:
         with pytest.raises(Exception) as exc_info:
             github_client.get_issue_details("owner/repo", 1)
         assert "Error fetching issue details" in str(exc_info.value)
+
+    def test_get_issue_details_retry(self, github_client, mock_issue):
+        """Test that get_issue_details retries on failure"""
+        # Setup
+        github_client.github.get_repo.side_effect = [
+            Exception("Rate limit"),
+            Exception("Rate limit"),
+            mock_issue,
+        ]
+
+        # Execute
+        result = github_client.get_issue_details("owner/repo", 1)
+
+        # Verify
+        assert result["number"] == 1
+
+    def test_issue_details_without_milestone(self, github_client, mock_issue):
+        """Test getting issue details when milestone is None"""
+        # Setup
+        mock_issue.milestone = None
+        github_client.github.get_repo.return_value.get_issue.return_value = mock_issue
+
+        # Execute
+        result = github_client.get_issue_details("owner/repo", 1)
+
+        # Verify
+        assert result["milestone"] is None
+
+    def test_pr_diff_without_patch(self, github_client):
+        """Test PR diff when file has no patch attribute"""
+        # Setup
+        mock_file = Mock(
+            filename="test.py", status="added", additions=5, deletions=0, changes=5
+        )
+        # Explicitly remove patch attribute
+        del mock_file.patch
+
+        mock_pr = Mock(
+            number=1,
+            title="Test PR",
+            state="open",
+            created_at=datetime(2023, 1, 1),
+            updated_at=datetime(2023, 1, 2),
+            merged_at=None,
+            additions=5,
+            deletions=0,
+            changed_files=1,
+            diff_url="https://github.com/diff",
+        )
+        mock_pr.get_files.return_value = [mock_file]
+
+        github_client.github.get_repo.return_value.get_pull.return_value = mock_pr
+
+        # Execute
+        result = github_client.get_pr_diff("owner/repo", 1)
+
+        # Verify
+        assert result["files"][0]["patch"] is None
+
+    def test_extract_issue_numbers_formats(self, github_client):
+        """Test extraction of issue numbers from various text formats"""
+        # Setup
+        mock_pr = Mock()
+        mock_pr.body = "Fixes #1, Related to #23\nCloses #456"
+        mock_pr.get_comments.return_value = [
+            Mock(body="See #789"),
+            Mock(body="Multiple #111 #222"),
+        ]
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.as_issue().get_timeline.return_value = []
+
+        def mock_get_issue(number):
+            return Mock(
+                number=number,
+                title=f"Issue {number}",
+                state="open",
+                created_at=datetime(2023, 1, 1),
+                closed_at=None,
+                labels=[],
+            )
+
+        github_client.github.get_repo.return_value.get_pull.return_value = mock_pr
+        github_client.github.get_repo.return_value.get_issue.side_effect = (
+            mock_get_issue
+        )
+
+        # Execute
+        result = github_client.get_linked_issues_from_pr("owner/repo", 1)
+
+        # Verify
+        issue_numbers = {issue["number"] for issue in result}
+        assert issue_numbers == {1, 23, 456, 789, 111, 222}
+
+    def test_milestone_issues_error(self, github_client):
+        """Test error handling for milestone issues"""
+        # Setup
+        github_client.github.get_repo.return_value.get_milestone.side_effect = (
+            Exception("Invalid milestone")
+        )
+
+        # Verify
+        with pytest.raises(Exception) as exc_info:
+            github_client.get_milestone_issues("owner/repo", 999)
+        assert "Error fetching milestone issues" in str(exc_info.value)
+
+    def test_linked_issues_with_inaccessible(self, github_client):
+        """Test handling of inaccessible issues in PR links"""
+        # Setup
+        mock_pr = Mock()
+        mock_pr.body = "Fixes #1 #2"
+        mock_pr.get_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.as_issue().get_timeline.return_value = []
+
+        def mock_get_issue(number):
+            if number == 1:
+                return Mock(
+                    number=1,
+                    title="Accessible Issue",
+                    state="open",
+                    created_at=datetime(2023, 1, 1),
+                    closed_at=None,
+                    labels=[],
+                )
+            raise Exception("Not found")
+
+        github_client.github.get_repo.return_value.get_pull.return_value = mock_pr
+        github_client.github.get_repo.return_value.get_issue.side_effect = (
+            mock_get_issue
+        )
+
+        # Execute
+        result = github_client.get_linked_issues_from_pr("owner/repo", 1)
+
+        # Verify
+        assert len(result) == 1
+        assert result[0]["number"] == 1

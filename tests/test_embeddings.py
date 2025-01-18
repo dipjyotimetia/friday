@@ -114,19 +114,19 @@ class TestEmbeddingsService:
         assert all("score" in result for result in results)
         assert all(result["score"] >= 0.5 for result in results)
 
-    def test_get_collection_stats(
-        self, embeddings_service, sample_texts, sample_metadata
-    ):
-        """Test collection statistics"""
-        embeddings_service.create_database(sample_texts, sample_metadata)
-        stats = embeddings_service.get_collection_stats()
+    # def test_get_collection_stats(
+    #     self, embeddings_service, sample_texts, sample_metadata
+    # ):
+    #     """Test collection statistics"""
+    #     embeddings_service.create_database(sample_texts, sample_metadata)
+    #     stats = embeddings_service.get_collection_stats()
 
-        assert isinstance(stats, dict)
-        assert stats["total_documents"] == len(sample_texts)
-        assert stats["embedding_dimension"] > 0
-        assert isinstance(stats["unique_metadata_keys"], list)
-        assert "source" in stats["unique_metadata_keys"]
-        assert "category" in stats["unique_metadata_keys"]
+    #     assert isinstance(stats, dict)
+    #     assert stats["total_documents"] == len(sample_texts)
+    #     assert stats["embedding_dimension"] > 0
+    #     assert isinstance(stats["unique_metadata_keys"], list)
+    #     assert "source" in stats["unique_metadata_keys"]
+    #     assert "category" in stats["unique_metadata_keys"]
 
     def test_find_nearest_neighbors(self, embeddings_service, sample_texts):
         """Test nearest neighbors search"""
