@@ -9,6 +9,8 @@ from friday.config.config import validate_config
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
+from friday.parsers.grpc_parser import GrpcParser
+from friday.parsers.openapi_parser import parse_openapi_spec
 from friday.services.prompt_builder import PromptBuilder
 from friday.services.test_generator import TestCaseGenerator
 from friday.utils.helpers import save_test_cases_as_markdown
@@ -95,6 +97,35 @@ def generate(
 
     except Exception as e:
         logger.error(f"Error generating test cases: {str(e)}")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def generate_api_tests(
+    spec_path: Path = typer.Option(..., "--spec", help="Path to OpenAPI/Proto spec"),
+    spec_type: str = typer.Option(
+        "openapi", "--type", help="Spec type: openapi or grpc"
+    ),
+    output: Path = typer.Option(
+        Path("api_tests.md"), "--output", "-o", help="Output file path"
+    ),
+):
+    """Generate test cases from API specifications"""
+    try:
+        if spec_type == "openapi":
+            spec = parse_openapi_spec(str(spec_path))
+        elif spec_type == "grpc":
+            parser = GrpcParser()
+            spec = parser.parse_file(str(spec_path))
+
+        test_generator = TestCaseGenerator()
+        test_cases = test_generator.generate_api_test_cases(spec)
+
+        save_test_cases_as_markdown(test_cases, str(output))
+        print(f"[green]Successfully generated API test cases to {output}[/green]")
+
+    except Exception as e:
+        logger.error(f"Error generating API test cases: {str(e)}")
         raise typer.Exit(code=1)
 
 

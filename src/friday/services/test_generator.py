@@ -42,6 +42,30 @@ class TestCaseGenerator:
         - Expected Results
         """
 
+        self.api_template = """
+        Generate test cases for the following API specification:
+        
+        API Type: {api_type}
+        Endpoint: {endpoint}
+        Method: {method}
+        Request Schema: {request_schema}
+        Response Schema: {response_schema}
+        
+        Generate test cases covering:
+        - Happy path scenarios
+        - Input validation 
+        - Error conditions
+        - Edge cases
+        - Security considerations
+        
+        Format test cases as:
+        - Test Case ID
+        - Description 
+        - Test Data
+        - Expected Status Code
+        - Expected Response
+        """
+
         self.prompt = PromptTemplate(
             input_variables=["requirement", "context"],
             template=self.template,

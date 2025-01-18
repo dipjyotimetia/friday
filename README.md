@@ -62,6 +62,12 @@ friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
 # Generate test cases from a GitHub issue 
 friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o test_cases.md
 
+# Generate tests from OpenAPI spec
+friday generate-api-tests --spec api.yaml --type openapi -o api_tests.md
+
+# Generate tests from gRPC proto
+friday generate-api-tests --spec service.proto --type grpc -o grpc_tests.md
+
 # Show version
 friday version
 
