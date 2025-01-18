@@ -1,37 +1,31 @@
+[build-system]
+requires = [ "poetry-core",]
+build-backend = "poetry.core.masonry.api"
+
 [tool.poetry]
 name = "friday-cli"
-version = "0.1.1"
+version = "0.1.4"
 description = "AI-powered test case generator CLI"
 license = "MIT"
-authors = ["Dipjyoti Metia <dipjyotimetia@gmail.com>"]
-readme = ["README.md", "LICENSE"]
-keywords = ["atlassian", "jira", "google", "github", "vertexai", "genai", "chroma", "openai", "anthropic", "cli"]
-packages = [
-    { include = "friday", from = "src" }
-]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Environment :: Console",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.13",
-    "Operating System :: OS Independent",
-    "Topic :: Software Development :: Quality Assurance",
-    "Topic :: Software Development :: Testing",
-]
-
-[tool.poetry.urls]
-"Homepage" = "https://github.com/dipjyotimetia/friday"
-"Bug Tracker" = "https://github.com/dipjyotimetia/friday/issues"
-
-[tool.poetry.scripts]
-friday = "friday.cli:main"
+authors = [ "Dipjyoti Metia <dipjyotimetia@gmail.com>",]
+readme = [ "README.md", "LICENSE",]
+keywords = [ "atlassian", "jira", "google", "github", "vertexai", "genai", "chroma", "openai", "anthropic", "cli",]
+classifiers = [ "Development Status :: 4 - Beta", "Environment :: Console", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3.13", "Operating System :: OS Independent", "Topic :: Software Development :: Quality Assurance", "Topic :: Software Development :: Testing",]
+[[tool.poetry.packages]]
+include = "friday"
+from = "src"
 
 [tool.action]
 name = "Friday Test Generator"
 description = "AI-powered test case generator for pull requests"
 author = "Dipjyoti Metia"
-branding = {icon = "book-open", color = "blue"}
+
+[tool.poetry.urls]
+Homepage = "https://github.com/dipjyotimetia/friday"
+"Bug Tracker" = "https://github.com/dipjyotimetia/friday/issues"
+
+[tool.poetry.scripts]
+friday = "friday.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.13"
@@ -54,18 +48,19 @@ typer = "^0.15.1"
 langchain-openai = "^0.3.0"
 langchain-anthropic = "^0.3.3"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.4"
-
-[tool.poetry.group.docs]
-optional = true
-dependencies = {}
+[tool.action.branding]
+icon = "book-open"
+color = "blue"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra -q"
-testpaths = ["tests"]
+testpaths = [ "tests",]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
