@@ -2,18 +2,22 @@ import re
 from typing import Dict, List
 
 from github import Github
+from retrying import retry
+
+from config.config import GITHUB_ACCESS_TOKEN
 
 
-class GitHubClient:
-    def __init__(self, access_token: str):
+class GitHubConnector:
+    def __init__(self):
         """
         Initialize GitHub client
 
         Args:
             access_token (str): GitHub personal access token
         """
-        self.github = Github(access_token)
+        self.github = Github(GITHUB_ACCESS_TOKEN)
 
+    @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def get_issue_details(self, repo_name: str, issue_number: int) -> Dict:
         """
         Get detailed information about a specific GitHub issue

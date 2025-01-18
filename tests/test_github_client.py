@@ -3,14 +3,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from connectors.github_client import GitHubClient
+from connectors.github_client import GitHubConnector
 
 
 @pytest.fixture
 def github_client():
     """Fixture that creates a GitHubClient instance with mock token"""
     with patch("github.Github"):
-        client = GitHubClient("fake-token")
+        client = GitHubConnector("fake-token")
         return client
 
 

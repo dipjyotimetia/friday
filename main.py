@@ -6,6 +6,7 @@ from typing import Optional, Tuple
 
 from config.config import GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_REGION
 from connectors.confluence_client import ConfluenceConnector
+from connectors.github_client import GitHubConnector
 from connectors.jira_client import JiraConnector
 from services.prompt_builder import PromptBuilder
 from services.test_generator import TestCaseGenerator
@@ -38,24 +39,52 @@ def validate_config() -> bool:
 def setup_args() -> argparse.Namespace:
     """Set up and parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Generate test cases from Jira and Confluence"
+        description="Generate test cases from Jira or GitHub issues"
     )
-    parser.add_argument("--issue-key", type=str, required=True, help="Jira issue key")
+
+    # Create mutually exclusive group for issue sources
+    source_group = parser.add_mutually_exclusive_group(required=True)
+    source_group.add_argument("--jira-key", type=str, help="Jira issue key")
+    source_group.add_argument("--gh-issue", type=str, help="GitHub issue number")
+
+    # GitHub specific arguments
+    parser.add_argument(
+        "--gh-repo",
+        type=str,
+        help="GitHub repository name in format 'owner/repo' (required with --gh-issue)",
+    )
+
+    # Common arguments
     parser.add_argument("--confluence-id", type=str, help="Confluence page ID")
+    parser.add_argument(
+        "--template", type=str, default="test_case", help="Prompt template key"
+    )
     parser.add_argument(
         "--output", type=str, default="test_cases.json", help="Output file path"
     )
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    # Validate GitHub args combination
+    if args.gh_issue and not args.gh_repo:
+        parser.error("--gh-repo is required when using --gh-issue")
+
+    return args
 
 
 def initialize_services() -> Tuple[
-    JiraConnector, ConfluenceConnector, TestCaseGenerator, PromptBuilder
+    JiraConnector,
+    ConfluenceConnector,
+    GitHubConnector,
+    TestCaseGenerator,
+    PromptBuilder,
 ]:
     """Initialize all required services and connectors."""
     logger.info("Initializing services...")
 
     jira = JiraConnector()
     confluence = ConfluenceConnector()
+    github = GitHubConnector()
     test_gen = TestCaseGenerator()
     prompt = PromptBuilder()
 
@@ -67,7 +96,28 @@ def initialize_services() -> Tuple[
         ]
     )
 
-    return (jira, confluence, test_gen, prompt)
+    return (jira, confluence, github, test_gen, prompt)
+
+
+def get_issue_details(
+    jira: JiraConnector, github: GitHubConnector, args: argparse.Namespace
+) -> dict:
+    """Get issue details from either Jira or GitHub."""
+    if args.jira_key:
+        logger.info(f"Fetching Jira issue: {args.jira_key}")
+        with error_handler("fetching Jira details"):
+            return jira.get_issue_details(args.jira_key)
+    else:
+        logger.info(f"Fetching GitHub issue: {args.gh_repo}#{args.gh_issue}")
+        with error_handler("fetching GitHub issue details"):
+            issue = github.get_issue_details(args.gh_repo, int(args.gh_issue))
+            # Convert GitHub format to match Jira format
+            return {
+                "fields": {
+                    "description": issue.get("body", ""),
+                    "summary": issue.get("title", ""),
+                }
+            }
 
 
 def get_confluence_content(
@@ -89,18 +139,15 @@ def main() -> int:
     args = setup_args()
 
     try:
-        jira, confluence, test_generator, prompt_builder = initialize_services()
+        jira, confluence, github, test_generator, prompt_builder = initialize_services()
 
-        with error_handler("fetching Jira details"):
-            logger.info(f"Fetching Jira issue: {args.issue_key}")
-            issue_details = jira.get_issue_details(args.issue_key)
-
+        issue_details = get_issue_details(jira, github, args)
         additional_context = get_confluence_content(confluence, args.confluence_id)
 
         variables = {
             "story_description": issue_details["fields"]["description"],
             "confluence_content": additional_context,
-            "unique_id": args.issue_key,
+            "unique_id": args.jira_key or f"{args.gh_repo}#{args.gh_issue}",
         }
 
         with error_handler("building prompt"):
