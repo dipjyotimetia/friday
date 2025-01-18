@@ -39,11 +39,6 @@ jobs:
         poetry config virtualenvs.create true --local
         poetry config virtualenvs.in-project true --local
         poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-  
-    - name: Install poetry-dynamic-versioning
-      run: |
-        poetry self add "poetry-dynamic-versioning[plugin]"
-        poetry dynamic-versioning enable
 
     - name: Install dependencies
       run: poetry install --no-interaction  

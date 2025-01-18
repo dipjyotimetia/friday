@@ -1,7 +1,6 @@
 [tool.poetry]
 name = "friday-cli"
-version = "0.0.0"
-dynamic = ["version"]
+version = "0.1.1"
 description = "AI-powered test case generator CLI"
 license = "MIT"
 authors = ["Dipjyoti Metia <dipjyotimetia@gmail.com>"]
@@ -67,12 +66,6 @@ minversion = "8.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
 
-[tool.poetry-dynamic-versioning]
-enable = true
-vcs = "git"
-style = "semver"
-tag-branch = "main"
-
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
