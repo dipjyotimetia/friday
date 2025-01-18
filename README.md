@@ -161,6 +161,14 @@ Parameters
 * `--gh-repo`: Github User/Repo
 * `--output`: Output file path for generated test cases (default: test_cases.json)
 
+## Example other repo
+
+```yaml
+- uses: dipjyotimetia/friday@v1
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    confluence_id: "optional-confluence-id" 
+```
 ## Development
 Run tests:
 
