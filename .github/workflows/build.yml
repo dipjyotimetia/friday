@@ -37,13 +37,13 @@ jobs:
         poetry config virtualenvs.create true --local
         poetry config virtualenvs.in-project true --local
     
-    - name: Install dependencies
-      run: poetry install --no-interaction
-
     - name: Install poetry-dynamic-versioning
       run: |
         poetry self add "poetry-dynamic-versioning[plugin]"
         poetry dynamic-versioning enable
+
+    - name: Install dependencies
+      run: poetry install --no-interaction
 
     - name: Build package
       run: poetry build
