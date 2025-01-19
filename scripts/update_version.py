@@ -21,6 +21,13 @@ def update_pyproject_version(version):
         toml.dump(data, f)
 
 
+def update_version_file(version):
+    version_path = "src/friday/version.py"
+    with open(version_path, "w") as f:
+        f.write(f'__version__ = "{version}"\n')
+
+
 if __name__ == "__main__":
     version = get_latest_tag()
     update_pyproject_version(version)
+    update_version_file(version)

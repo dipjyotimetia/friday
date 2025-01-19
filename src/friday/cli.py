@@ -15,6 +15,7 @@ from friday.services.parser import WebCrawler
 from friday.services.prompt_builder import PromptBuilder
 from friday.services.test_generator import TestCaseGenerator
 from friday.utils.helpers import save_test_cases_as_markdown
+from friday.version import __version__
 
 # Suppress google-crc32c warning
 warnings.filterwarnings(
@@ -163,13 +164,7 @@ def crawl(
 @app.command()
 def version():
     """Show the version of Friday"""
-    from importlib.metadata import version
-
-    try:
-        friday_version = version("friday")
-        print(f"Friday v{friday_version}")
-    except:  # noqa: E722
-        print("Friday version unknown")
+    print(f"Friday v{__version__}")
 
 
 @app.command()
