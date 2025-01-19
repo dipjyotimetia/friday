@@ -51,13 +51,28 @@ jobs:
     - name: Update version
       run: python scripts/update_version.py
 
+    - name: Generate requirements.txt
+      run: |
+        poetry export -f requirements.txt --output requirements.txt --without-hashes
+        if [ $? -ne 0 ]; then
+          echo "Failed to generate requirements.txt"
+          exit 1
+        fi
+
     - name: Commit version update
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add pyproject.toml
-        git commit -m "chore: update version to $(git describe --tags --abbrev=0)"
-        git push origin HEAD:main
+        git add pyproject.toml requirements.txt
+        
+        # Only commit if there are changes
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "chore: update version to $(git describe --tags --abbrev=0)"
+          git pull --rebase origin main
+          git push origin HEAD:main
+        fi
 
     - name: Build and publish
       run: |

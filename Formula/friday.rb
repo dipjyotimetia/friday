@@ -11,16 +11,14 @@ class Friday < Formula
   depends_on "poetry"
 
   def install
-    # Create virtualenv without system packages
-    virtualenv_install_with_resources
+    virtualenv_create(libexec, python3_version)
+    
+    # Install dependencies from requirements.txt
+    system libexec/"bin/pip", "install", "-r", "requirements.txt"
+    
+    # Install the package itself
+    system libexec/"bin/pip", "install", "."
 
-    # Configure poetry
-    system "poetry", "config", "virtualenvs.create", "false"
-    
-    # Install dependencies in user space
-    ENV["PYTHONUSERBASE"] = libexec
-    system "poetry", "install", "--no-interaction", "--no-ansi"
-    
     bin.install Dir[libexec/"bin/*"]
     bin.env_script_all_files(libexec/"bin", PYTHONPATH: ENV["PYTHONPATH"])
   end
