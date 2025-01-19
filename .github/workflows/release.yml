@@ -71,3 +71,29 @@ jobs:
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update Homebrew Formula
+      run: |
+        # Get latest version
+        VERSION=$(git describe --tags --abbrev=0)
+        
+        # Calculate SHA256 of tar.gz
+        wget https://github.com/dipjyotimetia/friday/archive/refs/tags/$VERSION.tar.gz
+        SHA=$(sha256sum $VERSION.tar.gz | cut -d' ' -f1)
+        
+        # Clone homebrew tap repo
+        git clone https://github.com/dipjyotimetia/homebrew-friday.git
+        cd homebrew-friday
+        
+        # Update formula
+        sed -i "s/\[LATEST_VERSION\]/$VERSION/" friday.rb
+        sed -i "s/\[SHA256_OF_TAR\]/$SHA/" friday.rb
+        
+        # Commit and push
+        git config user.name "GitHub Action"
+        git config user.email "action@github.com"
+        git add friday.rb
+        git commit -m "Update to version $VERSION"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
