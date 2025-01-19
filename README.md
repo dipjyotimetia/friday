@@ -4,104 +4,105 @@
   <img src="docs/images/banner.svg" alt="Auto Test Case Generator Banner" width="1000">
 </p>
 
+An AI-powered test case generator that leverages Google Vertex AI and LangChain to automatically create test cases from Jira/GitHub issues and Confluence documentation.
 
-A Python-based tool that uses Google's Vertex AI and LangChain to automatically generate test cases from Jira/Github and Confluence documentation.
+## 🚀 Features
 
-## Features
+- Generate test cases using Google Vertex AI
+- Extract requirements from Jira tickets or GitHub issues 
+- Integrate context from Confluence pages
+- Process data using LangChain's prompt engineering
+- Store and search documents using ChromaDB vectorization
+- Export test cases in JSON or Markdown format
 
-- 🤖 Leverages Google Vertex AI for test case generation
-- 📝 Pulls requirements from Jira tickets or github issue
-- 📚 Extracts additional context from Confluence pages
-- 🔄 Uses LangChain for prompt engineering and chain management
-- 💾 Use ChromaDb for Embeddings, vector search, document storage
-- { } Outputs structured test cases in JSON/MarkDown format
+## 📋 Prerequisites
 
-## Prerequisites
-
-- Python 3.12
+- Python 3.12+
 - Google Cloud Platform account with Vertex AI enabled
-- Jira and Confluence access credentials
+- Jira/GitHub and Confluence access credentials
 
-## Sequence diagram 
+## 🔄 Architecture
 
 ![Sequence Diagram](docs/images/sequence.png)
 
-## Installation
+## ⚡️ Quick Start
 
-1. Clone the repository:
+1. Install via Homebrew:
+```bash
+brew tap dipjyotimetia/friday https://github.com/dipjyotimetia/FRIDAY
+brew install friday
+```
+
+2. Run setup:
+```bash 
+friday setup
+```
+
+3. Generate test cases:
+```bash
+# From Jira
+friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
+
+# From GitHub
+friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o test_cases.md
+```
+
+## 🛠 Manual Installation
+
+1. Clone and setup:
 ```bash
 git clone https://github.com/dipjyotimetia/friday.git
 cd friday
-```
-2. Install dependencies:
-
-```bash
 chmod +x prerequisites.sh
 ./prerequisites.sh
 ```
 
-3. Configure environment variables:
-
+2. Configure environment:
 ```bash
 cp .env.example .env
-# Edit .env with your credentials
+# Add your credentials to .env
 ```
 
-## Usage
-Run the tool with:
+## 📖 Usage Options
+
+### Web Crawler
 ```bash
-# Install the cli
-brew tap dipjyotimetia/friday https://github.com/dipjyotimetia/FRIDAY 
-brew install friday
-
-# Run interactive setup
-friday setup
-
-# Generate test cases from a Jira issue
-friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
-
-# Generate test cases from a GitHub issue 
-friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o test_cases.md
-
-# Crawl multiple pages from same domain
+# Crawl single domain
 friday crawl https://example.com --provider vertex --persist-dir ./my_data/chroma --max-pages 5
 
-# # Crawl across different domains
+# Crawl multiple domains
 friday crawl https://example.com --provider vertex --persist-dir ./my_data/chroma --max-pages 10 --same-domain false
-
-# Show version
-friday version
-
-# Show help
-friday --help
-friday generate --help
 ```
 
-Parameters
-* `--jira-key`: Jira issue key (required)
-* `--confluence-id`: Confluence page ID (optional)
-* `--gh-issue`: Github Issue key
-* `--gh-repo`: Github User/Repo
-* `--output`: Output file path for generated test cases (default: test_cases.json)
+### Command Reference
+```bash
+friday --help          # Show all commands
+friday version         # Display version
+friday generate --help # Show generation options
+```
 
-## Example other repo
+### Parameters
+- `--jira-key`: Jira issue key
+- `--confluence-id`: Confluence page ID (optional)
+- `--gh-issue`: GitHub issue number
+- `--gh-repo`: GitHub repository (format: owner/repo)
+- `--output`: Output file path (default: test_cases.json)
+
+## 🔧 GitHub Action
 
 ```yaml
 - uses: dipjyotimetia/friday@v1
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
-    confluence_id: "optional-confluence-id" 
+    confluence_id: "optional-confluence-id"
 ```
-## Development
-Run tests:
+
+## 💻 Development
 
 ```bash
+# Run tests
 poetry run pytest tests/ -v
-```
 
-Format Code:
-
-```bash
+# Format code
 poetry run ruff format
 ```
-
