@@ -63,7 +63,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add pyproject.toml requirements.txt
+        git add pyproject.toml requirements.txt version.py
         
         # Only commit if there are changes
         if git diff --staged --quiet; then
