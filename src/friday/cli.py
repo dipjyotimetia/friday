@@ -164,6 +164,69 @@ def version():
         print("Friday version unknown")
 
 
+@app.command()
+def setup():
+    """Verify and configure required environment parameters"""
+    required_params = {
+        "GOOGLE_CLOUD_PROJECT": "Google Cloud project ID",
+        "GOOGLE_CLOUD_REGION": "Google Cloud region (default: us-central1)",
+        "GITHUB_ACCESS_TOKEN": "GitHub personal access token",
+        "GITHUB_USERNAME": "GitHub username",
+        "JIRA_URL": "Jira URL (e.g. https://your-org.atlassian.net)",
+        "JIRA_USERNAME": "Jira username/email",
+        "JIRA_API_TOKEN": "Jira API token",
+        "CONFLUENCE_URL": "Confluence URL (e.g. https://your-org.atlassian.net/wiki)",
+        "CONFLUENCE_USERNAME": "Confluence username/email",
+        "CONFLUENCE_API_TOKEN": "Confluence API token",
+    }
+
+    env_file = Path(".env")
+    if not env_file.exists():
+        print("[yellow]No .env file found, creating new one...[/yellow]")
+        env_file.touch()
+
+    current_env = {}
+    if env_file.stat().st_size > 0:
+        with open(env_file) as f:
+            for line in f:
+                if "=" in line:
+                    key, value = line.strip().split("=", 1)
+                    current_env[key] = value
+
+    new_env = {}
+    print("\n[bold blue]Friday Environment Setup[/bold blue]")
+    print(
+        "Fill in the following required parameters (press Enter to skip/keep existing):\n"
+    )
+
+    for key, description in required_params.items():
+        current = current_env.get(key, "")
+        if current:
+            prompt = f"{description} [current: {current}]: "
+        else:
+            prompt = f"{description}: "
+
+        value = typer.prompt(prompt, default="", show_default=False)
+        if value:
+            new_env[key] = value
+        elif current:
+            new_env[key] = current
+
+    # Write to .env file
+    with open(env_file, "w") as f:
+        for key, value in new_env.items():
+            f.write(f"{key}={value}\n")
+
+    print("\n[green]Environment configuration saved to .env file[/green]")
+
+    # Verify configuration
+    if validate_config():
+        print("[green]✓ All required parameters are configured[/green]")
+    else:
+        print("[red]⨯ Some required parameters are missing[/red]")
+        print("Run 'friday setup' again to configure missing parameters")
+
+
 def main():
     app()
 
