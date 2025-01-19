@@ -10,23 +10,22 @@ class Friday < Formula
   depends_on "python@3.13"
 
   def install
-    python_exe = Formula["python@3.13"].opt_bin/"python3.13"
-    venv = virtualenv_create(libexec, python_exe)
+    # Create virtualenv in libexec
+    venv = virtualenv_create(libexec, "python3.13")
     
-    # Ensure pip is available
+    # Install pip explicitly first
     venv.pip_install "pip"
     
-    # Install dependencies with error handling
-    system "#{libexec}/bin/python", "-m", "pip", "install", "-r", "requirements.txt"
+    # Install dependencies
+    system libexec/"bin/pip", "install", "-r", "requirements.txt"
     
     # Install the package itself
-    system "#{libexec}/bin/python", "-m", "pip", "install", "."
+    system libexec/"bin/pip", "install", "."
 
-    bin.install Dir[libexec/"bin/*"]
-    bin.env_script_all_files(libexec/"bin", 
+    # Only symlink the friday executable, not python/pip
+    (bin/"friday").write_env_script libexec/"bin/friday",
       PATH: "#{libexec}/bin:$PATH",
       PYTHONPATH: "#{libexec}/lib/python3.13/site-packages:#{ENV["PYTHONPATH"]}"
-    )
   end
 
   test do
