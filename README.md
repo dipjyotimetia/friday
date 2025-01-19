@@ -51,10 +51,11 @@ cp .env.example .env
 ## Usage
 Run the tool with:
 ```bash
-poetry self add "poetry-dynamic-versioning[plugin]"
-poetry dynamic-versioning enable
 # Install the package
 poetry install
+
+# Run interactive setup
+friday setup
 
 # Generate test cases from a Jira issue
 friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
