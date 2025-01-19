@@ -82,7 +82,7 @@ jobs:
         SHA=$(sha256sum $VERSION.tar.gz | cut -d' ' -f1)
         
         # Clone homebrew tap repo with token auth
-        git clone https://${HOMEBREW_TAP_TOKEN}@github.com/dipjyotimetia/homebrew-friday.git
+        git clone "https://oauth2:${HOMEBREW_TOKEN}@github.com/dipjyotimetia/homebrew-friday.git"
         cd homebrew-friday
         
         # Update formula
@@ -90,10 +90,10 @@ jobs:
         sed -i "s/\[SHA256_OF_TAR\]/$SHA/" friday.rb
         
         # Commit and push
-        git config user.name "GitHub Action"
-        git config user.email "action@github.com"
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git add friday.rb
         git commit -m "Update to version $VERSION"
-        git push https://${HOMEBREW_TAP_TOKEN}@github.com/dipjyotimetia/homebrew-friday.git HEAD:main
+        git push
       env:
-        HOMEBREW_TAP_TOKEN: ${{ secrets.HOME_BREW_TOKEN }}    
+        HOMEBREW_TOKEN: ${{ secrets.HOME_BREW_TOKEN }}    
