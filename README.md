@@ -51,8 +51,9 @@ cp .env.example .env
 ## Usage
 Run the tool with:
 ```bash
-# Install the package
-poetry install
+# Install the cli
+brew tap dipjyotimetia/friday
+brew install friday
 
 # Run interactive setup
 friday setup

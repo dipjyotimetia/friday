@@ -81,8 +81,8 @@ jobs:
         wget https://github.com/dipjyotimetia/friday/archive/refs/tags/$VERSION.tar.gz
         SHA=$(sha256sum $VERSION.tar.gz | cut -d' ' -f1)
         
-        # Clone homebrew tap repo
-        git clone https://github.com/dipjyotimetia/homebrew-friday.git
+        # Clone homebrew tap repo with token auth
+        git clone https://${HOMEBREW_TAP_TOKEN}@github.com/dipjyotimetia/homebrew-friday.git
         cd homebrew-friday
         
         # Update formula
@@ -94,6 +94,6 @@ jobs:
         git config user.email "action@github.com"
         git add friday.rb
         git commit -m "Update to version $VERSION"
-        git push
+        git push https://${HOMEBREW_TAP_TOKEN}@github.com/dipjyotimetia/homebrew-friday.git HEAD:main
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
+        HOME_BREW_TOKEN: ${{ secrets.HOME_BREW_TOKEN }}    
