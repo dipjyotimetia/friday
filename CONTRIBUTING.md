@@ -49,7 +49,7 @@ Before creating bug reports, please check existing issues. When creating a bug r
 
 ## Development Setup
 
-1. Install Python 3.13+
+1. Install Python 3.12
 2. Install poetry:
    ```sh 
    curl -sSL https://install.python-poetry.org | python3 -

@@ -18,7 +18,7 @@ A Python-based tool that uses Google's Vertex AI and LangChain to automatically 
 
 ## Prerequisites
 
-- Python 3.13+
+- Python 3.12
 - Google Cloud Platform account with Vertex AI enabled
 - Jira and Confluence access credentials
 
