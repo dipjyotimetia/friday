@@ -19,7 +19,7 @@ class Friday < Formula
        
        # Install project dependencies and build
        system "poetry", "config", "virtualenvs.create", "false"
-       system "poetry", "install", "--no-dev", "--no-interaction", "--no-ansi"
+       system "poetry", "install", "--no-interaction", "--no-ansi"
        system "poetry", "build"
        
        venv.pip_install_and_link buildpath
