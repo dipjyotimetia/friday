@@ -29,6 +29,6 @@ class Friday < Formula
   end
 
   test do
-    assert_match "friday version", shell_output("#{bin}/friday --version")
+    assert_match "friday version", shell_output("#{bin}/friday version")
   end
 end
