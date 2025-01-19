@@ -1,4 +1,5 @@
 import logging
+import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -14,6 +15,13 @@ from friday.services.parser import WebCrawler
 from friday.services.prompt_builder import PromptBuilder
 from friday.services.test_generator import TestCaseGenerator
 from friday.utils.helpers import save_test_cases_as_markdown
+
+# Suppress google-crc32c warning
+warnings.filterwarnings(
+    "ignore",
+    message="As the c extension couldn't be imported, `google-crc32c` is using a pure python implementation",
+    category=RuntimeWarning,
+)
 
 app = typer.Typer(name="friday", help="AI-powered test case generator CLI")
 logging.basicConfig(level=logging.INFO)

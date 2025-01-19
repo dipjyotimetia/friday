@@ -52,7 +52,7 @@ cp .env.example .env
 Run the tool with:
 ```bash
 # Install the cli
-brew tap dipjyotimetia/friday
+brew tap dipjyotimetia/friday https://github.com/dipjyotimetia/FRIDAY 
 brew install friday
 
 # Run interactive setup
