@@ -10,7 +10,11 @@ from langchain_openai import OpenAIEmbeddings
 
 class EmbeddingsService:
     def __init__(
-        self, provider: str = "vertex", persist_directory: str = "./data/chroma"
+        self,
+        provider: str = "vertex",
+        persist_directory: str = "./data/chroma",
+        chunk_size: int = 1000,  # Maximum size of each text chunk
+        chunk_overlap: int = 200,  # Number of characters to overlap between chunks
     ):
         """Initialize the embeddings service with configurable persistence directory"""
         if provider == "vertex":
@@ -24,22 +28,40 @@ class EmbeddingsService:
         else:
             raise ValueError("Unsupported provider. Use 'vertex' or 'openai'")
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000, chunk_overlap=200
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            separators=[
+                "\n\n",
+                "\n",
+                " ",
+                "",
+            ],  # Tries to split at paragraph, line, word boundaries
         )
         self.persist_directory = Path(persist_directory)
         self.db = None
 
-    def create_database(self, texts: List[str], metadatas: List[dict] = None) -> None:
+    def create_database(
+        self,
+        texts: List[str],
+        metadatas: List[dict] = None,
+        collection_name: str = "default",
+    ) -> None:
         """Create a new vector database from texts"""
         docs = self.text_splitter.create_documents(texts, metadatas=metadatas)
         self.db = Chroma.from_documents(
             documents=docs,
             embedding=self.embeddings,
             persist_directory=str(self.persist_directory),
+            collection_name=collection_name,
         )
 
     def similarity_search(self, query: str, k: int = 4) -> List[str]:
-        """Search for similar documents"""
+        """Search for similar documents with input validation"""
+
+        if not query or not query.strip():
+            raise ValueError("Query cannot be empty")
+        if k < 1:
+            raise ValueError("k must be positive")
         if not self.db:
             raise ValueError("Database not initialized. Call create_database first.")
 
@@ -57,7 +79,12 @@ class EmbeddingsService:
     def add_texts(
         self, texts: List[str], metadatas: Optional[List[dict]] = None
     ) -> List[str]:
-        """Add new texts to the existing database"""
+        """Add texts with validation"""
+
+        if not texts:
+            raise ValueError("Cannot add empty text list")
+        if metadatas and len(texts) != len(metadatas):
+            raise ValueError("Number of texts and metadata entries must match")
         if not self.db:
             raise ValueError("Database not initialized. Call create_database first.")
 
@@ -154,3 +181,10 @@ class EmbeddingsService:
             "documents": documents,
             "distances": distances if include_distances else None,
         }
+
+    def cleanup(self) -> None:
+        """Clean up resources and delete the database"""
+        if self.db:
+            self.db.delete_collection()
+            self.persist()
+        self.db = None

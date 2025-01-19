@@ -9,6 +9,8 @@ from friday.config.config import validate_config
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
+from friday.services.embeddings import EmbeddingsService
+from friday.services.parser import WebCrawler
 from friday.services.prompt_builder import PromptBuilder
 from friday.services.test_generator import TestCaseGenerator
 from friday.utils.helpers import save_test_cases_as_markdown
@@ -95,6 +97,58 @@ def generate(
 
     except Exception as e:
         logger.error(f"Error generating test cases: {str(e)}")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def crawl(
+    url: str = typer.Argument(..., help="URL to crawl"),
+    provider: str = typer.Option(
+        "vertex", help="Embedding provider (vertex or openai)"
+    ),
+    persist_dir: str = typer.Option(
+        "./data/chroma", help="ChromaDB persistence directory"
+    ),
+    max_pages: int = typer.Option(10, help="Maximum number of pages to crawl"),
+    same_domain: bool = typer.Option(
+        True, help="Only crawl pages from the same domain"
+    ),
+):
+    """Crawl webpage content and store embeddings in ChromaDB"""
+    try:
+        # Initialize crawler
+        crawler = WebCrawler(max_pages=max_pages, same_domain_only=same_domain)
+
+        # Crawl pages
+        pages_data = crawler.crawl(url)
+
+        # Initialize embeddings service
+        embeddings_service = EmbeddingsService(
+            provider=provider, persist_directory=persist_dir
+        )
+
+        # Create metadata and texts lists
+        texts = []
+        metadata = []
+
+        for page in pages_data:
+            texts.append(page["text"])
+            metadata.append(
+                {"source": page["url"], "type": "webpage", "title": page["title"]}
+            )
+
+        # Create database from texts
+        embeddings_service.create_database(texts, metadata)
+
+        # Get collection stats
+        stats = embeddings_service.get_collection_stats()
+
+        typer.echo(f"Successfully processed {len(pages_data)} pages")
+        typer.echo(f"Total documents: {stats['total_documents']}")
+        typer.echo(f"Embedding dimension: {stats['embedding_dimension']}")
+
+    except Exception as e:
+        typer.echo(f"Error: {str(e)}", err=True)
         raise typer.Exit(code=1)
 
 

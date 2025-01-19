@@ -62,6 +62,12 @@ friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
 # Generate test cases from a GitHub issue 
 friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o test_cases.md
 
+# Crawl multiple pages from same domain
+friday crawl https://example.com --provider vertex --persist-dir ./my_data/chroma --max-pages 5
+
+# # Crawl across different domains
+friday crawl https://example.com --provider vertex --persist-dir ./my_data/chroma --max-pages 10 --same-domain false
+
 # Show version
 friday version
 

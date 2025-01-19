@@ -145,17 +145,32 @@ class TestEmbeddingsService:
 
     def test_load_database(self, embeddings_service, sample_texts, test_dir):
         """Test loading an existing database"""
-        # Create and persist a database
-        embeddings_service.create_database(sample_texts)
+        # Create initial database with collection name
+        collection_name = "test_collection"
+        embeddings_service.create_database(
+            texts=sample_texts,
+            metadatas=[{"source": "test"} for _ in sample_texts],
+            collection_name=collection_name,
+        )
 
         # Create new service instance and load existing database
         new_service = EmbeddingsService(persist_directory=str(test_dir))
-        new_service.load_database()
+        new_service.load_database(collection_name=collection_name)
 
-        # Verify loaded data
-        original_results = embeddings_service.similarity_search("test", k=1)
-        loaded_results = new_service.similarity_search("test", k=1)
+        # Verify database was loaded correctly
+        assert new_service.db is not None
+
+        # Test exact match using similarity search
+        query = "test"
+        original_results = embeddings_service.similarity_search(query, k=1)
+        loaded_results = new_service.similarity_search(query, k=1)
+
+        # Verify results match
+        assert len(original_results) == len(loaded_results)
         assert original_results == loaded_results
+
+        # Test metadata was preserved
+        assert all(doc.metadata.get("source") == "test" for doc in loaded_results)
 
     def test_error_handling(self, embeddings_service):
         """Test error handling for uninitialized database operations"""
