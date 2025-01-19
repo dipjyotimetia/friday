@@ -79,6 +79,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        ref: main
 
     - name: Update Homebrew Formula
       run: |
@@ -98,7 +99,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/friday.rb
           git commit -m "chore: update formula to version ${VERSION}"
-          git push
+          git push origin main || {
+            echo "Failed to push changes"
+            exit 1
+          }
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
