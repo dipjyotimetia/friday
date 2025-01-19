@@ -38,7 +38,6 @@ cd friday
 ```bash
 chmod +x prerequisites.sh
 ./prerequisites.sh
-poetry install
 ```
 
 3. Configure environment variables:
