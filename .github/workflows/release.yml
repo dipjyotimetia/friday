@@ -72,24 +72,33 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  update-homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
     - name: Update Homebrew Formula
       run: |
-        # Get latest version
         VERSION=$(git describe --tags --abbrev=0)
+        TARBALL_URL="https://github.com/dipjyotimetia/friday/archive/refs/tags/${VERSION}.tar.gz"
         
-        # Calculate SHA256 of tar.gz
-        wget https://github.com/dipjyotimetia/friday/archive/refs/tags/$VERSION.tar.gz
-        SHA=$(sha256sum $VERSION.tar.gz | cut -d' ' -f1)
+        # Download and calculate SHA
+        curl -L -o release.tar.gz $TARBALL_URL
+        SHA=$(sha256sum release.tar.gz | cut -d' ' -f1)
         
         # Update formula
-        sed -i "s/\[LATEST_VERSION\]/$VERSION/" friday.rb
-        sed -i "s/\[SHA256_OF_TAR\]/$SHA/" friday.rb
+        sed -i "s|url.*|url \"$TARBALL_URL\"|" Formula/friday.rb
+        sed -i "s|sha256.*|sha256 \"$SHA\"|" Formula/friday.rb
         
-        # Commit and push changes
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add friday.rb
-        git commit -m "Update to version $VERSION"
-        git push origin HEAD:main
+        if [ -n "$(git status --porcelain)" ]; then
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/friday.rb
+          git commit -m "chore: update formula to version ${VERSION}"
+          git push
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
