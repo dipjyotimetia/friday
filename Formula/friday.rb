@@ -8,10 +8,9 @@ class Friday < Formula
   license "MIT"
 
   depends_on "python@3.13"
-  depends_on "poetry"
 
   def install
-    virtualenv_create(libexec, python3_version)
+    venv = virtualenv_create(libexec, Formula["python@3.13"].opt_bin/"python3.13")
     
     # Install dependencies from requirements.txt
     system libexec/"bin/pip", "install", "-r", "requirements.txt"
@@ -20,7 +19,9 @@ class Friday < Formula
     system libexec/"bin/pip", "install", "."
 
     bin.install Dir[libexec/"bin/*"]
-    bin.env_script_all_files(libexec/"bin", PYTHONPATH: ENV["PYTHONPATH"])
+    bin.env_script_all_files(libexec/"bin", 
+      PYTHONPATH: "#{libexec}/lib/python3.13/site-packages:#{ENV["PYTHONPATH"]}"
+    )
   end
 
   test do
