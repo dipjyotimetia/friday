@@ -95,19 +95,3 @@ class WebCrawler:
                 continue
 
         return pages_data
-
-
-# # Basic usage with default settings
-# python crawl.py https://example.com
-
-# # Specify custom provider and persistence directory
-# python crawl.py https://example.com --provider openai --persist-dir ./my_data/chroma
-
-# # Adjust text chunking parameters
-# python crawl.py https://example.com --chunk-size 500 --chunk-overlap 100
-
-# Crawl multiple pages from same domain
-# python -m friday crawl https://example.com --max-pages 5
-
-# # Crawl across different domains
-# python -m friday crawl https://example.com --max-pages 10 --same-domain false
