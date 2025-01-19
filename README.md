@@ -24,7 +24,7 @@ A Python-based tool that uses Google's Vertex AI and LangChain to automatically 
 
 ## Sequence diagram 
 
-<img src="docs/images/sequence.png" width="900">
+![Sequence Diagram](docs/images/sequence.png)
 
 ## Installation
 
