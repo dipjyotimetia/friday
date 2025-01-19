@@ -12,6 +12,7 @@ class Friday < Formula
 
   def install
     venv = virtualenv_create(libexec, "python3.13")
+    system "poetry", "install"
     system "poetry", "build"
     venv.pip_install_and_link buildpath
   end
