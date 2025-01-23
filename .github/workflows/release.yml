@@ -101,6 +101,10 @@ jobs:
         VERSION=$(git describe --tags --abbrev=0)
         TARBALL_URL="https://github.com/dipjyotimetia/friday/archive/refs/tags/${VERSION}.tar.gz"
         
+        # Clone homebrew-friday repository
+        git clone https://github.com/dipjyotimetia/homebrew-friday.git
+        cd homebrew-friday
+        
         # Download and calculate SHA
         curl -L -o release.tar.gz $TARBALL_URL
         SHA=$(sha256sum release.tar.gz | cut -d' ' -f1)
@@ -113,8 +117,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/friday.rb
-          git commit -m "chore: update formula to version ${VERSION}"
-          git push origin main || {
+          git commit -m "chore: update friday formula to version ${VERSION}"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/dipjyotimetia/homebrew-friday.git main || {
             echo "Failed to push changes"
             exit 1
           }
