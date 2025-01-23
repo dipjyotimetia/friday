@@ -29,7 +29,7 @@ An AI-powered test case generator that leverages Google Vertex AI and LangChain 
 
 1. Install via Homebrew:
 ```bash
-brew tap dipjyotimetia/friday https://github.com/dipjyotimetia/FRIDAY
+brew tap dipjyotimetia/friday
 brew install friday
 ```
 
