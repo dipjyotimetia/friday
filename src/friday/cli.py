@@ -11,7 +11,6 @@ from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
 from friday.services.embeddings import EmbeddingsService
 from friday.services.parser import WebCrawler
-from friday.services.prompt_builder import PromptBuilder
 from friday.services.test_generator import TestCaseGenerator
 from friday.utils.helpers import save_test_cases_as_markdown
 from friday.version import __version__
@@ -58,36 +57,18 @@ def generate(
         # for openai provider
         # test_generator = TestCaseGenerator(provider="openai")
         test_generator = TestCaseGenerator()
-        prompt_builder = PromptBuilder()
 
-        # Initialize test generator context
-        test_generator.initialize_context(
-            [
-                "Test case generation guidelines",
-                "Best practices for testing",
-                "Common test scenarios",
-            ]
-        )
-
-        # Get issue details
         if jira_key:
             issue_details = jira.get_issue_details(jira_key)
         else:
             issue_details = github.get_issue_details(gh_repo, int(gh_issue))
 
-        # Get additional context from Confluence
         additional_context = ""
         if confluence_id:
             additional_context = confluence.get_page_content(confluence_id)
 
-        variables = {
-            "story_description": issue_details["fields"]["description"],
-            "confluence_content": additional_context,
-            "unique_id": jira_key or f"{gh_repo}#{gh_issue}",
-        }
+        test_generator.initialize_context(additional_context)
 
-        # Build prompt and generate test cases
-        _ = prompt_builder.build_prompt(template_key=template, variables=variables)
         test_cases = test_generator.generate_test_cases(
             requirement=issue_details["fields"]["description"]
         )

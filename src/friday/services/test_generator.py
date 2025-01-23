@@ -6,7 +6,7 @@ from langchain_openai import ChatOpenAI
 
 from friday.services.embeddings import EmbeddingsService
 
-ModelProvider = Literal["vertex", "openai", "anthropic"]
+ModelProvider = Literal["vertex", "openai"]
 
 
 class TestCaseGenerator:
@@ -35,11 +35,21 @@ class TestCaseGenerator:
         {context}
         
         Generate test cases in the following format:
-        - Test Case ID
-        - Description
-        - Pre-conditions
-        - Test Steps
-        - Expected Results
+         - Test Case ID
+         - Title: [Brief description]
+         - Description
+         - Preconditions: [List any required setup]
+        Test Steps:
+         1. [Step 1]
+         2. [Step 2]
+        Expected Results:  [What should happen]
+        
+        Consider:
+        - Boundary conditions
+        - Data validation scenarios
+        - System state variations
+        - Integration points
+        - Performance conditions
         """
 
         self.prompt = PromptTemplate(
@@ -54,10 +64,9 @@ class TestCaseGenerator:
         self.embeddings_service.create_database(documents)
 
     def generate_test_cases(self, requirement: str) -> str:
-        # Combine requirement and acceptance criteria for search
+        """Generate test cases based on the given requirement"""
         search_query = f"{requirement}"
 
-        # Get relevant context using similarity search
         relevant_contexts = self.embeddings_service.similarity_search(search_query)
         context = "\n\n".join(relevant_contexts)
 
