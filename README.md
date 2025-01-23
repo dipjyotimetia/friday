@@ -18,7 +18,7 @@ An AI-powered test case generator that leverages Google Vertex AI and LangChain 
 ## 📋 Prerequisites
 
 - Python 3.12+
-- Google Cloud Platform account with Vertex AI enabled
+- Google Cloud Platform account with Vertex AI enabled or OpenAI
 - Jira/GitHub and Confluence access credentials
 
 ## 🔄 Architecture
@@ -91,10 +91,48 @@ friday generate --help # Show generation options
 ## 🔧 GitHub Action
 
 ```yaml
-- uses: dipjyotimetia/friday@v1
-  with:
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-    confluence_id: "optional-confluence-id"
+name: Friday Test Generator
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      confluence_id:
+        description: 'Confluence Page ID'
+        required: true
+      jira_id:
+        description: 'Jira Issue ID'
+        required: false
+
+jobs:
+  generate-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate Test Cases
+        uses: dipjyotimetia/friday@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          confluence_url: ${{ secrets.CONFLUENCE_URL }}
+          confluence_user: ${{ secrets.CONFLUENCE_USERNAME }}
+          confluence_token: ${{ secrets.CONFLUENCE_API_TOKEN }}
+          jira_url: ${{ secrets.JIRA_URL }}
+          jira_user: ${{ secrets.JIRA_USERNAME }}
+          jira_token: ${{ secrets.JIRA_API_TOKEN }}
+          confluence_id: ${{ inputs.confluence_id || '12345' }}
+          jira_id: ${{ inputs.jira_id || github.event.pull_request.number }}
+          google_cloud_project: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          google_cloud_region: ${{ secrets.GOOGLE_CLOUD_REGION }}
+          model_provider: 'vertex'
+          persist_dir: './data/chroma'
+
+      - name: Upload Test Cases
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-cases
+          path: test_cases.md
 ```
 
 ## 💻 Development

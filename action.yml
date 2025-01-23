@@ -37,6 +37,14 @@ inputs:
   google_cloud_region:
     description: 'Google Cloud region'
     required: true
+  model_provider:
+    description: 'AI model provider (vertex/openai)'
+    required: false
+    default: 'vertex'
+  persist_dir:
+    description: 'Directory to persist Chroma DB'
+    required: false
+    default: './data/chroma'  
 runs:
   using: 'composite'
   steps:
@@ -50,9 +58,11 @@ runs:
     
     - run: |
         poetry install
-        poetry run friday --gh-issue ${{ github.event.pull_request.number }} \
-                         --gh-repo ${{ github.repository }} \
-                         --output test_cases.md
+        poetry run friday generate \
+          --gh-issue ${{ github.event.pull_request.number }} \
+          --gh-repo ${{ github.repository }} \
+          --confluence-id ${{ inputs.confluence_id }} \
+          --output test_cases.md
       shell: bash
       env:
         GITHUB_ACCESS_TOKEN: ${{ inputs.github_token }}
@@ -61,12 +71,14 @@ runs:
         CONFLUENCE_USERNAME: ${{ inputs.confluence_user }}
         CONFLUENCE_API_TOKEN: ${{ inputs.confluence_token }}
         JIRA_URL: ${{ inputs.jira_url }}
-        JIRA_USERNAME: ${{ inputs.jira_user }}
+        JIRA_USERNAME: ${{ inputs.jira_user }} 
         JIRA_API_TOKEN: ${{ inputs.jira_token }}
-        CONFLUENCE_ID: ${{ inputs.confluence_id }}
-        JIRA_TOKEN: ${{ inputs.jira_token }}
-        JIRA_ID: ${{ inputs.jira_id }}
         GOOGLE_CLOUD_PROJECT: ${{ inputs.google_cloud_project }}
         GOOGLE_CLOUD_REGION: ${{ inputs.google_cloud_region }}
+outputs:
+  test_cases_path:
+    description: 'Path to generated test cases file'
+    value: test_cases.md
+
         
 
