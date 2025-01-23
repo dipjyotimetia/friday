@@ -9,8 +9,8 @@ from friday.config.config import validate_config
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
+from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
-from friday.services.parser import WebCrawler
 from friday.services.test_generator import TestCaseGenerator
 from friday.utils.helpers import save_test_cases_as_markdown
 from friday.version import __version__
