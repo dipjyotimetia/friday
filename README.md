@@ -8,7 +8,7 @@ An AI-powered test case generator that leverages Google Vertex AI and LangChain 
 
 ## 🚀 Features
 
-- Generate test cases using Google Vertex AI
+- Generate test cases using Google Vertex AI or OpenAI
 - Extract requirements from Jira tickets or GitHub issues 
 - Integrate context from Confluence pages
 - Process data using LangChain's prompt engineering
