@@ -1,0 +1,62 @@
+name: Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (x.x.x)'
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            script: make:mac
+          - os: windows-latest
+            script: make:win
+          - os: ubuntu-latest
+            script: make:linux
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: app/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('app/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        working-directory: ./app
+        run: npm ci
+
+      - name: Update Version
+        working-directory: ./app
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+
+      - name: Build Application
+        working-directory: ./app
+        run: npm run ${{ matrix.script }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: friday-${{ matrix.os }}
+          path: app/out/make/**/*
+          if-no-files-found: error
