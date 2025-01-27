@@ -1,6 +1,17 @@
 # API
 
+## Local Run
 `uvicorn friday.api.app:app --reload`
+
+## Docker Run
+```bash
+# Build image
+docker build -t friday-api .
+# Interactive mode
+docker run -p 8080:8080 friday-api
+# Detached mode
+docker run -d -p 8080:8080 friday-api
+```
 
 ```json
 # Get version
