@@ -1,4 +1,7 @@
-data/
+# Version control
+.git
+.gitignore
+
 # Python
 __pycache__
 *.pyc
@@ -34,3 +37,6 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker
+data/
