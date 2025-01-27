@@ -233,3 +233,9 @@ poetry run pytest tests/ -v
 # Format code
 poetry run ruff format
 ```
+
+6. Deploy to google cloud
+```bash
+chmod +x deploy.sh
+PROJECT_ID="your-project" REGION="us-west1" ./deploy.sh
+```
