@@ -1,0 +1,142 @@
+/* styles.css */
+:root {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --accent-primary: #4285f4;
+  --accent-hover: #3367d6;
+  --border-color: #404040;
+  --input-bg: #333333;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+h1, h2 {
+  color: var(--text-primary);
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 40px;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  background: var(--accent-primary);
+}
+
+.tab-btn.active {
+  background: var(--accent-primary);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.form-section {
+  background: var(--bg-secondary);
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.input-group {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.flex-row {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+input, select {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+button {
+  background: var(--accent-primary);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s ease;
+  width: 100%;
+}
+
+button:hover {
+  background: var(--accent-hover);
+}
+
+.output-section {
+  background: var(--bg-secondary);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+pre {
+  background: var(--input-bg);
+  padding: 20px;
+  border-radius: 6px;
+  overflow-x: auto;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}

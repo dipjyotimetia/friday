@@ -1,0 +1,53 @@
+{
+  "name": "friday",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "dev": "NODE_ENV=development electron .",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "make:mac": "electron-forge make --platform=darwin --arch=x64,arm64",
+    "make:win": "electron-forge make --platform=win32 --arch=x64",
+    "make:linux": "electron-forge make --platform=linux --arch=x64"
+  },
+  "build": {
+    "appId": "com.friday.app",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "linux": {
+      "target": ["deb", "rpm", "AppImage"]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dipjyotimetia/friday.git"
+  },
+  "author": "Dipjyoti Metia",
+  "license": "MIT",
+  "description": "AI Test Generator App",
+  "devDependencies": {
+    "@electron-forge/cli": "^7.6.1",
+    "@electron-forge/maker-deb": "^7.6.1",
+    "@electron-forge/maker-rpm": "^7.6.1",
+    "@electron-forge/maker-squirrel": "^7.6.1",
+    "@electron-forge/maker-zip": "^7.6.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.6.1",
+    "@electron-forge/plugin-fuses": "^7.6.1",
+    "@electron-forge/publisher-github": "^7.6.1",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^34.0.1",
+    "eslint": "^9.19.0",
+    "eslint-plugin-electron": "^7.0.0"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.1",
+    "update-electron-app": "^3.1.0"
+  }
+}
