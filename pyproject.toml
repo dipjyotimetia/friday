@@ -43,6 +43,7 @@ chromadb = "^0.5.23"
 langchain-chroma = "^0.2.0"
 typer = "^0.15.1"
 langchain-openai = "^0.3.0"
+playwright = "^1.49.1"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
