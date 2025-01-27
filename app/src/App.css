@@ -1,0 +1,210 @@
+:root {
+  /* Colors */
+  --primary: #4299e1;
+  --primary-dark: #3182ce;
+  --text-dark: #2d3748;
+  --text-light: #e2e8f0;
+  --border-light: #e2e8f0;
+  --border-dark: #4a5568;
+  --bg-dark: #1a202c;
+  --bg-card-dark: #2d3748;
+  
+  /* Spacing */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Transitions */
+  --transition-base: 0.2s ease;
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base styles */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+h1 {
+  color: var(--text-dark);
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+/* Card component */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: var(--spacing-xl);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--spacing-xl);
+  transition: transform var(--transition-base);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.card h2 {
+  color: var(--text-dark);
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Form elements */
+.form-group {
+  padding: var(--spacing-lg);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-lg);
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  transition: all var(--transition-base);
+}
+
+.form-group:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-dark);
+}
+
+/* Input and Select shared styles */
+input, select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--text-dark);
+  background-color: white;
+  transition: all var(--transition-base);
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%234a5568' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+}
+
+/* Button styles */
+button {
+  background-color: var(--primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-base);
+}
+
+button:hover {
+  background-color: var(--primary-dark);
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.4);
+}
+
+/* Tab navigation */
+.tabs {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-sm);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all var(--transition-smooth);
+}
+
+.tab:hover:not(.active) {
+  background: rgba(100, 108, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #646cff, #5058cc);
+  color: white;
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.2);
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+  }
+
+  .card, input, select {
+    background-color: var(--bg-card-dark);
+    border-color: var(--border-dark);
+    color: var(--text-light);
+  }
+
+  h1, h2, label {
+    color: var(--text-light);
+  }
+
+  .form-group {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .tab {
+    color: var(--text-light);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-md);
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .card {
+    padding: var(--spacing-lg);
+  }
+
+  .tabs {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .tab {
+    width: 100%;
+    text-align: center;
+  }
+}
+
