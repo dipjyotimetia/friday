@@ -10,19 +10,30 @@
     "publish": "electron-forge publish",
     "make:mac": "electron-forge make --platform=darwin --arch=x64,arm64",
     "make:win": "electron-forge make --platform=win32 --arch=x64",
-    "make:linux": "electron-forge make --platform=linux --arch=x64"
+    "make:linux": "electron-forge make --platform=linux --arch=x64",
+    "rebuild": "electron-rebuild"
   },
   "build": {
     "appId": "com.friday.app",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": ["dmg", "zip"]
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "win": {
-      "target": ["nsis", "portable"]
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
     "linux": {
-      "target": ["deb", "rpm", "AppImage"]
+      "target": [
+        "deb",
+        "rpm",
+        "AppImage"
+      ]
     }
   },
   "repository": {
@@ -43,6 +54,7 @@
     "@electron-forge/publisher-github": "^7.6.1",
     "@electron/fuses": "^1.8.0",
     "electron": "^34.0.1",
+    "electron-rebuild": "^3.2.9",
     "eslint": "^9.19.0",
     "eslint-plugin-electron": "^7.0.0"
   },
