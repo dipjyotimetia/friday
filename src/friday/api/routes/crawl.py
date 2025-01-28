@@ -1,7 +1,11 @@
+import logging
 from fastapi import APIRouter, HTTPException
 
 from friday.api.schemas.crawl import CrawlRequest
 from friday.services.crawler import WebCrawler
+from friday.services.embeddings import EmbeddingsService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -9,15 +13,25 @@ router = APIRouter()
 @router.post("/crawl")
 async def crawl_site(request: CrawlRequest):
     try:
-        crawler = WebCrawler(persist_dir=request.persist_dir, provider=request.provider)
-
-        pages_data = crawler.crawl(
-            url=request.url,
-            max_pages=request.max_pages,
-            same_domain=request.same_domain,
+        crawler = WebCrawler(
+            max_pages=request.max_pages, same_domain_only=request.same_domain
         )
 
-        stats = crawler.get_embeddings_stats()
+        pages_data = crawler.crawl(request.url)
+        embeddings_service = EmbeddingsService(provider=request.provider)
+
+        texts = []
+        metadata = []
+
+        for page in pages_data:
+            texts.append(page["text"])
+            metadata.append(
+                {"source": page["url"], "type": "webpage", "title": page["title"]}
+            )
+
+        embeddings_service.create_database(texts, metadata)
+
+        stats = embeddings_service.get_collection_stats()
 
         return {
             "pages_processed": len(pages_data),

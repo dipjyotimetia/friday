@@ -143,20 +143,28 @@ class EmbeddingsService:
             raise ValueError("Database not initialized. Call create_database first.")
 
         collection = self.db.get()
+
+        # Handle empty collection
+        if not collection["documents"]:
+            return {
+                "total_documents": 0,
+                "embedding_dimension": 0,
+                "unique_metadata_keys": [],
+            }
+
+        # Get unique metadata keys with null checks
+        unique_keys = set()
+        if collection["metadatas"]:
+            for metadata in collection["metadatas"]:
+                if metadata:  # Check if metadata item exists
+                    unique_keys.update(metadata.keys())
+
         return {
             "total_documents": len(collection["documents"]),
             "embedding_dimension": len(collection["embeddings"][0])
             if collection["embeddings"]
             else 0,
-            "unique_metadata_keys": list(
-                set(
-                    key
-                    for metadata in collection["metadatas"]
-                    for key in metadata.keys()
-                )
-            )
-            if collection["metadatas"]
-            else [],
+            "unique_metadata_keys": list(unique_keys),
         }
 
     def find_nearest_neighbors(
