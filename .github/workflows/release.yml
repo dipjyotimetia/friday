@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  py-release:
+  package-release:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -74,7 +74,7 @@ jobs:
           git push origin HEAD:main
         fi
 
-    - name: Build and publish
+    - name: Build and publish package
       run: |
         poetry build
         poetry publish
@@ -88,7 +88,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   app-build:
-    needs: py-release
+    needs: package-release
     permissions:
       contents: write
     runs-on: ${{ matrix.os }}
@@ -127,7 +127,7 @@ jobs:
           if-no-files-found: error
 
   app-release:
-    needs: app-build
+    needs: [app-build, package-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -142,12 +142,15 @@ jobs:
       - name: Create App Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.zip
+            artifacts/**/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  update-homebrew:
-    needs: py-release
+  homebrew-release:
+    needs: package-release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
