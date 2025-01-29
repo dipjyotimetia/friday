@@ -24,6 +24,18 @@ module.exports = {
       config: {},
     },
   ],
+  build: {
+    mac: {
+      hardenedRuntime: true,
+      gatekeeperAssess: false,
+      entitlements: "build/entitlements.mac.plist",
+      entitlementsInherit: "build/entitlements.mac.plist"
+    },
+    win: {
+      signingHashAlgorithms: ["sha256"],
+      certificateSubjectName: "Dipjyoti Metia",
+    }
+  },
   publishers: [
     {
       name: '@electron-forge/publisher-github',

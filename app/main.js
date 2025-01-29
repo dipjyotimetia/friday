@@ -1,6 +1,15 @@
 const { app, BrowserWindow } = require('electron')
-const path = require('path')
-require('update-electron-app')
+const { updateElectronApp, UpdateSourceType } = require('update-electron-app')
+updateElectronApp({
+  updateSource: {
+    host: 'https://github.com',
+    repo: 'dipjyotimetia/friday',
+    type: UpdateSourceType.ElectronPublicUpdateService,
+  },
+  logger: require('electron-log'),
+  updateInterval: '1 hour',
+  notifyUser: true,
+})
 
 function createWindow() {
   const win = new BrowserWindow({
