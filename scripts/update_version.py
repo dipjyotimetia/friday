@@ -1,3 +1,4 @@
+import json
 import subprocess
 
 import toml
@@ -21,6 +22,17 @@ def update_pyproject_version(version):
         toml.dump(data, f)
 
 
+def update_package_json_version(version):
+    package_path = "app/package.json"
+    with open(package_path, "r") as f:
+        data = json.load(f)
+
+    data["version"] = version
+
+    with open(package_path, "w") as f:
+        json.dump(data, f, indent=2)
+
+
 def update_version_file(version):
     version_path = "src/friday/version.py"
     with open(version_path, "w") as f:
@@ -31,3 +43,4 @@ if __name__ == "__main__":
     version = get_latest_tag()
     update_pyproject_version(version)
     update_version_file(version)
+    update_package_json_version(version)

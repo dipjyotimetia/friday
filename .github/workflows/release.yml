@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  py-release:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -79,16 +79,75 @@ jobs:
         poetry build
         poetry publish
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
+    - name: Create Cli Release
+      uses: softprops/action-gh-release@v2
       with:
         files: dist/*
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  app-build:
+    needs: py-release
+    permissions:
+      contents: write
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./app
+        run: |
+          npm ci
+          npm run rebuild
+
+      - name: Build & Release
+        working-directory: ./app
+        run: npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-artifacts
+          path: app/dist/
+          if-no-files-found: error
+
+  app-release:
+    needs: app-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: '*-artifacts'
+          merge-multiple: true
+
+      - name: Create App Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   update-homebrew:
-    needs: release
+    needs: py-release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
