@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, windows-latest]
 
     steps:
       - name: Checkout Repository
@@ -31,16 +31,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
 
-      - name: Install System Dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libnotify-dev libnss3
-          # Install snapcraft for Ubuntu builds
-          sudo snap install snapcraft --classic
-          # Install multipass for snapcraft
-          sudo snap install multipass
-
       - name: Install Dependencies
         working-directory: ./app
         run: |
@@ -49,13 +39,7 @@ jobs:
 
       - name: Build & Release
         working-directory: ./app
-        run: |
-          # Build for Ubuntu
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            # Configure snapcraft to use multipass
-            snapcraft --use-lxd
-          fi
-          npm run build
+        run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
