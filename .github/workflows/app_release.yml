@@ -16,6 +16,8 @@ on:
 jobs:
   release:
     runs-on: ${{ matrix.os }}
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
 
     strategy:
       matrix:
@@ -30,9 +32,30 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+          cache-dependency-path: app/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Set Version
+        id: set-version
+        working-directory: ./app
+        run: |
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT    
+
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libnotify-dev libnss3
+
+      - name: Update Version
+        working-directory: ./app
+        run: npm version ${{ needs.prepare.outputs.version }} --no-git-tag-version
+
+      - name: Install Dependencies
+        working-directory: ./app
+        run: |
+          npm ci
+          npm run rebuild
 
       # macOS Signing Setup
       - name: Setup macOS signing
@@ -68,6 +91,7 @@ jobs:
         shell: bash
 
       - name: Build/Release Electron app
+        working-directory: ./app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run make
