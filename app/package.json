@@ -12,55 +12,31 @@
   "scripts": {
     "start": "electron-forge start",
     "dev": "NODE_ENV=development electron .",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "make:mac": "electron-forge make --platform=darwin --arch=x64,arm64",
-    "make:win": "electron-forge make --platform=win32 --arch=x64",
-    "make:linux": "electron-forge make --platform=linux --arch=x64",
+    "build": "electron-builder",
     "rebuild": "electron-rebuild"
   },
   "build": {
     "appId": "com.friday.app",
-    "mac": {
-      "category": "public.app-category.developer-tools",
-      "target": [
-        "dmg",
-        "zip"
-      ]
+    "productName": "Friday",
+    "directories": {
+      "output": "dist"
     },
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
-    },
-    "linux": {
-      "target": [
-        "deb",
-        "rpm",
-        "AppImage"
-      ]
-    }
+    "files": [
+      "**/*",
+      "!dist/**/*"
+    ]
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.6.1",
-    "@electron-forge/maker-deb": "^7.6.1",
-    "@electron-forge/maker-rpm": "^7.6.1",
-    "@electron-forge/maker-squirrel": "^7.6.1",
-    "@electron-forge/maker-zip": "^7.6.1",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.6.1",
-    "@electron-forge/plugin-fuses": "^7.6.1",
-    "@electron-forge/publisher-github": "^7.6.1",
     "@electron/fuses": "^1.8.0",
     "electron": "^34.0.1",
+    "electron-builder": "^25.1.8",
     "electron-rebuild": "^3.2.9",
     "eslint": "^9.19.0",
     "eslint-plugin-electron": "^7.0.0"
   },
   "dependencies": {
+    "electron-log": "^5.2.4",
     "electron-squirrel-startup": "^1.0.1",
-    "update-electron-app": "^3.1.0",
-    "electron-log": "^5.2.4"
+    "update-electron-app": "^3.1.0"
   }
 }
