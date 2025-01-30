@@ -34,3 +34,12 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+#app
+// .gitignore
+node_modules
+dist
+dist-electron
+release
+*.log
+.DS_Store

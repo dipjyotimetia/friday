@@ -1,64 +1,11 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
-<head>
-  <title>FRIDAY - Test Case Generator</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body class="dark-mode">
-  <div class="container">
-    <h1>FRIDAY Test Case Generator</h1>
-    
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="generator">Test Case Generator</button>
-      <button class="tab-btn" data-tab="crawler">Web Crawler</button>
-    </div>
-
-    <div class="tab-content active" id="generator">
-      <div class="form-section">
-        <h2>Generate Test Cases</h2>
-        <form id="generate-form">
-          <div class="input-group">
-            <input type="text" id="jira-key" placeholder="Jira Key (e.g. PROJ-123)">
-            <input type="text" id="gh-issue" placeholder="GitHub Issue Number">
-            <input type="text" id="gh-repo" placeholder="GitHub Repo (owner/repo)">
-            <input type="text" id="confluence-id" placeholder="Confluence Page ID">
-            <input type="text" id="output" placeholder="Output filename" value="test_cases.md">
-          </div>
-          <button type="submit">Generate Test Cases</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="tab-content" id="crawler">
-      <div class="form-section">
-        <h2>Web Crawler</h2>  
-        <form id="crawler-form">
-          <div class="input-group">
-            <input type="text" id="url" placeholder="URL to crawl">
-            <select id="provider">
-              <option value="vertex">Vertex AI</option>
-              <option value="openai">OpenAI</option>
-            </select>
-            <div class="flex-row">
-              <input type="number" id="max-pages" placeholder="Max pages" value="10">
-              <label class="checkbox-label">
-                <input type="checkbox" id="same-domain" checked>
-                <span>Same domain only</span>
-              </label>
-            </div>
-          </div>
-          <button type="submit">Start Crawling</button>
-        </form>
-      </div>
-    </div>
-
-    <div class="output-section">
-      <h2>Output</h2>
-      <pre id="output-text"></pre>
-    </div>
-  </div>
-  
-  <script src="renderer.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Electron + React + TypeScript App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
 </html>

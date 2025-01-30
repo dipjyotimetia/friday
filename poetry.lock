@@ -1891,15 +1891,20 @@ files = [
 
 [[package]]
 name = "itemadapter"
-version = "0.10.0"
+version = "0.11.0"
 description = "Common interface for data container classes"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "itemadapter-0.10.0-py3-none-any.whl", hash = "sha256:d404a91cd0ebf17b7983af1aae43116d375e8d831a1dcbe98de5723b2c66e36d"},
-    {file = "itemadapter-0.10.0.tar.gz", hash = "sha256:2655c8c50f1a8405c9fa74b8cdc4da7fec541ca217bc821b90acc8451c98a9d2"},
+    {file = "itemadapter-0.11.0-py3-none-any.whl", hash = "sha256:07bc1a26a51f124ec155b80ee3d170eda06ffccd7ceba99c08bea68ad4de5fcd"},
+    {file = "itemadapter-0.11.0.tar.gz", hash = "sha256:3b0f27f4c5e2e8ae415d83e3d60d33adb7ba09b98c30638bc606fb1dff2ecdd2"},
 ]
+
+[package.extras]
+attrs = ["attrs (>=18.1.0)"]
+pydantic = ["pydantic (>=1.8)"]
+scrapy = ["scrapy (>=2.2)"]
 
 [[package]]
 name = "itemloaders"
@@ -2073,19 +2078,19 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "langchain"
-version = "0.3.16"
+version = "0.3.17"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "langchain-0.3.16-py3-none-any.whl", hash = "sha256:9a9c1a0604b599e929a5a823ee1491065dc8758fc1802d3df344214ab765f555"},
-    {file = "langchain-0.3.16.tar.gz", hash = "sha256:17d35ee6991e0ebd980c1be86c34b2d48e961213ca89e7b585f6333c90cdbdb4"},
+    {file = "langchain-0.3.17-py3-none-any.whl", hash = "sha256:4d6d3cf454cc261a5017fd1fa5014cffcc7aeaccd0ec0530fc10c5f71e6e97a0"},
+    {file = "langchain-0.3.17.tar.gz", hash = "sha256:cef56f0a7c8369f35f1fa2690ecf0caa4504a36a5383de0eb29b8a5e26f625a0"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
-langchain-core = ">=0.3.32,<0.4.0"
+langchain-core = ">=0.3.33,<0.4.0"
 langchain-text-splitters = ">=0.3.3,<0.4.0"
 langsmith = ">=0.1.17,<0.4"
 numpy = {version = ">=1.26.2,<3", markers = "python_version >= \"3.12\""}
@@ -2141,14 +2146,14 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<10"
 
 [[package]]
 name = "langchain-core"
-version = "0.3.32"
+version = "0.3.33"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "langchain_core-0.3.32-py3-none-any.whl", hash = "sha256:c050bd1e6dd556ae49073d338aca9dca08b7b55f4778ddce881a12224bc82a7e"},
-    {file = "langchain_core-0.3.32.tar.gz", hash = "sha256:4eb85d8428585e67a1766e29c6aa2f246c6329d97cb486e8d6f564ab0bd94a4f"},
+    {file = "langchain_core-0.3.33-py3-none-any.whl", hash = "sha256:269706408a2223f863ff1f9616f31903a5712403199d828b50aadbc4c28b553a"},
+    {file = "langchain_core-0.3.33.tar.gz", hash = "sha256:b5dd93a4e7f8198d2fc6048723b0bfecf7aaf128b0d268cbac19c34c1579b953"},
 ]
 
 [package.dependencies]
@@ -2222,18 +2227,18 @@ mistral = ["langchain-mistralai (>=0.2.0,<1)"]
 
 [[package]]
 name = "langchain-openai"
-version = "0.3.2"
+version = "0.3.3"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "langchain_openai-0.3.2-py3-none-any.whl", hash = "sha256:8674183805e26d3ae3f78cc44f79fe0b2066f61e2de0e7e18be3b86f0d3b2759"},
-    {file = "langchain_openai-0.3.2.tar.gz", hash = "sha256:c2c80ac0208eb7cefdef96f6353b00fa217979ffe83f0a21cc8666001df828c1"},
+    {file = "langchain_openai-0.3.3-py3-none-any.whl", hash = "sha256:979ef0d9eca9a34d7c39cd9d0f66d1d38f2f10a5a8c723bbc7e7a8275259c71a"},
+    {file = "langchain_openai-0.3.3.tar.gz", hash = "sha256:aaaee691f145d4ed3035fe23dce69e3212c8de7e208e650c1ce292960287725c"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.3.31,<0.4.0"
+langchain-core = ">=0.3.33,<0.4.0"
 openai = ">=1.58.1,<2.0.0"
 tiktoken = ">=0.7,<1"
 
@@ -2254,14 +2259,14 @@ langchain-core = ">=0.3.29,<0.4.0"
 
 [[package]]
 name = "langsmith"
-version = "0.3.2"
+version = "0.3.3"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "langsmith-0.3.2-py3-none-any.whl", hash = "sha256:48ff6bc5eda62f4729596bb68d4f96166d2654728ac32970b69b1be874c61925"},
-    {file = "langsmith-0.3.2.tar.gz", hash = "sha256:7724668e9705734ab25a7977fc34a9ee15a40ba4108987926c69293a05d40229"},
+    {file = "langsmith-0.3.3-py3-none-any.whl", hash = "sha256:ef2bde2380b3e0d27a832b1b1f22831e98ed875933c6a96c3b8057108ee17c44"},
+    {file = "langsmith-0.3.3.tar.gz", hash = "sha256:364fedd50406c46f61b2fc179ac8a2db6b3587610102c644a2a0af3fc51f4345"},
 ]
 
 [package.dependencies]

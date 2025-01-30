@@ -140,3 +140,107 @@ pre {
   line-height: 1.5;
   margin: 0;
 }
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #4285f4;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.tab-btn.active {
+  background: #4285f4;
+  color: #fff;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.form-section {
+  background: #2d2d2d;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  padding: 0.75rem;
+  border: 1px solid #4285f4;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 4px;
+}
+
+.flex-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 0.75rem;
+  background: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button[type="submit"]:hover {
+  background: #3b77db;
+}
+
+.output-section {
+  background: #2d2d2d;
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.output-section pre {
+  background: #1a1a1a;
+  padding: 1rem;
+  border-radius: 4px;
+  color: #fff;
+  overflow-x: auto;
+}
+
+h1, h2 {
+  color: #fff;
+  margin-bottom: 1.5rem;
+}

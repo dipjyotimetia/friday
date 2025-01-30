@@ -1,5 +1,9 @@
-const { app, BrowserWindow } = require('electron')
-const { updateElectronApp, UpdateSourceType } = require('update-electron-app')
+import { app, BrowserWindow } from 'electron';
+import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
+import path from 'path';
+
+const isDev = !app.isPackaged;
+
 updateElectronApp({
   updateSource: {
     host: 'https://github.com',
@@ -12,16 +16,21 @@ updateElectronApp({
 })
 
 function createWindow() {
-  const win = new BrowserWindow({
+  const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     }
-  })
+  });
 
-  win.loadFile('index.html')
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
 }
 
 app.whenReady().then(() => {

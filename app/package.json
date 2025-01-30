@@ -1,7 +1,7 @@
 {
   "name": "friday",
   "version": "0.1.43",
-  "main": "main.js",
+  "main": "dist-electron/main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/dipjyotimetia/friday.git"
@@ -10,33 +10,71 @@
   "license": "MIT",
   "description": "AI Test Generator App",
   "scripts": {
-    "start": "electron-forge start",
-    "dev": "NODE_ENV=development electron .",
-    "build": "electron-builder",
-    "rebuild": "electron-rebuild"
+    "build": "tsc -p electron && vite build",
+    "start:react": "vite",
+    "electron:build": "npm run build && electron-builder",
+    "start": "concurrently \"npm run start:react\" \"npm run start:electron\"",
+    "start:electron": "wait-on tcp:3000 && tsc -p electron && electron .",
+    "watch:electron": "tsc -p electron -w"
   },
   "build": {
     "appId": "com.friday.app",
     "productName": "Friday",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
-    "files": [
-      "**/*",
-      "!dist/**/*"
-    ]
+   "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true
+    }
   },
   "devDependencies": {
     "@electron/fuses": "^1.8.0",
+    "@types/electron": "^1.6.12",
+    "@types/node": "^22.12.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
     "electron": "^34.0.1",
     "electron-builder": "^25.1.8",
-    "electron-rebuild": "^3.2.9",
     "eslint": "^9.19.0",
-    "eslint-plugin-electron": "^7.0.0"
+    "eslint-plugin-electron": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11",
+    "wait-on": "^8.0.2"
   },
   "dependencies": {
     "electron-log": "^5.2.4",
     "electron-squirrel-startup": "^1.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "update-electron-app": "^3.1.0"
   }
 }
