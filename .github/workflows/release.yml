@@ -107,6 +107,13 @@ jobs:
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
 
+      - name: Install Dependencies
+        working-directory: ./app
+        run: |
+          npm ci
+          npm install -g typescript@5.7.3
+          tsc --version
+
       - name: Build & Release
         working-directory: ./app
         run: npm run electron:build
