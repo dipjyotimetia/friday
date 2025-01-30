@@ -1,6 +1,6 @@
 {
   "name": "friday",
-  "version": "0.1.44",
+  "version": "0.1.45",
   "main": "dist-electron/main.js",
   "repository": {
     "type": "git",
