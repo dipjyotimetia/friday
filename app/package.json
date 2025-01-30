@@ -1,6 +1,6 @@
 {
   "name": "friday",
-  "version": "0.1.43",
+  "version": "0.1.44",
   "main": "dist-electron/main.js",
   "repository": {
     "type": "git",
@@ -23,7 +23,7 @@
     "directories": {
       "output": "release"
     },
-   "files": [
+    "files": [
       "dist/**/*",
       "dist-electron/**/*"
     ],
@@ -31,7 +31,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}"
@@ -40,7 +43,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
