@@ -107,15 +107,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
 
-      - name: Install Dependencies
-        working-directory: ./app
-        run: |
-          npm ci
-          npm run rebuild
-
       - name: Build & Release
         working-directory: ./app
-        run: npm run build
+        run: npm run electron:build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -123,7 +117,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-artifacts
-          path: app/dist/
+          path: app/release/
           if-no-files-found: error
 
   app-release:
