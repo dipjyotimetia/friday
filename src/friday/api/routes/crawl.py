@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import APIRouter, HTTPException
 
 from friday.api.schemas.crawl import CrawlRequest
@@ -18,7 +19,10 @@ async def crawl_site(request: CrawlRequest):
         )
 
         pages_data = crawler.crawl(request.url)
-        embeddings_service = EmbeddingsService(provider=request.provider)
+
+        embeddings_service = EmbeddingsService(
+            provider=request.provider, persist_directory="./data/chroma"
+        )
 
         texts = []
         metadata = []
