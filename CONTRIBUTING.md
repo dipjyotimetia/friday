@@ -66,7 +66,15 @@ Before creating bug reports, please check existing issues. When creating a bug r
 
 ## Project Structure
 
+- [app](app): Friday desktop application
 - [src/friday/](src/friday/): Main package source code 
 - [tests/](tests/): Test suite
 - [docs/](docs/): Documentation including sequence diagrams
 - [data/](data/): Data storage for chroma DB
+- [scripts/](scripts/): Utility scripts
+- [friday/](friday/): CLI entry point
+- [pyproject.toml](pyproject.toml): Poetry configuration
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): Code of Conduct
+- [CONTRIBUTING.md](CONTRIBUTING.md): Contribution guidelines
+- [LICENSE](LICENSE): MIT License
+- [README.md](README.md): Project overview

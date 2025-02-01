@@ -1,31 +1,15 @@
-from typing import List, Literal
+from typing import List
 
 from langchain_core.prompts import PromptTemplate
-from langchain_google_vertexai import VertexAI
-from langchain_openai import ChatOpenAI
 
+from friday.llm.llm import ModelProvider, get_llm_client
 from friday.services.embeddings import EmbeddingsService
-
-ModelProvider = Literal["vertex", "openai"]
 
 
 class TestCaseGenerator:
     def __init__(self, provider: ModelProvider = "vertex"):
-        if provider == "vertex":
-            self.llm = VertexAI(
-                model_name="gemini-pro",
-            )
-        elif provider == "openai":
-            self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo-preview",
-                temperature=0,
-                max_tokens=1024,
-                timeout=None,
-                max_retries=2,
-            )
-        # For OpenAI embeddings
-        # self.embeddings_service = EmbeddingsService(provider="openai")
-        self.embeddings_service = EmbeddingsService()
+        self.llm = get_llm_client(provider)
+        self.embeddings_service = EmbeddingsService(provider=provider)
         self.template = """
         Based on the following requirements, generate detailed test cases:
         
@@ -35,21 +19,13 @@ class TestCaseGenerator:
         {context}
         
         Generate test cases in the following format:
-         - Test Case ID
+         - Test Case ID: <unique id>
          - Title: [Brief description]
-         - Description
          - Preconditions: [List any required setup]
-        Test Steps:
-         1. [Step 1]
-         2. [Step 2]
-        Expected Results:  [What should happen]
-        
-        Consider:
-        - Boundary conditions
-        - Data validation scenarios
-        - System state variations
-        - Integration points
-        - Performance conditions
+         - Test Steps:
+             1. [Step 1]
+             2. [Step 2]
+         - Expected Results: [What should happen]
         """
 
         self.prompt = PromptTemplate(
