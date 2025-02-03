@@ -230,11 +230,6 @@ def testapi(
                     test_cases, base_url="https://petstore.swagger.io/v2/pet"
                 )
 
-        report = generator.generate_report()
-        # Save report as markdown
-        with open("test_report.md", "w") as f:
-            f.write(report)
-
         print(f"[green]Test report generated successfully at {output}[/green]")
 
     except Exception as e:
