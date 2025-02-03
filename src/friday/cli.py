@@ -9,6 +9,7 @@ from friday.config.config import validate_config
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
+from friday.llm.agent import ApiTestGenerator
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 from friday.services.test_generator import TestCaseGenerator
@@ -201,6 +202,44 @@ def setup():
     else:
         print("[red]⨯ Some required parameters are missing[/red]")
         print("Run 'friday setup' again to configure missing parameters")
+
+
+@app.command()
+def testapi(
+    spec_file: Path = typer.Option(
+        ..., "--spec", "-s", help="Path to API specification file"
+    ),
+    output: Path = typer.Option(
+        Path("api_test_report.md"), "--output", "-o", help="Output path for test report"
+    ),
+):
+    """Run API tests and generate a report"""
+    try:
+        # Initialize the API test agent
+        generator = ApiTestGenerator(openapi_spec_path=spec_file)
+
+        spec = generator.load_spec()
+        if not generator.validate_spec(spec):
+            print("Invalid OpenAPI specification")
+            return
+
+        for path, methods in spec["paths"].items():
+            for method, details in methods.items():
+                test_cases = generator.create_test_cases(path, method, spec)
+                generator.execute_tests(
+                    test_cases, base_url="https://petstore.swagger.io/v2/pet"
+                )
+
+        report = generator.generate_report()
+        # Save report as markdown
+        with open("test_report.md", "w") as f:
+            f.write(report)
+
+        print(f"[green]Test report generated successfully at {output}[/green]")
+
+    except Exception as e:
+        print(f"[red]Error running API tests: {str(e)}[/red]")
+        raise typer.Exit(code=1)
 
 
 def main():
