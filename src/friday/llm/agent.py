@@ -17,14 +17,12 @@ class ApiTestGenerator:
         self.max_retries = 3  # Add max retries
         self.llm = VertexAI(
             model_name="gemini-pro",
-            kwargs={"temperature": 0.0, "max_tokens": 1024, "timeout": None},
+            kwargs={"temperature": 0.5, "max_tokens": 1024, "timeout": None},
         )
         self.test_results = []
-        # Load OpenAPI spec
         with open(self.spec_path) as f:
             raw_api_spec = yaml.safe_load(f)
         self.api_spec = JsonSpec(dict_=raw_api_spec, max_value_length=4000)
-        # Configure secure requests wrapper
         self.requests_wrapper = RequestsWrapper(
             headers={},  # Add any default headers here
             verify=True,  # Enable SSL verification
@@ -45,8 +43,8 @@ class ApiTestGenerator:
             toolkit=self.toolkit,
             verbose=True,
             handle_parsing_errors=True,  # Add error handling
-            max_iterations=5,  # Limit iterations for safety
-            return_intermediate_steps=True,  # Disable intermediate steps
+            max_iterations=2,  # Limit iterations for safety
+            return_intermediate_steps=True,  # Return intermediate steps
         )
 
     def load_spec(self) -> Dict:
@@ -75,42 +73,41 @@ class ApiTestGenerator:
 
                 response = self.agent.invoke(prompt)
 
-                # Early exit if response is None or empty
                 if not response:
-                    print("Empty response received")
-                    return [default_test]
+                    raise ValueError("Empty response received")
 
-                # Handle structured response
+                # Check if response is something like "I don't know"
+                if isinstance(response, str) and "I don't know" in response:
+                    raise ValueError("Agent response: 'I don't know'")
+
+                # Try parsing the response into JSON
                 if isinstance(response, dict):
                     if "output" in response:
                         response = response["output"]
-                    return [response] if response else [default_test]
+                    return [response] if isinstance(response, dict) else [default_test]
 
-                # Parse string response
                 if isinstance(response, str):
                     try:
                         parsed = json.loads(response.strip())
-                        if isinstance(parsed, (dict, list)):
-                            return [parsed] if isinstance(parsed, dict) else parsed
+                        return [parsed] if isinstance(parsed, dict) else parsed
                     except json.JSONDecodeError as je:
-                        print(f"JSON parsing error: {je}")
-                        return [default_test]
+                        raise ValueError(f"Invalid JSON response: {je}")
 
-                # Handle list response
                 if isinstance(response, list):
-                    return response if response else [default_test]
+                    if not response:
+                        raise ValueError("Empty list response")
+                    return response
 
-                print(f"Unexpected response type: {type(response)}")
-                return [default_test]
+                raise TypeError(f"Unexpected response type: {type(response)}")
 
-            except Exception as e:
+            except (ValueError, TypeError, json.JSONDecodeError) as e:
                 attempts += 1
                 print(f"Attempt {attempts}/{self.max_retries} failed: {str(e)}")
                 if attempts >= self.max_retries:
-                    print(f"Max retries ({self.max_retries}) reached")
+                    print(
+                        f"Max retries ({self.max_retries}) reached, using default test"
+                    )
                     return [default_test]
-
-        return [default_test]  # Fallback case
 
     def execute_tests(self, test_cases: List[Dict], base_url: str) -> None:
         try:
@@ -118,9 +115,11 @@ class ApiTestGenerator:
                 try:
                     response = requests.request(
                         method=test["method"],
-                        url=f"{base_url}{test['endpoint']}",
+                        url=f"{base_url.rstrip('/')}/{test['endpoint'].lstrip('/')}",  # Fix URL joining
                         json=test.get("payload"),
                         headers=test.get("headers", {}),
+                        timeout=30,
+                        verify=False,  # Explicit SSL verification
                     )
 
                     try:
