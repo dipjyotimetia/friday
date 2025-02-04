@@ -4,22 +4,22 @@
   <img src="docs/images/banner.svg" alt="Auto Test Case Generator Banner" width="1000">
 </p>
 
-An AI-powered test case generator that leverages Google Vertex AI and LangChain to automatically create test cases from Jira/GitHub issues and Confluence documentation.
+An AI-powered testing agent that leverages popular LLMs and LangChain to create test cases from Jira/GitHub issues along with Confluence documentation.
 
 ## 🚀 Features
 
-- Generate test cases using Google Vertex AI or OpenAI
-- Extract requirements from Jira tickets or GitHub issues 
+- Generate test cases using Google Vertex AI or OpenAI or deepseek. 
+- Extract requirements from Jira tickets or GitHub issues. 
 - Integrate context from Confluence pages
-- Process data using LangChain's prompt engineering
-- Store and search documents using ChromaDB vectorization
+- Process data using LangChain's prompt engineering.
+- Store and search documents using ChromaDB vectorization.
 - Export test cases in JSON or Markdown format
-- Create embeddings using web crawler for additional context
+- Create embeddings using web crawler for additional context.
 
 ## 📋 Prerequisites
 
 - Python 3.12+
-- Google Cloud Platform account with Vertex AI enabled or OpenAI
+- Access to Google Geminior, OpenAI or deepseek.
 - Jira/GitHub and Confluence access credentials
 
 ## 🔄 Sequence Diagram
