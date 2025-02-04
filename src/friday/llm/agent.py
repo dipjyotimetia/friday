@@ -119,7 +119,7 @@ class ApiTestGenerator:
                         json=test.get("payload"),
                         headers=test.get("headers", {}),
                         timeout=30,
-                        verify=False,  # Explicit SSL verification
+                        verify=True,
                     )
 
                     try:
@@ -145,27 +145,6 @@ class ApiTestGenerator:
 
         except Exception as e:
             print(f"Test suite execution failed: {str(e)}")
-        finally:
-            # Generate report regardless of test execution status
-            try:
-                report = self.generate_report()
-                print("\nTest Execution Report:")
-                with open("test_report.md", "w") as f:
-                    f.write(report)
-            except Exception as e:
-                print(f"Failed to generate report: {str(e)}")
-                # Minimal fallback report
-                print("\nTest Results Summary:")
-                print(f"Total Tests: {len(self.test_results)}")
-                print(
-                    f"Passed: {sum(1 for t in self.test_results if t['status'] == 'PASS')}"
-                )
-                print(
-                    f"Failed: {sum(1 for t in self.test_results if t['status'] == 'FAIL')}"
-                )
-                print(
-                    f"Errors: {sum(1 for t in self.test_results if t['status'] == 'ERROR')}"
-                )
 
     def generate_report(self) -> str:
         try:

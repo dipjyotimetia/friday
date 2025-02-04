@@ -209,28 +209,51 @@ def testapi(
     spec_file: Path = typer.Option(
         ..., "--spec", "-s", help="Path to API specification file"
     ),
+    base_url: str = typer.Option(
+        ..., "--base-url", "-b", help="Base URL for API testing"
+    ),
     output: Path = typer.Option(
         Path("api_test_report.md"), "--output", "-o", help="Output path for test report"
     ),
 ):
     """Run API tests and generate a report"""
     try:
-        # Initialize the API test agent
-        generator = ApiTestGenerator(openapi_spec_path=spec_file)
+        if not spec_file.exists():
+            print("[red]Error: OpenAPI specification file not found[/red]")
+            raise typer.Exit(code=1)
 
+        # Initialize the API test agent
+        generator = ApiTestGenerator(openapi_spec_path=str(spec_file))
+
+        # Load and validate spec
         spec = generator.load_spec()
         if not generator.validate_spec(spec):
-            print("Invalid OpenAPI specification")
-            return
+            print("[red]Error: Invalid OpenAPI specification[/red]")
+            raise typer.Exit(code=1)
 
+        # Track test execution statistics
+        total_tests = 0
+        paths_tested = 0
+
+        # Test each endpoint
         for path, methods in spec["paths"].items():
-            for method, details in methods.items():
-                test_cases = generator.create_test_cases(path, method, spec)
-                generator.execute_tests(
-                    test_cases, base_url="https://petstore.swagger.io/v2/pet"
-                )
+            paths_tested += 1
+            print(f"\n[blue]Testing path: {path}[/blue]")
 
-        print(f"[green]Test report generated successfully at {output}[/green]")
+            for method, details in methods.items():
+                print(f"[yellow]Method: {method.upper()}[/yellow]")
+                test_cases = generator.create_test_cases(path, method, spec)
+                total_tests += len(test_cases)
+                generator.execute_tests(test_cases, base_url=base_url.rstrip("/"))
+
+        # Generate and save test report
+        report = generator.generate_report()
+        output.write_text(report)
+
+        print("\n[green]Test Summary:[/green]")
+        print(f"Paths tested: {paths_tested}")
+        print(f"Total test cases: {total_tests}")
+        print(f"Test report generated at: {output}")
 
     except Exception as e:
         print(f"[red]Error running API tests: {str(e)}[/red]")
