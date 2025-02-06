@@ -112,6 +112,7 @@ sequenceDiagram
 ```
 
 </details>
+
 ## ⚡️ Quick Start
 
 1. Install via Homebrew:

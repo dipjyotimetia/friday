@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiService } from '../services/api';
 import './styles.css'; // Import [app/styles.css](app/styles.css)
 
 function FridayApp() {
@@ -14,37 +15,38 @@ function FridayApp() {
   const [sameDomain, setSameDomain] = useState(true);
   const [outputText, setOutputText] = useState('');
 
-  const API_URL = process.env.API_URL || 'http://localhost:8080';
-
   const handleTabClick = (tabId: any) => {
     setActiveTab(tabId);
     setOutputText('');
   };
 
-  const handleGenerate = async (e: any) => {
+  const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_URL}/generate`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ jira_key: jiraKey, gh_issue: ghIssue, gh_repo: ghRepo, confluence_id: confluenceId, output: outputFilename })
+      const result = await apiService.generateTests({
+        jira_key: jiraKey,
+        gh_issue: ghIssue,
+        gh_repo: ghRepo,
+        confluence_id: confluenceId,
+        output: outputFilename
       });
-      const result = await response.json();
       setOutputText(JSON.stringify(result, null, 2));
     } catch (err) {
       setOutputText(`Error: ${(err as Error).message}`);
     }
   };
 
-  const handleCrawl = async (e:any) => {
+  
+  const handleCrawl = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_URL}/crawl`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url, provider, persist_dir: './data/chroma', max_pages: Number(maxPages), same_domain: sameDomain })
+      const result = await apiService.crawlWebsite({
+        url,
+        provider,
+        persist_dir: './data/chroma',
+        max_pages: Number(maxPages),
+        same_domain: sameDomain
       });
-      const result = await response.json();
       setOutputText(JSON.stringify(result, null, 2));
     } catch (err) {
       setOutputText(`Error: ${(err as Error).message}`);
