@@ -141,7 +141,7 @@ action.yml
 ## External Dependencies
 
 The project relies on several key external libraries. Some notable ones include:
-- **LangChain & Langchain-OpenAI/Deepseek/Google:** For prompt engineering and AI integrations (pyproject.toml).
+- **LangChain & Langchain-OpenAI/Google:** For prompt engineering and AI integrations (pyproject.toml).
 - **ChromaDB:** Employed for vectorized document storage and similarity search (integrated within 
 
 EmbeddingsService

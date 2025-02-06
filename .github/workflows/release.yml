@@ -87,48 +87,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  app-build:
-    needs: package-release
-    permissions:
-      contents: write
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          cache-dependency-path: app/package-lock.json
-
-      - name: Install Dependencies
-        working-directory: ./app
-        run: |
-          npm ci
-          npm install -g typescript@5.7.3
-          tsc --version
-
-      - name: Build & Release
-        working-directory: ./app
-        run: npm run electron:build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.os }}-artifacts
-          path: app/release/
-          if-no-files-found: error
-
   app-release:
-    needs: [app-build, package-release]
+    needs: [package-release]
     runs-on: ubuntu-latest
     permissions:
       contents: write

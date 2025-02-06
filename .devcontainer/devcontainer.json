@@ -1,0 +1,46 @@
+{
+    "name": "Friday Development",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "workspace",
+    "workspaceFolder": "/workspace",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22"
+        },
+        "ghcr.io/devcontainers/features/python:1": {
+            "version": "3.12"
+        },
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "ms-azuretools.vscode-docker",
+                "charliermarsh.ruff"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.formatting.provider": "ruff"
+            }
+        }
+    },
+    "remoteEnv": {
+        "GOOGLE_CLOUD_PROJECT": "${localEnv:GOOGLE_CLOUD_PROJECT}",
+        "GOOGLE_CLOUD_REGION": "${localEnv:GOOGLE_CLOUD_REGION}",
+        "GITHUB_ACCESS_TOKEN": "${localEnv:GITHUB_ACCESS_TOKEN}",
+        "GITHUB_USERNAME": "${localEnv:GITHUB_USERNAME}",
+        "JIRA_URL": "${localEnv:JIRA_URL}",
+        "JIRA_USERNAME": "${localEnv:JIRA_USERNAME}",
+        "JIRA_API_TOKEN": "${localEnv:JIRA_API_TOKEN}",
+        "CONFLUENCE_URL": "${localEnv:CONFLUENCE_URL}",
+        "CONFLUENCE_USERNAME": "${localEnv:CONFLUENCE_USERNAME}",
+        "CONFLUENCE_API_TOKEN": "${localEnv:CONFLUENCE_API_TOKEN}"
+    },
+    "postCreateCommand": "pip install poetry && poetry install && cd app && npm install",
+    "remoteUser": "vscode"
+}

@@ -7,8 +7,10 @@ IFS=$'\n\t'
 # Configuration
 readonly PROJECT_ID="${PROJECT_ID:-your-project-id}"
 readonly REGION="${REGION:-us-central1}"
-readonly SERVICE_NAME="${SERVICE_NAME:-friday-api}"
-readonly IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
+readonly API_SERVICE_NAME="${API_SERVICE_NAME:-friday-api}"
+readonly APP_SERVICE_NAME="${APP_SERVICE_NAME:-friday-app}"
+readonly API_IMAGE_NAME="gcr.io/${PROJECT_ID}/${API_SERVICE_NAME}"
+readonly APP_IMAGE_NAME="gcr.io/${PROJECT_ID}/${APP_SERVICE_NAME}"
 readonly ENV_FILE=".env.yaml"
 readonly REQUIRED_APIS=(
     "run.googleapis.com"
@@ -44,23 +46,20 @@ check_dependencies() {
 
 # Validate environment
 validate_environment() {
-    # Check if .env.yaml exists
     if [[ ! -f "$ENV_FILE" ]]; then
         log_error "$ENV_FILE file not found"
         exit 1
     fi
 
-    # Verify gcloud auth
     if ! gcloud auth print-access-token &>/dev/null; then
         log_error "Not authenticated with gcloud. Please run 'gcloud auth login'"
         exit 1
-    }
+    fi
 
-    # Verify project ID
     if [[ "$PROJECT_ID" == "your-project-id" ]]; then
         log_error "Please set a valid PROJECT_ID"
         exit 1
-    }
+    fi
 }
 
 # Enable required APIs
@@ -84,10 +83,7 @@ create_secrets() {
     local service_account="${PROJECT_ID}@appspot.gserviceaccount.com"
 
     while IFS=': ' read -r key value || [[ -n "$key" ]]; do
-        # Skip empty lines and comments
         [[ -z "$key" || "$key" == \#* ]] && continue
-        
-        # Trim whitespace
         key="${key// /}"
         value="${value// /}"
         
@@ -111,40 +107,70 @@ create_secrets() {
         --quiet
 }
 
-# Build and deploy service
-deploy_service() {
-    # Build and push Docker image
-    log_info "Building and pushing Docker image..."
-    gcloud builds submit --tag "$IMAGE_NAME" --quiet
+# Deploy API service
+deploy_api() {
+    log_info "Building and pushing API image..."
+    gcloud builds submit --tag "$API_IMAGE_NAME" --quiet
 
-    # Prepare secrets string for deployment
     local secrets_str=""
     while IFS=': ' read -r key value || [[ -n "$key" ]]; do
         [[ -z "$key" || "$key" == \#* ]] && continue
         key="${key// /}"
         secrets_str+="${key}=${key}:latest,"
     done < "$ENV_FILE"
-    secrets_str="${secrets_str%,}"  # Remove trailing comma
+    secrets_str="${secrets_str%,}"
 
-    # Deploy to Cloud Run
-    log_info "Deploying to Cloud Run..."
-    gcloud run deploy "$SERVICE_NAME" \
-        --image "$IMAGE_NAME" \
+    log_info "Deploying API to Cloud Run..."
+    gcloud run deploy "$API_SERVICE_NAME" \
+        --image "$API_IMAGE_NAME" \
         --platform managed \
         --region "$REGION" \
         --allow-unauthenticated \
-        --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_REGION=$REGION" \
+        --memory 512Mi \
+        --cpu 1 \
+        --concurrency 10 \
+        --timeout 30s \
+        --set-env-vars="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_REGION=$REGION,WORKERS=2,MAX_WORKERS=4,WEB_CONCURRENCY=2" \
         --update-secrets="$secrets_str" \
         --quiet
 
-    # Get the service URL
-    local service_url
-    service_url=$(gcloud run services describe "$SERVICE_NAME" \
+    API_URL=$(gcloud run services describe "$API_SERVICE_NAME" \
+        --region "$REGION" \
+        --format='value(status.url)')
+    
+    log_info "API deployed at: $API_URL"
+    return "$API_URL"
+}
+
+# Deploy Web App service
+deploy_webapp() {
+    local api_url="$1"
+    log_info "Building and pushing Web App image..."
+    
+    # Build with API URL configuration
+    gcloud builds submit ./app --tag "$APP_IMAGE_NAME" \
+        --substitutions=_API_URL="$api_url" \
+        --quiet
+
+    log_info "Deploying Web App to Cloud Run..."
+    gcloud run deploy "$APP_SERVICE_NAME" \
+        --image "$APP_IMAGE_NAME" \
+        --platform managed \
+        --region "$REGION" \
+        --memory 512Mi \
+        --cpu 1 \
+        --concurrency 10 \
+        --timeout 30s \
+        --allow-unauthenticated \
+        --set-env-vars="API_URL=$api_url" \
+        --quiet
+
+    local webapp_url
+    webapp_url=$(gcloud run services describe "$APP_SERVICE_NAME" \
         --region "$REGION" \
         --format='value(status.url)')
 
-    log_info "✅ Deployment complete!"
-    log_info "🌎 Service URL: $service_url"
+    log_info "Web App deployed at: $webapp_url"
 }
 
 main() {
@@ -153,8 +179,16 @@ main() {
     validate_environment
     enable_apis
     create_secrets
-    deploy_service
+    
+    # Deploy API first
+    api_url=$(deploy_api)
+    
+    # Then deploy webapp with API URL
+    deploy_webapp "$api_url"
+    
+    log_info "✅ Deployment complete!"
 }
 
 # Execute main function
+# PROJECT_ID="your-project" REGION="us-west1" ./deploy.sh
 main

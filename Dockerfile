@@ -13,14 +13,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/poetry/bin:$PATH"
 
 # Install system dependencies and Poetry
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
         curl \
         gcc \
-        libc6-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION} \
-    && poetry --version
+        libc6-dev && \
+    curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION} && \
+    poetry --version
 
 WORKDIR /app
 
@@ -28,7 +28,8 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock README.md ./
 
 # Configure poetry and install dependencies
-RUN poetry install --only main --no-root --compile
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry install --only main --no-root --compile
 
 # Copy application code
 COPY . .
@@ -43,12 +44,16 @@ FROM python:3.12-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080 \
-    PYTHONPATH=/app/src
+    PYTHONPATH=/app/src \
+    WORKERS=2 \
+    MAX_WORKERS=4 \
+    WEB_CONCURRENCY=2
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser \
-    && mkdir -p /app /app/.local \
-    && chown -R appuser:appuser /app
+# Create non-root user with explicit UID/GID for better Cloud Run compatibility
+RUN groupadd -r -g 1000 appuser && \
+    useradd -r -u 1000 -g appuser appuser && \
+    mkdir -p /app /app/.local && \
+    chown -R appuser:appuser /app
 
 WORKDIR /app
 
@@ -56,27 +61,35 @@ WORKDIR /app
 COPY --from=builder --chown=appuser:appuser /app/dist/*.whl ./
 COPY --from=builder --chown=appuser:appuser /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
-# Install the wheel package
-RUN pip install --no-cache-dir *.whl \
-    && rm -f *.whl \
-    && pip cache purge
+# Install the wheel package and clean up
+RUN pip install --no-cache-dir *.whl && \
+    rm -f *.whl && \
+    pip cache purge && \
+    # Remove unnecessary files to reduce image size
+    find /usr/local/lib/python3.12/site-packages -name "*.pyc" -delete && \
+    find /usr/local/lib/python3.12/site-packages -name "__pycache__" -exec rm -r {} +
 
 # Switch to non-root user
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Expose port
 EXPOSE ${PORT}
 
-# Use exec form of CMD with explicit path to binaries
-CMD ["/usr/local/bin/uvicorn", "friday.api.app:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8080", \
-     "--workers", "4", \
-     "--limit-concurrency", "1000", \
-     "--backlog", "2048", \
-     "--proxy-headers", \
-     "--log-level", "info"]
+# Use exec form of CMD with auto-scaling worker configuration
+CMD ["/bin/sh", "-c", "\
+    WORKER_COUNT=$(( ${WORKERS} > ${MAX_WORKERS} ? ${MAX_WORKERS} : ${WORKERS} )) && \
+    /usr/local/bin/uvicorn \
+    friday.api.app:app \
+    --host 0.0.0.0 \
+    --port ${PORT} \
+    --workers ${WORKER_COUNT} \
+    --limit-concurrency 100 \
+    --backlog 2048 \
+    --proxy-headers \
+    --forwarded-allow-ips='*' \
+    --log-level info \
+    --no-access-log \
+    --timeout-keep-alive 75"]

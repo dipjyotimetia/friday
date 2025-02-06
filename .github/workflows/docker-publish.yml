@@ -9,6 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  APP_IMAGE_NAME: ${{ github.repository }}/app
 
 jobs:
   build-and-publish:
@@ -33,13 +34,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}
             type=sha,format=long
             type=ref,event=branch
 
-      - name: Build and push Docker image
+      - name: Build and push api image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -48,6 +49,16 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-to: type=inline
+
+      - name: Build and push app image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest
+          cache-to: type=inline    
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.29.0

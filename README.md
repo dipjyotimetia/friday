@@ -1,15 +1,11 @@
-# FRIDAY - AI Test Case Generator
+# FRIDAY - AI Test Agent
 
-<p align="center">
-  <img src="docs/images/banner.svg" alt="Auto Test Case Generator Banner" width="1000">
-</p>
-
-An AI-powered testing agent that leverages popular LLMs and LangChain to create test cases from Jira/GitHub issues along with Confluence documentation.
+An AI-powered test agent that leverages Google Gemini and LangChain to automatically create test cases from Jira/GitHub issues and Confluence documentation, providing a seamless testing experience.
 
 ## 🚀 Features
 
-- Generate test cases using Google Vertex AI or OpenAI or deepseek. 
-- Extract requirements from Jira tickets or GitHub issues. 
+- Generate test cases using Google Gemini or OpenAI
+- Extract requirements from Jira tickets or GitHub issues 
 - Integrate context from Confluence pages
 - Process data using LangChain's prompt engineering.
 - Store and search documents using ChromaDB vectorization.
@@ -18,11 +14,14 @@ An AI-powered testing agent that leverages popular LLMs and LangChain to create 
 
 ## 📋 Prerequisites
 
-- Python 3.12+
-- Access to Google Geminior, OpenAI or deepseek.
+- Python >=3.12
+- Google Cloud Platform account with Gemini enabled or OpenAI
 - Jira/GitHub and Confluence access credentials
 
 ## 🔄 Sequence Diagram
+
+<details>
+<summary>Expand Sequence diagram</summary>
 
 ```mermaid
 %%{init: {
@@ -112,6 +111,7 @@ sequenceDiagram
     Note over User,PromptBuilder: Process Complete
 ```
 
+</details>
 ## ⚡️ Quick Start
 
 1. Install via Homebrew:
@@ -157,54 +157,8 @@ friday generate --help # Show generation options
 - `--confluence-id`: Confluence page ID (optional)
 - `--gh-issue`: GitHub issue number
 - `--gh-repo`: GitHub repository (format: owner/repo)
-- `--output`: Output file path (default: test_cases.json)
-
-## 🔧 GitHub Action
-
-```yaml
-name: Friday Test Generator
-
-on:
-  pull_request:
-    types: [opened, synchronize]
-  workflow_dispatch:
-    inputs:
-      confluence_id:
-        description: 'Confluence Page ID'
-        required: true
-      jira_id:
-        description: 'Jira Issue ID'
-        required: false
-
-jobs:
-  generate-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Generate Test Cases
-        uses: dipjyotimetia/friday@main
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          confluence_url: ${{ secrets.CONFLUENCE_URL }}
-          confluence_user: ${{ secrets.CONFLUENCE_USERNAME }}
-          confluence_token: ${{ secrets.CONFLUENCE_API_TOKEN }}
-          jira_url: ${{ secrets.JIRA_URL }}
-          jira_user: ${{ secrets.JIRA_USERNAME }}
-          jira_token: ${{ secrets.JIRA_API_TOKEN }}
-          confluence_id: ${{ inputs.confluence_id || '12345' }}
-          jira_id: ${{ inputs.jira_id || github.event.pull_request.number }}
-          google_cloud_project: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
-          google_cloud_region: ${{ secrets.GOOGLE_CLOUD_REGION }}
-          model_provider: 'vertex'
-          persist_dir: './data/chroma'
-
-      - name: Upload Test Cases
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-cases
-          path: test_cases.md
-```
+- `--output`: Output file path (default: test_cases.md)
+- `--provider`: AI provider (vertex/openai)
 
 ## 💻 Development
 
@@ -239,3 +193,63 @@ poetry run ruff format
 chmod +x deploy.sh
 PROJECT_ID="your-project" REGION="us-west1" ./deploy.sh
 ```
+
+<details>
+<summary>Development Container Setup</summary>
+
+## Development Container Setup
+
+This project uses Visual Studio Code's Development Containers feature, providing a consistent development environment via Docker.
+
+### Prerequisites
+
+1. [Visual Studio Code](https://code.visualstudio.com/)
+2. [Docker Desktop](https://www.docker.com/products/docker-desktop)
+3. [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+### Features
+
+- Python 3.12 with Poetry package management
+- Node.js 22 with npm
+- Docker-in-Docker support
+- Pre-configured VS Code extensions:
+  - Python and Pylance
+  - ESLint
+  - Prettier
+  - Docker
+  - Ruff (Python linter)
+
+### Environment Variables
+
+Required environment variables (set these before opening the dev container):
+
+```sh
+GOOGLE_CLOUD_PROJECT
+GOOGLE_CLOUD_REGION
+GITHUB_ACCESS_TOKEN
+GITHUB_USERNAME
+JIRA_URL
+JIRA_USERNAME
+JIRA_API_TOKEN
+CONFLUENCE_URL
+CONFLUENCE_USERNAME
+CONFLUENCE_API_TOKEN
+```
+
+## Services
+
+The development environment includes three services:
+
+- `workspace`: Main development container
+- `api`: FastAPI backend service (port 8080)
+- `app`: Frontend application (port 3000)
+
+## Getting Started
+
+1. Clone the repository
+2. Copy .env.example to .env and fill in your credentials
+3. Open in VS Code
+4. Click "Reopen in Container" when prompted
+5. The container will build and install all dependencies automatically
+
+</details>

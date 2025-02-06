@@ -1,42 +1,20 @@
-# Version control
-.git
-.gitignore
-
-# Python
 __pycache__
 *.pyc
 *.pyo
 *.pyd
 .Python
-*.py[cod]
-*$py.class
-.pytest_cache
-.coverage
-htmlcov/
-.ruff_cache/
-.venv/
-
-# Environment
 .env
 .venv
 env/
 venv/
-ENV/
-
-# Build
+.git
+.gitignore
+.pytest_cache
 *.egg-info/
 dist/
 build/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Docker
-data/
+tests/
+docs/
+*.md
+!README.md
+*.log

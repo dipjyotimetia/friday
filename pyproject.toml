@@ -9,7 +9,7 @@ description = "AI-powered test case generator CLI"
 license = "MIT"
 authors = [ "Dipjyoti Metia <dipjyotimetia@gmail.com>",]
 readme = [ "README.md", "LICENSE",]
-keywords = [ "atlassian", "jira", "google", "github", "vertexai", "genai", "chroma", "openai", "deepseek", "cli",]
+keywords = [ "atlassian", "jira", "google", "github", "vertexai", "genai", "chroma", "openai", "cli",]
 classifiers = [ "Development Status :: 4 - Beta", "Environment :: Console", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3.12", "Operating System :: OS Independent", "Topic :: Software Development :: Quality Assurance", "Topic :: Software Development :: Testing",]
 [[tool.poetry.packages]]
 include = "friday"
@@ -41,7 +41,6 @@ langchain-core = "^0.3.32"
 langchain-google-genai = "^2.0.9"
 langchain-community = "^0.3.16"
 langchain-openai = "^0.3.2"
-langchain-deepseek = "^0.0.1"
 langchain-ollama = "^0.2.3"
 langchain-chroma = "^0.2.1"
 pygithub = "^2.5.0"
