@@ -6,6 +6,8 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.http import Response
 from scrapy.spiders import Spider
 
+from friday.services.logger import ws_logger
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +44,17 @@ class WebCrawler:
             if self.crawler_instance.same_domain_only:
                 self.allowed_domains = [self.crawler_instance._get_domain(start_url)]
 
-        def parse(self, response: Response):
+        async def _send_log(self, message: str) -> None:
+            """Send log message to websocket with error handling"""
+            try:
+                if ws_logger:
+                    await ws_logger.broadcast(message)  # Call broadcast directly
+                else:
+                    print(f"Warning: WebSocket logger not initialized: {message}")
+            except Exception as e:
+                print(f"Error sending log: {message} - {str(e)}")
+
+        async def parse(self, response: Response):
             """Parse webpage and extract content"""
             url = response.url
 
@@ -56,6 +68,7 @@ class WebCrawler:
 
             self.crawler_instance.visited_urls.add(url)
             logger.info(f"Crawling {url}")
+            await self._send_log(f"Crawling {url}")
 
             try:
                 # Extract text content
@@ -88,6 +101,7 @@ class WebCrawler:
                             yield response.follow(next_url, self.parse)
 
             except Exception as e:
+                await self._send_log(f"Error parsing {url}: {str(e)}")
                 logger.error(f"Error parsing {url}: {str(e)}")
 
     def extract_text_from_url(self, response: Response) -> Optional[Dict[str, str]]:

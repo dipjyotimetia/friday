@@ -1,6 +1,6 @@
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -96,6 +96,36 @@ class EmbeddingsService:
         return {
             "documents": documents,
             "distances": distances if include_distances else None,
+        }
+
+    def get_collection_stats(self) -> Dict[str, Any]:
+        """Get statistics about the current database"""
+        if not self.db:
+            raise ValueError("Database not initialized. Call create_database first.")
+
+        collection = self.db.get()
+
+        # Handle empty collection
+        if not collection["documents"]:
+            return {
+                "total_documents": 0,
+                "embedding_dimension": 0,
+                "unique_metadata_keys": [],
+            }
+
+        # Get unique metadata keys with null checks
+        unique_keys = set()
+        if collection["metadatas"]:
+            for metadata in collection["metadatas"]:
+                if metadata:  # Check if metadata item exists
+                    unique_keys.update(metadata.keys())
+
+        return {
+            "total_documents": len(collection["documents"]),
+            "embedding_dimension": len(collection["embeddings"][0])
+            if collection["embeddings"]
+            else 0,
+            "unique_metadata_keys": list(unique_keys),
         }
 
     def cleanup(self) -> None:
