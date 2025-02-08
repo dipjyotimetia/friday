@@ -1,108 +1,18 @@
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
 export const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-`;
+  animation: ${fadeIn} 0.6s ease-out;
 
-export const Title = styled.h1`
-  text-align: center;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-`;
-
-export const Description = styled.p`
-  text-align: center;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-`;
-
-export const TabsContainer = styled.div`
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-`;
-
-export const TabButton = styled.button<{ isActive: boolean }>`
-  padding: 0.75rem 1.5rem;
-  border: 1px solid var(--accent-primary);
-  background: ${props => props.isActive ? 'var(--accent-primary)' : 'transparent'};
-  color: ${props => props.isActive ? '#fff' : 'var(--text-primary)'};
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.3s ease, color 0.3s ease;
-
-  &:hover {
-    background: var(--accent-primary);
-    color: #fff;
-  }
-`;
-
-export const TabContent = styled.div<{ isActive: boolean }>`
-  display: ${props => props.isActive ? 'block' : 'none'};
-`;
-
-export const FormSection = styled.div`
-  background: var(--bg-secondary);
-  padding: 2rem;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow);
-`;
-
-export const InputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-`;
-
-export const Input = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  border-radius: 4px;
-  transition: border 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: var(--input-bg-disabled, #1a1a1a);
-  }
-`;
-
-export const Select = styled.select`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  border-radius: 4px;
-  transition: border 0.3s ease;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-  }
-
-  &:hover {
-    border-color: var(--accent-hover);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: var(--input-bg-disabled, #1a1a1a);
+  @media (max-width: 768px) {
+    padding: 1rem;
   }
 `;
 
@@ -130,51 +40,116 @@ export const CheckboxLabel = styled.label`
   }
 `;
 
-export const SubmitButton = styled.button`
- background: var(--accent-primary);
-  color: #fff;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s ease, opacity 0.3s ease;
-  width: 100%;
+export const TabContent = styled.div<{ isActive: boolean }>`
+  display: ${props => props.isActive ? 'block' : 'none'};
+`;
 
-  &:hover:not(:disabled) {
-    background: var(--accent-hover);
-  }
+export const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+`;
 
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+export const Title = styled.h1`
+  text-align: center;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(120deg, var(--accent-primary), #9c27b0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+export const Description = styled.p`
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+export const TabsContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 3rem;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
   }
 `;
 
-export const OutputSection = styled.div`
-  background: var(--bg-secondary);
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  margin-bottom: 2rem;
+export const TabButton = styled.button<{ isActive: boolean }>`
+  padding: 1rem 2rem;
+  border: none;
+  background: ${props => props.isActive ? 
+    'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))' : 
+    'transparent'};
+  color: ${props => props.isActive ? '#fff' : 'var(--text-primary)'};
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: ${props => props.isActive ? 
+    '0 4px 15px rgba(66, 133, 244, 0.3)' : 'none'};
 
-  pre {
-    background: var(--bg-primary);
-    padding: 1rem;
-    border-radius: 4px;
-    color: var(--text-primary);
-    overflow-x: auto;
-  }
-
-  /* Add styles for responsive design */
-  @media (max-width: 768px) {
-    padding: 1rem;
-    border-radius: 8px;
-  }
-
-  /* Additional hover effect */
   &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    background: ${props => props.isActive ? 
+      'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))' : 
+      'rgba(66, 133, 244, 0.1)'};
+  }
+`;
+
+export const FormSection = styled.div`
+  background: var(--bg-secondary);
+  padding: 2.5rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+export const Input = styled.input`
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--input-bg-disabled);
   }
 `;
 
@@ -182,35 +157,115 @@ export const FileInput = styled.input`
   display: none;
 `;
 
-export const FileLabel = styled.label<{ $disabled: boolean }>`
-  display: block;
+export const Select = styled.select`
   width: 100%;
   padding: 0.75rem;
-  border: 2px dashed var(--border-color);
-  background: ${({ $disabled }) => $disabled ? 'var(--input-bg-disabled, #1a1a1a)' : 'var(--input-bg)'};
-  color: ${({ $disabled }) => $disabled ? 'lightgray' : 'var(--text-primary)'};
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-primary);
   border-radius: 4px;
-  cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'pointer'};
-  text-align: center;
-  transition: border-color 0.3s ease;
+  transition: border 0.3s ease;
+  cursor: pointer;
+  
+  &:hover:not(:disabled) {
+    border-color: var(--accent-hover);
+  }
+`;
 
-  &:hover {
-    border-color: ${({ $disabled }) => $disabled ? 'var(--border-color)' : 'var(--accent-primary)'};
+export const SubmitButton = styled.button`
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  color: #fff;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      120deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: 0.5s;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(66, 133, 244, 0.3);
+
+    &::before {
+      left: 100%;
+    }
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
+`;
 
-  &:focus {
-    outline: none;
-    border-color: ${({ $disabled }) => $disabled ? 'var(--border-color)' : 'var(--accent-primary)'};
+export const FileLabel = styled.label<{ $disabled: boolean }>`
+  display: block;
+  width: 100%;
+  padding: 2rem;
+  border: 2px dashed ${props => props.$disabled ? 
+    'var(--border-color)' : 
+    'var(--accent-primary)'};
+  background: ${props => props.$disabled ? 
+    'var(--input-bg-disabled)' : 
+    'var(--input-bg)'};
+  color: ${props => props.$disabled ? 
+    'var(--text-secondary)' : 
+    'var(--text-primary)'};
+  border-radius: 12px;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  text-align: center;
+  transition: all 0.3s ease;
+
+  &:hover:not([disabled]) {
+    background: rgba(66, 133, 244, 0.05);
+    transform: translateY(-2px);
   }
 
-  &:active {
+  &:active:not([disabled]) {
     transform: scale(0.98);
-    transition: transform 0.1s ease;
-  }  
+  }
 `;
-  
+
+export const OutputSection = styled.div`
+  background: var(--bg-secondary);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+
+  pre {
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    color: var(--text-primary);
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+    border: 1px solid var(--border-color);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
+`;
