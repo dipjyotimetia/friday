@@ -13,6 +13,7 @@ export const Container = styled.div`
 
   @media (max-width: 768px) {
     padding: 1rem;
+    max-width: 100%;
   }
 `;
 
@@ -21,6 +22,10 @@ export const FlexRow = styled.div`
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+  }
 `;
 
 export const CheckboxLabel = styled.label`
@@ -49,6 +54,11 @@ export const InputGroup = styled.div`
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.5rem;
+
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 export const Title = styled.h1`
@@ -72,6 +82,11 @@ export const Description = styled.p`
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 export const TabsContainer = styled.div`
@@ -112,6 +127,11 @@ export const TabButton = styled.button<{ isActive: boolean }>`
       'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))' : 
       'rgba(66, 133, 244, 0.1)'};
   }
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }    
 `;
 
 export const FormSection = styled.div`
@@ -128,6 +148,11 @@ export const FormSection = styled.div`
     transform: translateY(-5px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   }
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }  
 `;
 
 export const Input = styled.input`
