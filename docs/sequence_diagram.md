@@ -44,6 +44,25 @@ sequenceDiagram
     Main->>User: Save test cases to output file
 ```
 
+```mermaid
+sequenceDiagram
+    participant UI as ApiTester Component
+    participant API as /testapi Endpoint
+    participant Generator as ApiTestGenerator
+    participant HTTP as HTTP Client
+
+    UI->>API: POST /testapi with spec file & base URL
+    API->>Generator: Create ApiTestGenerator
+    Generator->>Generator: Load & validate OpenAPI spec
+    loop For each endpoint
+        Generator->>Generator: Generate test cases
+        Generator->>HTTP: Execute tests
+        HTTP-->>Generator: Store test results
+    end
+    Generator->>Generator: Generate markdown report
+    API-->>UI: Return test summary & report
+```
+
 ## Diagram Description
 
 1. **User**: Initiates the process by running the main script with required parameters (issue-key/number and confluence-id).
