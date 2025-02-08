@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import Dict, List
 
-import requests
+import httpx
 import yaml
 from langchain_community.agent_toolkits import OpenAPIToolkit
 from langchain_community.agent_toolkits.openapi.base import create_openapi_agent
@@ -10,10 +10,13 @@ from langchain_community.tools.json.tool import JsonSpec
 from langchain_community.utilities import RequestsWrapper
 from langchain_google_vertexai import VertexAI
 
+from friday.services.logger import ws_logger
+
 
 class ApiTestGenerator:
     def __init__(self, openapi_spec_path: str):
         self.spec_path = openapi_spec_path
+        self.http_client = httpx.AsyncClient(verify=True, timeout=30.0)
         self.max_retries = 3  # Add max retries
         self.llm = VertexAI(
             model_name="gemini-pro",
@@ -47,7 +50,17 @@ class ApiTestGenerator:
             return_intermediate_steps=True,  # Return intermediate steps
         )
 
-    def load_spec(self) -> Dict:
+    async def _send_log(self, message: str) -> None:
+        """Send log message to websocket with error handling"""
+        try:
+            if ws_logger:
+                await ws_logger.broadcast(message)  # Call broadcast directly
+            else:
+                print(f"Warning: WebSocket logger not initialized: {message}")
+        except Exception as e:
+            print(f"Error sending log: {message} - {str(e)}")
+
+    async def load_spec(self) -> Dict:
         with open(self.spec_path) as f:
             return yaml.safe_load(f)
 
@@ -55,7 +68,9 @@ class ApiTestGenerator:
         required_fields = ["openapi", "info", "paths"]
         return all(field in spec for field in required_fields)
 
-    def create_test_cases(self, endpoint: str, method: str, spec: Dict) -> List[Dict]:
+    async def create_test_cases(
+        self, endpoint: str, method: str, spec: Dict
+    ) -> List[Dict]:
         attempts = 0
         default_test = {
             "name": f"Basic {method} {endpoint} test",
@@ -65,11 +80,26 @@ class ApiTestGenerator:
             "headers": {},
         }
 
+        # Validate endpoint exists in spec
+
+        if "paths" not in spec or endpoint not in spec["paths"]:
+            await self._send_log(f"Endpoint {endpoint} not found in spec")
+            return [default_test]
+
+        # Get endpoint specification
+        endpoint_spec = spec["paths"][endpoint]
+        if method.lower() not in endpoint_spec:
+            await self._send_log(f"Method {method} not found for endpoint {endpoint}")
+            return [default_test]
+
         while attempts < self.max_retries:
             try:
-                prompt = f"""Generate test cases for {method} {endpoint} with different input combinations.
-                Return response as a JSON array of test cases with this structure:
-                [{{"name": "test name", "method": "HTTP method", "endpoint": "path", "payload": {{}}, "headers": {{}}}}]"""
+                await self._send_log(f"Generating test cases for {method} {endpoint}")
+
+                prompt = f"""Generate test cases for {method} {endpoint} based on this OpenAPI spec:
+            Endpoint: {json.dumps(endpoint_spec[method.lower()])}
+            Return response as a JSON array of test cases with this structure:
+            [{{"name": "test name", "method": "HTTP method", "endpoint": "path", "payload": {{}}, "headers": {{}}}}]"""
 
                 response = self.agent.invoke(prompt)
 
@@ -102,28 +132,36 @@ class ApiTestGenerator:
 
             except (ValueError, TypeError, json.JSONDecodeError) as e:
                 attempts += 1
+                await self._send_log(
+                    f"Test generation attempt {attempts}/{self.max_retries} failed: {str(e)}"
+                )
                 print(f"Attempt {attempts}/{self.max_retries} failed: {str(e)}")
                 if attempts >= self.max_retries:
+                    await self._send_log(
+                        f"Max retries ({self.max_retries}) reached, using default test"
+                    )
                     print(
                         f"Max retries ({self.max_retries}) reached, using default test"
                     )
                     return [default_test]
 
-    def execute_tests(self, test_cases: List[Dict], base_url: str) -> None:
+    async def execute_tests(self, test_cases: List[Dict], base_url: str) -> None:
         try:
             for test in test_cases:
+                await self._send_log(f"Executing test: {test['name']}")
                 try:
-                    response = requests.request(
+                    response = await self.http_client.request(
                         method=test["method"],
-                        url=f"{base_url.rstrip('/')}/{test['endpoint'].lstrip('/')}",  # Fix URL joining
+                        url=f"{base_url.rstrip('/')}/{test['endpoint'].lstrip('/')}",
                         json=test.get("payload"),
                         headers=test.get("headers", {}),
-                        timeout=30,
-                        verify=True,
                     )
 
                     try:
                         response_data = response.json()
+                        await self._send_log(
+                            f"Test {test['name']} completed with status code {response.status_code}"
+                        )
                     except ValueError:
                         response_data = {"raw": response.text}
 
@@ -138,6 +176,9 @@ class ApiTestGenerator:
                         }
                     )
                 except Exception as e:
+                    await self._send_log(
+                        f"Test {test['name']} failed with error: {str(e)}"
+                    )
                     self.test_results.append(
                         {"test_name": test["name"], "status": "ERROR", "error": str(e)}
                     )
@@ -145,8 +186,16 @@ class ApiTestGenerator:
 
         except Exception as e:
             print(f"Test suite execution failed: {str(e)}")
+            await self._send_log(f"Test suite execution failed: {str(e)}")
 
-    def generate_report(self) -> str:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.http_client.aclose()
+
+    async def generate_report(self) -> str:
+        await self._send_log("Generating test execution report")
         try:
             report = f"""# API Test Results
         Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
@@ -168,6 +217,8 @@ class ApiTestGenerator:
                     report += f"Response Code: {result['response_code']}\n"
                     report += f"Response: ```json\n{json.dumps(result['response'], indent=2)}\n```\n"
 
+            await self._send_log("Report generation completed")
             return report
         except Exception as e:
+            await self._send_log(f"Error generating report: {str(e)}")
             return f"Error generating report: {str(e)}"

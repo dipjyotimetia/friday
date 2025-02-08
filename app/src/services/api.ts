@@ -1,4 +1,4 @@
-const API_URL = process.env.API_URL || 'http://localhost:8080';
+const API_URL =  'http://localhost:8000';
 
 export interface GenerateRequest {
   jira_key: string;
@@ -14,6 +14,12 @@ export interface CrawlRequest {
   persist_dir: string;
   max_pages: number;
   same_domain: boolean;
+}
+
+export interface ApiTestRequest {
+  spec_file: string;
+  base_url: string;
+  output: string;
 }
 
 export const apiService = {
@@ -32,6 +38,17 @@ export const apiService = {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(data)
     });
+    return response.json();
+  },
+
+  async testApi(formData: FormData) {
+    const response = await fetch(`${API_URL}/testapi`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error('API test request failed');
+    }
     return response.json();
   }
 };
