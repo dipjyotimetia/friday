@@ -1,7 +1,3 @@
-Here’s a Jira story template: 
-
----
-
 ### **Jira Story: Enable LLM to Read Data from Jira Issues**  
 **Story ID:** (Assigned by Jira)  
 **Story Type:** Feature  

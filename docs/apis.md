@@ -13,6 +13,22 @@ docker run -p 8080:8080 friday-api
 docker run -d -p 8080:8080 friday-api
 ```
 
+```bash
+# Test with spec file path
+curl -X POST "http://localhost:8000/testapi" \
+  -H "Content-Type: multipart/form-data" \
+  -F "base_url=https://petstore.swagger.io/v2/pet" \
+  -F "spec_file=./docs/specs/petstore.yaml" \
+  -F "output=report.md"
+
+# Test with file upload
+curl -X POST "http://localhost:8000/testapi" \
+  -H "Content-Type: multipart/form-data" \
+  -F "base_url=https://petstore.swagger.io/v2/pet" \
+  -F "spec_upload=@./docs/specs/petstore.yaml" \
+  -F "output=report.md"
+```
+
 ```json
 # Get version
 curl http://localhost:8000/version

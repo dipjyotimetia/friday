@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import styled from 'styled-components';
+import { Header, LogContainer, LogEntry, LogViewerContainer, Status, Timestamp } from '../css/LogViewer';
+
 
 interface LogEntry {
   id: string;
@@ -8,68 +9,20 @@ interface LogEntry {
   level?: 'info' | 'error' | 'warn';
 }
 
-const LogViewerContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #1e1e1e;
-  border-radius: 4px;
-  overflow: hidden;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: #2d2d2d;
-  border-bottom: 1px solid #404040;
-
-  h3 {
-    margin: 0;
-    color: #fff;
-  }
-`;
-
-const Status = styled.span<{ isConnected: boolean }>`
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  background: ${props => props.isConnected ? '#1b5e20' : '#b71c1c'};
-  color: #fff;
-`;
-
-const LogContainer = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 0.9rem;
-`;
-
-const LogEntry = styled.div<{ level?: 'info' | 'error' | 'warn' }>`
-  padding: 4px 0;
-  line-height: 1.4;
-  color: ${props => {
-    switch (props.level) {
-      case 'error': return '#f44336';
-      case 'warn': return '#ffd700';
-      default: return '#d4d4d4';
-    }
-  }};
-`;
-
-const Timestamp = styled.span`
-  color: #888;
-  margin-right: 8px;
-  font-size: 0.8rem;
-`;
-
 export function LogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
   const socketRef = useRef<WebSocket | null>(null);
   const logContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = useCallback(() => {
+    if (logContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
+      setAutoScroll(isAtBottom);
+    }
+  }, []);
 
   const appendLog = useCallback((newLog: LogEntry) => {
     setLogs(prev => {
@@ -85,6 +38,12 @@ export function LogViewer() {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs]);
+
+  useEffect(() => {
+    if (autoScroll && logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [logs, autoScroll]);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8000/ws/logs');
@@ -104,7 +63,7 @@ export function LogViewer() {
         }
       }, 3000);
     };
-    
+
     ws.onmessage = (event) => {
       try {
         const logEntry: LogEntry = JSON.parse(event.data);
@@ -138,7 +97,10 @@ export function LogViewer() {
           {isConnected ? 'Connected' : 'Disconnected'}
         </Status>
       </Header>
-      <LogContainer ref={logContainerRef}>
+      <LogContainer
+        ref={logContainerRef}
+        onScroll={handleScroll}
+      >
         {logs.map(({ id, message, timestamp, level }) => (
           <LogEntry key={id} level={level}>
             <Timestamp>{timestamp}</Timestamp>

@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime
 from typing import Dict, List
@@ -8,6 +9,7 @@ from langchain_community.agent_toolkits import OpenAPIToolkit
 from langchain_community.agent_toolkits.openapi.base import create_openapi_agent
 from langchain_community.tools.json.tool import JsonSpec
 from langchain_community.utilities import RequestsWrapper
+from langchain_core.exceptions import OutputParserException
 from langchain_google_vertexai import VertexAI
 
 from friday.services.logger import ws_logger
@@ -40,7 +42,6 @@ class ApiTestGenerator:
             verbose=True,
         )
 
-        # Create OpenAPI agent
         self.agent = create_openapi_agent(
             llm=self.llm,
             toolkit=self.toolkit,
@@ -80,13 +81,11 @@ class ApiTestGenerator:
             "headers": {},
         }
 
-        # Validate endpoint exists in spec
-
+        # Early validation
         if "paths" not in spec or endpoint not in spec["paths"]:
             await self._send_log(f"Endpoint {endpoint} not found in spec")
             return [default_test]
 
-        # Get endpoint specification
         endpoint_spec = spec["paths"][endpoint]
         if method.lower() not in endpoint_spec:
             await self._send_log(f"Method {method} not found for endpoint {endpoint}")
@@ -96,33 +95,87 @@ class ApiTestGenerator:
             try:
                 await self._send_log(f"Generating test cases for {method} {endpoint}")
 
-                prompt = f"""Generate test cases for {method} {endpoint} based on this OpenAPI spec:
-            Endpoint: {json.dumps(endpoint_spec[method.lower()])}
-            Return response as a JSON array of test cases with this structure:
-            [{{"name": "test name", "method": "HTTP method", "endpoint": "path", "payload": {{}}, "headers": {{}}}}]"""
+                prompt = f"""
+                You are an API test case generator. You will be given an OpenAPI specification and your task is to generate a comprehensive set of test cases for a specific endpoint and method. Ensure the test cases cover various scenarios, including basic functionality, edge cases, and error conditions.
 
-                response = self.agent.invoke(prompt)
+                Follow these guidelines for generating test cases:
 
-                if not response:
-                    raise ValueError("Empty response received")
+                1.  **Understand the OpenAPI Specification:** Carefully analyze the provided specification for the endpoint and method, including request parameters, request body, headers, and expected responses.
+                2.  **Cover Basic Functionality:** Generate test cases to validate the core functionality of the API endpoint. These tests should cover typical use cases and ensure the API behaves as expected under normal conditions.
+                3.  **Explore Edge Cases:** Identify and create test cases for edge cases, such as boundary values, unusual input combinations, and unexpected data. These tests help uncover potential issues that may not be apparent during basic testing.
+                4.  **Test Error Scenarios:** Develop test cases to verify how the API handles errors, such as invalid input, missing parameters, authentication failures, and server errors. These tests should ensure the API returns appropriate error codes and messages.
+                5.  **Prioritize Security:** Include tests that check for common security vulnerabilities, such as injection attacks, authentication bypasses, and data breaches.
+                6.  **Output Format:** Return test cases in the EXACT JSON array format specified below.
 
-                # Check if response is something like "I don't know"
-                if isinstance(response, str) and "I don't know" in response:
-                    raise ValueError("Agent response: 'I don't know'")
+                Here is the OpenAPI specification for the **{method}** method of the **{endpoint}** endpoint:
 
-                # Try parsing the response into JSON
+                ```json
+                {json.dumps(endpoint_spec[method.lower()], indent=2)}
+
+                Return test cases in this EXACT JSON array format:
+                [
+                    {{
+                        "name": "test name - be descriptive",
+                        "method": "{method}",
+                        "endpoint": "{endpoint}",
+                        "payload": {{
+                            // Add required request payload based on spec
+                        }},
+                        "headers": {{
+                            // Add required headers based on spec
+                        }}
+                    }}
+                ]
+
+                Required fields:
+                - name: Descriptive test name
+                - method: Must be {method}
+                - endpoint: Must be {endpoint} 
+                - payload: Include request body if required
+                - headers: Include required headers"""
+
+                # Add structured response handling
+                response = self.agent.invoke(
+                    {
+                        "input": prompt,
+                        "action": "generate_test_cases",
+                        "action_input": {
+                            "method": method,
+                            "endpoint": endpoint,
+                            "spec": endpoint_spec[method.lower()],
+                        },
+                    }
+                )
+
+                # Add specific handling for OutputParserException
+                if isinstance(response, OutputParserException):
+                    raise ValueError(f"Parser error: {str(response)}")
+
+                # Handle empty or "I don't know" responses
+                if not response or (
+                    isinstance(response, str) and "don't know" in response.lower()
+                ):
+                    raise ValueError("Invalid or empty response from agent")
+
+                # Parse dict response
                 if isinstance(response, dict):
                     if "output" in response:
                         response = response["output"]
                     return [response] if isinstance(response, dict) else [default_test]
 
+                # Parse string response
                 if isinstance(response, str):
                     try:
                         parsed = json.loads(response.strip())
-                        return [parsed] if isinstance(parsed, dict) else parsed
-                    except json.JSONDecodeError as je:
-                        raise ValueError(f"Invalid JSON response: {je}")
+                        if isinstance(parsed, dict):
+                            return [parsed]
+                        elif isinstance(parsed, list) and parsed:
+                            return parsed
+                        raise ValueError("Invalid response structure")
+                    except json.JSONDecodeError:
+                        raise ValueError("Invalid JSON response")
 
+                # Parse list response
                 if isinstance(response, list):
                     if not response:
                         raise ValueError("Empty list response")
@@ -130,19 +183,17 @@ class ApiTestGenerator:
 
                 raise TypeError(f"Unexpected response type: {type(response)}")
 
-            except (ValueError, TypeError, json.JSONDecodeError) as e:
+            except Exception as e:
                 attempts += 1
-                await self._send_log(
-                    f"Test generation attempt {attempts}/{self.max_retries} failed: {str(e)}"
-                )
-                print(f"Attempt {attempts}/{self.max_retries} failed: {str(e)}")
-                if attempts >= self.max_retries:
-                    await self._send_log(
-                        f"Max retries ({self.max_retries}) reached, using default test"
-                    )
-                    print(
-                        f"Max retries ({self.max_retries}) reached, using default test"
-                    )
+                error_msg = f"Test generation attempt {attempts}/{self.max_retries} failed: {str(e)}"
+                await self._send_log(error_msg)
+                print(error_msg)
+
+                # Sleep between retries with increasing duration
+                if attempts < self.max_retries:
+                    await asyncio.sleep(attempts)
+                else:
+                    await self._send_log("Max retries reached, using default test")
                     return [default_test]
 
     async def execute_tests(self, test_cases: List[Dict], base_url: str) -> None:
