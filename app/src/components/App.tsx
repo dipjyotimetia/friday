@@ -8,9 +8,10 @@ import { GlobalStyle } from '../css/GlobalStyle';
 import TestGenerator from './generator/testGenerator';
 import Crawler from './crawler/webCrawler';
 import ApiTester from './apitest/apiTester';
+import PerfTester from './apitest/perfTester';
 
 // Define tab types to ensure type safety
-type TabId = 'generator' | 'crawler' | 'apitest';
+type TabId = 'generator' | 'crawler' | 'apitest' | 'perftest';
 
 interface Tab {
   id: TabId;
@@ -39,6 +40,11 @@ function FridayApp() {
       id: 'apitest',
       label: 'API Testing',
       component: (props) => <ApiTester {...props} />
+    },
+    {
+      id: 'perftest',
+      label: 'Performance Testing',
+      component: (props) => <PerfTester {...props} />
     }
   ];
   
