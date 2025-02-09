@@ -2,17 +2,11 @@
 
 An AI-powered test agent that uses Google Gemini and LangChain to automatically create test cases from Jira/GitHub issues and Confluence documentation, for a streamlined testing experience.
 
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](https://opensource.org/licenses/MIT)
+
 <p align="center">
   <img src="docs/images/friday.png" alt="Friday Logo" width="700">
 </p>
-
-[![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-312/)
-[![FastAPI Version](https://img.shields.io/badge/fastapi-0.70.0-blue.svg)](https://fastapi.tiangolo.com/)
-[![Poetry Version](https://img.shields.io/badge/poetry-1.7.0-blue.svg)](https://python-poetry.org/)
-[![Docker Version](https://img.shields.io/badge/docker-24.0.0-blue.svg)](https://www.docker.com/)
-[![GitHub Release](https://img.shields.io/github/v/release/dipjyotimetia/friday)](https://github.com/dipjyotimetia/friday/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dipjyotimetia/friday/CI)](https://github.com/dipjyotimetia/friday/actions)
 
 ## ✨ Key Features
 
