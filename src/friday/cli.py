@@ -10,8 +10,8 @@ from friday.config.config import validate_config
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
-from friday.llm.api_agent import ApiTestGenerator
-from friday.llm.perf_agent import PerfTestGenerator
+from friday.agents.api_agent import ApiTestGenerator
+from friday.agents.perf_agent import PerfTestGenerator
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 from friday.services.test_generator import TestCaseGenerator

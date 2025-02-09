@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Form, UploadFile
 
-from friday.llm.perf_agent import PerfTestGenerator
+from friday.agents.perf_agent import PerfTestGenerator
 
 router = APIRouter()
 

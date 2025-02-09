@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from friday.api.schemas.api_test import ApiTestResponse
-from friday.llm.api_agent import ApiTestGenerator
+from friday.agents.api_agent import ApiTestGenerator
 
 router = APIRouter()
 
