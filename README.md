@@ -2,6 +2,10 @@
 
 An AI-powered test agent that uses Generative AI and LangChain to automatically create test cases from Jira/GitHub issues and execute API tests, for a streamlined testing experience.
 
+- **Web Application**: React-based UI running on port 3000 for visual interaction
+- **CLI Application**: Command-line tool for quick test case generation and web crawling
+- **REST API**: FastAPI service running on port 8080 for system integration
+
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](https://opensource.org/licenses/MIT)
 
 <p align="center">
@@ -17,7 +21,7 @@ An AI-powered test agent that uses Generative AI and LangChain to automatically 
 -   **Vectorized Storage:** Store and search documents efficiently using ChromaDB vectorization.
 -   **Flexible Export:** Export test cases in JSON or Markdown format.
 -   **Web Crawling:** Enhance context by creating embeddings using a web crawler.
--   **API Testing:** Execute API tests for comprehensive validation of functionalities.
+-   **API Testing:** Execute API tests using OpenAPI specifications.
 
 ## ⚙️ Setup
 
@@ -44,7 +48,7 @@ An AI-powered test agent that uses Generative AI and LangChain to automatically 
 
 ## ⚡️ Usage
 
-### Generate Test Cases
+### CLI Application
 
 ```bash
 # From Jira
@@ -52,34 +56,55 @@ friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
 
 # From GitHub
 friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o test_cases.md
-```
 
-### Web Crawler
-
-```bash
 # Crawl single domain
 friday crawl https://example.com --provider openai --persist-dir ./my_data/chroma --max-pages 5
 
 # Crawl multiple domains
 friday crawl https://example.com --provider openai --persist-dir ./my_data/chroma --max-pages 10 --same-domain false
-```
 
-### Command Reference
-
-```bash
 friday --help          # Show all commands
 friday version         # Display version
 friday generate --help # Show generation options
+friday crawl --help    # Show crawling options
 ```
 
-### Parameters
+### REST API
 
--   `--jira-key`: Jira issue key
--   `--confluence-id`: Confluence page ID (optional)
--   `--gh-issue`: GitHub issue number
--   `--gh-repo`: GitHub repository (format: owner/repo)
--   `--output`: Output file path (default: test_cases.md)
--   `--provider`: AI provider (gemini/openai)
+```bash
+uvicorn friday.api.app:app --reload --port 8080
+
+# Generate test cases
+curl -X POST http://localhost:8080/api/v1/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jira_key": "PROJ-123",
+    "confluence_id": "12345",
+    "output": "test_cases.md"
+  }'
+
+# Run API tests
+curl -X POST "http://localhost:8000/api/v1/testapi" \
+  -H "Content-Type: multipart/form-data" \
+  -F "base_url=https://petstore.swagger.io/v2/pet" \
+  -F "spec_upload=@./docs/specs/petstore.yaml" \
+  -F "output=report.md"
+```
+
+### Web Application
+
+```bash
+cd friday/app
+npm install
+npm start
+
+Open http://localhost:3000 in your browser
+
+* Generate test cases from Jira/GitHub issues
+* Execute API tests with OpenAPI specifications
+* Crawl websites for additional context
+* View real-time test execution logs
+```
 
 ## 🛠️ Development
 
