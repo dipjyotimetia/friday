@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "friday-cli"
-version = "0.1.45"
+version = "0.1.46"
 description = "AI-powered testing agent"
 license = "MIT"
 authors = [ "Dipjyoti Metia <dipjyotimetia@gmail.com>",]
@@ -68,4 +68,4 @@ version = "^0.34.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
-pytest-asyncio = "^0.23.5" 
+pytest-asyncio = "^0.23.5"
