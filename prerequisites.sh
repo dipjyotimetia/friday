@@ -37,6 +37,10 @@ pipx install poetry
 echo "Installing Ruff..."
 pipx install ruff
 
+# Install Node.js
+echo "Installing Node.js..."
+brew install node@22
+
 # Setup Poetry environment
 echo "Setting up Poetry environment..."
 poetry env use python3.12
@@ -47,9 +51,11 @@ echo -e "\n${GREEN}Verifying installations:${NC}"
 python3.12 --version
 poetry --version
 ruff --version
+node --version
 
 echo -e "\n${GREEN}Development environment setup completed successfully!${NC}"
 
 # Add environment to PATH
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+echo 'export PATH="$HOME/.local/bin:$HOME' >> ~/.zshrc
+echo 'export PATH="/opt/homebrew/bin:$PATH"' >> ~/.zshrc # Add Homebrew to PATH
 source ~/.zshrc

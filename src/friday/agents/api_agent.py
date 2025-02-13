@@ -1,3 +1,30 @@
+"""
+API Test Generator Module
+
+This module provides an automated API testing solution using OpenAPI specifications
+and LLM-powered test case generation. It supports real-time logging via WebSocket
+and comprehensive test reporting.
+
+Features:
+- Automated test case generation from OpenAPI specs
+- Multiple LLM provider support
+- Real-time progress logging
+- Retry mechanisms for reliability
+- Async HTTP client with connection pooling
+- Markdown report generation
+- WebSocket-based logging
+
+Example:
+    ```python
+    async with ApiTestGenerator("openapi.yaml", provider="openai") as generator:
+        spec = await generator.load_spec()
+        if generator.validate_spec(spec):
+            test_cases = await generator.create_test_cases("/users", "GET", spec)
+            await generator.execute_tests(test_cases, "http://api.example.com")
+            report = await generator.generate_report()
+    ```
+"""
+
 import asyncio
 import json
 from datetime import datetime
@@ -11,16 +38,52 @@ from langchain_community.agent_toolkits.openapi.base import create_openapi_agent
 from langchain_community.tools.json.tool import JsonSpec
 from langchain_community.utilities import RequestsWrapper
 from langchain_core.exceptions import OutputParserException
-from langchain_google_vertexai import VertexAI
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from friday.llm.llm import ModelProvider, get_llm_client
 from friday.services.logger import ws_logger
 
 logger = structlog.get_logger(__name__)
 
 
 class ApiTestGenerator:
-    def __init__(self, openapi_spec_path: str):
+    """
+    A class for generating and executing API tests based on OpenAPI specifications.
+
+    This class combines LLM capabilities with OpenAPI specifications to automatically
+    generate, execute, and report on API tests. It supports multiple LLM providers
+    and includes robust error handling and retry mechanisms.
+
+    Attributes:
+        spec_path (str): Path to the OpenAPI specification file
+        http_client (httpx.AsyncClient): Async HTTP client for making requests
+        max_retries (int): Maximum number of retry attempts for failed operations
+        llm: Language model client for test generation
+        test_results (List): Collection of test execution results
+        api_spec (JsonSpec): Parsed OpenAPI specification
+        toolkit (OpenAPIToolkit): OpenAPI toolkit for LLM integration
+        agent: LLM agent for test case generation
+
+    Example:
+        ```python
+        async with ApiTestGenerator("specs/api.yaml") as generator:
+            spec = await generator.load_spec()
+            test_cases = await generator.create_test_cases("/users", "GET", spec)
+            await generator.execute_tests(test_cases, "http://api.example.com")
+        ```
+    """
+
+    def __init__(self, openapi_spec_path: str, provider: ModelProvider = "openai"):
+        """
+        Initialize the API test generator.
+
+        Args:
+            openapi_spec_path (str): Path to the OpenAPI specification file
+            provider (ModelProvider, optional): LLM provider to use. Defaults to "openai"
+
+        Raises:
+            RuntimeError: If initialization fails (e.g., invalid spec file)
+        """
         self.spec_path = openapi_spec_path
         self.http_client = httpx.AsyncClient(
             verify=True,
@@ -28,10 +91,7 @@ class ApiTestGenerator:
             limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
         )
         self.max_retries = 3  # Add max retries
-        self.llm = VertexAI(
-            model_name="gemini-pro",
-            kwargs={"temperature": 0.5, "max_tokens": 1024, "timeout": None},
-        )
+        self.llm = get_llm_client(provider)
         self.test_results = []
         try:
             with open(self.spec_path) as f:
@@ -64,7 +124,15 @@ class ApiTestGenerator:
         )
 
     async def _send_log(self, message: str) -> None:
-        """Send log message to websocket with error handling"""
+        """
+        Send a log message through the WebSocket logger.
+
+        Args:
+            message (str): Message to be logged
+
+        Note:
+            Falls back to print if WebSocket logger is not available
+        """
         try:
             if ws_logger:
                 await ws_logger.broadcast(message)  # Call broadcast directly
@@ -74,16 +142,55 @@ class ApiTestGenerator:
             print(f"Error sending log: {message} - {str(e)}")
 
     async def load_spec(self) -> Dict:
+        """
+        Load and parse the OpenAPI specification file.
+
+        Returns:
+            Dict: Parsed OpenAPI specification
+
+        Raises:
+            yaml.YAMLError: If the specification file is invalid
+            FileNotFoundError: If the specification file doesn't exist
+        """
         with open(self.spec_path) as f:
             return yaml.safe_load(f)
 
     def validate_spec(self, spec: Dict) -> bool:
+        """
+        Validate the OpenAPI specification.
+        """
         required_fields = ["openapi", "info", "paths"]
         return all(field in spec for field in required_fields)
 
     async def create_test_cases(
         self, endpoint: str, method: str, spec: Dict
     ) -> List[Dict]:
+        """
+        Generate test cases for a specific API endpoint.
+
+        This method uses LLM to generate comprehensive test cases covering:
+        - Basic functionality
+        - Edge cases
+        - Error scenarios
+        - Security considerations
+
+        Args:
+            endpoint (str): API endpoint path
+            method (str): HTTP method (GET, POST, etc.)
+            spec (Dict): OpenAPI specification
+
+        Returns:
+            List[Dict]: List of generated test cases
+
+        Example:
+            ```python
+            test_cases = await generator.create_test_cases(
+                "/users",
+                "POST",
+                spec
+            )
+            ```
+        """
         attempts = 0
         default_test = {
             "name": f"Basic {method} {endpoint} test",
@@ -214,6 +321,24 @@ class ApiTestGenerator:
         reraise=True,
     )
     async def execute_tests(self, test_cases: List[Dict], base_url: str) -> None:
+        """
+        Execute the generated test cases against a target API.
+
+        Features:
+        - Automatic retries for failed requests
+        - Real-time progress logging
+        - Comprehensive result collection
+        - Error handling and reporting
+
+        Args:
+            test_cases (List[Dict]): List of test cases to execute
+            base_url (str): Base URL of the target API
+
+        Example:
+            ```python
+            await generator.execute_tests(test_cases, "http://api.example.com")
+            ```
+        """
         try:
             for test in test_cases:
                 await self._send_log(f"Executing test: {test['name']}")
@@ -264,6 +389,25 @@ class ApiTestGenerator:
         await self.http_client.aclose()
 
     async def generate_report(self) -> str:
+        """
+        Generate a Markdown report of test execution results.
+
+        The report includes:
+        - Test execution timestamp
+        - Summary statistics
+        - Detailed results for each test case
+        - Response data and error messages
+
+        Returns:
+            str: Markdown-formatted test report
+
+        Example:
+            ```python
+            report = await generator.generate_report()
+            with open("test_report.md", "w") as f:
+                f.write(report)
+            ```
+        """
         await self._send_log("Generating test execution report")
         try:
             report = f"""# API Test Results

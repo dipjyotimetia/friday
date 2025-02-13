@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FormSection, Input, InputGroup, SubmitButton } from '../../css/friday';
+import { FormSection, Input, InputGroup, Select, SubmitButton } from '../../css/friday';
 import { apiService } from '../../services/api';
 import { FileUploader } from '../FileUploader';
 
@@ -11,17 +11,16 @@ interface ApiTesterProps {
 function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
   const [baseUrl, setBaseUrl] = useState('');
   const [isTestingApi, setIsTestingApi] = useState(false);
-  const [apiOutput, setApiOutput] = useState('api_test_report.md'); // Match default from API
+  const [apiOutput, setApiOutput] = useState('api_test_report.md');
   const [specFileObj, setSpecFileObj] = useState<File | null>(null);
+  const [provider, setProvider] = useState('openai');
 
   const handleApiTest = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate inputs
     if (!specFileObj) {
-      setOutputText(
-        'Error: Please upload an OpenAPI/Swagger specification file'
-      );
+      setOutputText('Error: Please upload an OpenAPI/Swagger specification file');
       return;
     }
 
@@ -42,27 +41,21 @@ function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
     setOutputText('Running API tests...');
 
     try {
-      const formData = new FormData();
-      formData.append('spec_upload', specFileObj);
-      formData.append('base_url', baseUrl.trim());
-      formData.append('output', apiOutput);
-
       const result = await apiService.testApi({
-        spec_file: specFileObj,
         base_url: baseUrl.trim(),
         output: apiOutput,
+        spec_upload: specFileObj,
+        provider: provider,
       });
 
       setOutputText(
         `Test Results:\n` +
-          `- Total Tests: ${result.total_tests}\n` +
-          `- Paths Tested: ${result.paths_tested}\n` +
-          `- Message: ${result.message}`
+        `- Total Tests: ${result.total_tests}\n` +
+        `- Paths Tested: ${result.paths_tested}\n` +
+        `- Message: ${result.message}`
       );
     } catch (err) {
-      setOutputText(
-        `Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`
-      );
+      setOutputText(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`);
     } finally {
       setIsTestingApi(false);
       setIsGenerating(false);
@@ -93,22 +86,27 @@ function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
             disabled={isTestingApi}
             required
           />
+          <Select
+            value={provider}
+            onChange={(e) => setProvider(e.target.value)}
+            disabled={isTestingApi}
+          >
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Gemini</option>
+            <option value="ollama">Ollama</option>
+            <option value="mistral">Mistral</option>
+          </Select>
           <Input
             type="text"
             placeholder="Output filename (e.g. api_test_report.md)"
             value={apiOutput}
-            onChange={(e) =>
-              setApiOutput(e.target.value.trim() || 'api_test_report.md')
-            }
+            onChange={(e) => setApiOutput(e.target.value.trim() || 'api_test_report.md')}
             disabled={isTestingApi}
             pattern="^[\w-]+\.md$"
             title="Filename must end with .md extension"
           />
         </InputGroup>
-        <SubmitButton
-          type="submit"
-          disabled={isTestingApi || !specFileObj || !baseUrl}
-        >
+        <SubmitButton type="submit" disabled={isTestingApi || !specFileObj || !baseUrl}>
           {isTestingApi ? 'Running Tests...' : 'Run API Tests'}
         </SubmitButton>
       </form>

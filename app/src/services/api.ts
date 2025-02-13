@@ -56,10 +56,11 @@ export interface CrawlRequest {
 }
 
 export interface ApiTestRequest {
-  spec_file?: File; // For file upload
-  spec_path?: string; // For file path
   base_url: string;
   output: string;
+  spec_file?: string;
+  spec_upload?: File;
+  provider: string;
 }
 
 export const apiService = {
@@ -81,27 +82,21 @@ export const apiService = {
     return response.data;
   },
 
-  async testApi({
-    spec_file,
-    spec_path,
-    base_url,
-    output,
-  }: ApiTestRequest): Promise<{
+  async testApi(request: ApiTestRequest): Promise<{
     message: string;
     total_tests: number;
     paths_tested: number;
   }> {
     const formData = new FormData();
+    formData.append('base_url', request.base_url);
+    formData.append('output', request.output);
+    formData.append('provider', request.provider);
 
-    // Handle either spec_file upload or spec_path
-    if (spec_file) {
-      formData.append('spec_upload', spec_file);
-    } else if (spec_path) {
-      formData.append('spec_file', spec_path);
+    if (request.spec_upload) {
+      formData.append('spec_upload', request.spec_upload);
+    } else if (request.spec_file) {
+      formData.append('spec_file', request.spec_file);
     }
-
-    formData.append('base_url', base_url);
-    formData.append('output', output);
 
     try {
       const response = await axiosWithRetry<any>(`/api/v1/testapi`, {
@@ -109,7 +104,6 @@ export const apiService = {
         headers: { 'Content-Type': 'multipart/form-data' },
         data: formData,
       });
-
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'API test request failed');

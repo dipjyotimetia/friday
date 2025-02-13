@@ -12,7 +12,7 @@ import { apiService } from '../../services/api';
 
 function Crawler() {
   const [url, setUrl] = useState('');
-  const [provider, setProvider] = useState('vertex');
+  const [provider, setProvider] = useState('openai');
   const [maxPages, setMaxPages] = useState(10);
   const [sameDomain, setSameDomain] = useState(true);
   const [isCrawling, setIsCrawling] = useState(false);
@@ -54,8 +54,10 @@ function Crawler() {
               onChange={(e) => setProvider(e.target.value)}
               disabled={isCrawling}
             >
-              <option value="vertex">Vertex</option>
               <option value="openai">OpenAI</option>
+              <option value="gemini">Gemini</option>
+              <option value="ollama">Ollama</option>
+              <option value="mistral">Mistral</option>
             </Select>
             <Input
               type="number"

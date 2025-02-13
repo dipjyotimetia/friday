@@ -7,7 +7,7 @@ from friday.services.embeddings import EmbeddingsService
 
 
 class TestCaseGenerator:
-    def __init__(self, provider: ModelProvider = "vertex"):
+    def __init__(self, provider: ModelProvider = "openai"):
         self.llm = get_llm_client(provider)
         self.embeddings_service = EmbeddingsService(provider=provider)
         self.template = """

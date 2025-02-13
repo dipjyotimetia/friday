@@ -1,7 +1,7 @@
 # API
 
 ## Local Run
-`uvicorn friday.api.app:app --reload --port 8080`
+`uvicorn friday.api.app:app --reload --port 8080 --log-level info`
 
 
 ## Docker Run
@@ -49,7 +49,7 @@ curl -X POST http://localhost:8000/api/v1/crawl \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com",
-    "provider": "vertex",
+    "provider": "openai",
     "persist_dir": "./data/chroma",
     "max_pages": 5,
     "same_domain": true

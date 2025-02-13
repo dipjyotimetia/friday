@@ -1,3 +1,24 @@
+"""
+Web Crawler Module
+
+This module provides a web crawling service using Scrapy framework with real-time logging
+capabilities over WebSocket connections. It supports configurable crawling behavior and
+content extraction.
+
+Features:
+- Configurable maximum page limit
+- Domain restriction options
+- Real-time progress logging via WebSocket
+- Robust error handling
+- Text content extraction
+- Robotstxt compliance
+- Rate limiting and polite crawling
+
+Example:
+    >>> crawler = WebCrawler(max_pages=5, same_domain_only=True)
+    >>> results = crawler.crawl("https://example.com")
+"""
+
 import logging
 from typing import Dict, List, Optional, Set
 from urllib.parse import urljoin, urlparse
@@ -12,7 +33,30 @@ logger = logging.getLogger(__name__)
 
 
 class WebCrawler:
+    """
+    A configurable web crawler built on Scrapy with real-time logging.
+
+    This class provides functionality for crawling web pages, extracting content,
+    and managing the crawling process with various restrictions and configurations.
+
+    Attributes:
+        visited_urls (Set[str]): Set of URLs that have been crawled
+        max_pages (int): Maximum number of pages to crawl
+        same_domain_only (bool): Whether to restrict crawling to the same domain
+        pages_data (List[Dict[str, str]]): Collected data from crawled pages
+    """
+
     def __init__(self, max_pages: int = 10, same_domain_only: bool = True):
+        """
+        Initialize the web crawler with configurable parameters.
+
+        Args:
+            max_pages (int): Maximum number of pages to crawl (default: 10)
+            same_domain_only (bool): Whether to restrict crawling to the same domain (default: True)
+
+        Example:
+            >>> crawler = WebCrawler(max_pages=5, same_domain_only=True)
+        """
         self.visited_urls: Set[str] = set()
         self.max_pages = max_pages
         self.same_domain_only = same_domain_only
@@ -23,6 +67,17 @@ class WebCrawler:
         return urlparse(url).netloc
 
     class _CustomSpider(Spider):
+        """
+        Custom Scrapy spider implementation for controlled web crawling.
+
+        This inner class handles the actual crawling process with configurable
+        settings and proper rate limiting.
+
+        Attributes:
+            name (str): Name of the spider
+            custom_settings (dict): Scrapy spider configuration
+        """
+
         name = "compatible_crawler"
 
         custom_settings = {
@@ -36,6 +91,15 @@ class WebCrawler:
         def __init__(
             self, start_url: str, crawler_instance: "WebCrawler", *args, **kwargs
         ):
+            """
+            Initialize the spider with start URL and crawler instance.
+
+            Args:
+                start_url (str): The initial URL to start crawling from
+                crawler_instance (WebCrawler): Reference to the parent crawler
+                *args: Variable length argument list
+                **kwargs: Arbitrary keyword arguments
+            """
             super().__init__(*args, **kwargs)
             self.start_urls = [start_url]
             self.crawler_instance = crawler_instance
@@ -105,7 +169,21 @@ class WebCrawler:
                 logger.error(f"Error parsing {url}: {str(e)}")
 
     def extract_text_from_url(self, response: Response) -> Optional[Dict[str, str]]:
-        """Extract text content from a webpage"""
+        """
+        Extract text content from a webpage response.
+
+        Args:
+            response (Response): Scrapy response object containing the webpage
+
+        Returns:
+            Optional[Dict[str, str]]: Dictionary containing URL, text content, and title
+                                    or None if extraction fails
+
+        Example:
+            >>> data = crawler.extract_text_from_url(response)
+            >>> if data:
+            ...     print(f"Title: {data['title']}")
+        """
         try:
             # Remove script and style elements
             body = response.css("body").get()
@@ -131,12 +209,26 @@ class WebCrawler:
             return None
 
     def crawl(self, start_url: str) -> List[Dict[str, str]]:
-        """Crawl pages starting from a URL"""
-        # Reset state for new crawl
+        """
+        Start crawling from a specified URL.
+
+        Args:
+            start_url (str): The URL to start crawling from
+
+        Returns:
+            List[Dict[str, str]]: List of dictionaries containing extracted data
+                                 from crawled pages
+
+        Example:
+            >>> crawler = WebCrawler(max_pages=5)
+            >>> results = crawler.crawl("https://example.com")
+            >>> for page in results:
+            ...     print(f"Found page: {page['url']}")
+        """
+
         self.visited_urls.clear()
         self.pages_data.clear()
 
-        # Configure and run the crawler
         process = CrawlerProcess(
             {
                 "LOG_LEVEL": "ERROR",

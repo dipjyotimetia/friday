@@ -3,7 +3,7 @@ from openai import BaseModel
 
 class CrawlRequest(BaseModel):
     url: str
-    provider: str = "vertex"
+    provider: str = "openai"
     max_pages: int = 10
     same_domain: bool = True
 
