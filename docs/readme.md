@@ -19,7 +19,7 @@ This document provides an in-depth overview of the FRIDAY project, detailing its
 
 ## Introduction
 
-FRIDAY is an AI-powered CLI and web application that automatically generates test cases from Jira or GitHub issues and extracts additional context from Confluence. It leverages Google Vertex AI, LangChain, and ChromaDB for document embeddings and similarity search.
+FRIDAY is an AI-powered CLI and web application that automatically generates test cases from Jira or GitHub issues and extracts additional context from Confluence. It leverages Google Gemini, LangChain, and ChromaDB for document embeddings and similarity search.
 
 For a quick overview, see the [README.md](README.md).
 
@@ -147,7 +147,7 @@ The project relies on several key external libraries. Some notable ones include:
 EmbeddingsService
 
 ).
-- **Google Cloud & Vertex AI:** For test case generation processing.
+- **Google Cloud & Gemini AI:** For test case generation processing.
 - **Atlassian and GitHub APIs:** For fetching issue details.
 
 Check 

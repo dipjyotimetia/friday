@@ -1,6 +1,6 @@
 # FRIDAY - AI Test Agent
 
-An AI-powered test agent that uses Google Gemini and LangChain to automatically create test cases from Jira/GitHub issues and Confluence documentation, for a streamlined testing experience.
+An AI-powered test agent that uses Generative AI and LangChain to automatically create test cases from Jira/GitHub issues and execute API tests, for a streamlined testing experience.
 
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](https://opensource.org/licenses/MIT)
 
@@ -10,20 +10,21 @@ An AI-powered test agent that uses Google Gemini and LangChain to automatically 
 
 ## ✨ Key Features
 
--   **AI-Powered Test Case Generation:** Leverage Google Gemini or OpenAI to generate test cases.
+-   **AI-Powered Test Case Generation:** Leverage Google Gemini, OpenAI or mistral to generate test cases.
 -   **Requirement Extraction:** Automatically extract requirements from Jira tickets or GitHub issues.
 -   **Contextual Integration:** Incorporate relevant context from Confluence pages.
 -   **LangChain Processing:** Utilize LangChain for advanced prompt engineering.
 -   **Vectorized Storage:** Store and search documents efficiently using ChromaDB vectorization.
 -   **Flexible Export:** Export test cases in JSON or Markdown format.
 -   **Web Crawling:** Enhance context by creating embeddings using a web crawler.
+-   **API Testing:** Execute API tests for comprehensive validation of functionalities.
 
 ## ⚙️ Setup
 
 ### Prerequisites
 
 -   Python 3.12+
--   Google Cloud Platform account with Gemini enabled or OpenAI API key
+-   Gemini enabled or OpenAI API key 
 -   Jira/GitHub and Confluence access credentials
 
 ### Installation
@@ -57,10 +58,10 @@ friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o tes
 
 ```bash
 # Crawl single domain
-friday crawl https://example.com --provider vertex --persist-dir ./my_data/chroma --max-pages 5
+friday crawl https://example.com --provider openai --persist-dir ./my_data/chroma --max-pages 5
 
 # Crawl multiple domains
-friday crawl https://example.com --provider vertex --persist-dir ./my_data/chroma --max-pages 10 --same-domain false
+friday crawl https://example.com --provider openai --persist-dir ./my_data/chroma --max-pages 10 --same-domain false
 ```
 
 ### Command Reference
@@ -78,7 +79,7 @@ friday generate --help # Show generation options
 -   `--gh-issue`: GitHub issue number
 -   `--gh-repo`: GitHub repository (format: owner/repo)
 -   `--output`: Output file path (default: test_cases.md)
--   `--provider`: AI provider (vertex/openai)
+-   `--provider`: AI provider (gemini/openai)
 
 ## 🛠️ Development
 
@@ -154,6 +155,8 @@ JIRA_API_TOKEN
 CONFLUENCE_URL
 CONFLUENCE_USERNAME
 CONFLUENCE_API_TOKEN
+OPENAI_API_KEY
+GOOGLE_API_KEY
 ```
 
 ### Services

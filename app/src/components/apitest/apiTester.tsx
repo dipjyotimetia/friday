@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FormSection, Input, InputGroup, SubmitButton } from "../../css/friday";
+import { FormSection, Input, InputGroup, Select, SubmitButton } from '../../css/friday';
 import { apiService } from '../../services/api';
 import { FileUploader } from '../FileUploader';
 
@@ -11,8 +11,9 @@ interface ApiTesterProps {
 function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
   const [baseUrl, setBaseUrl] = useState('');
   const [isTestingApi, setIsTestingApi] = useState(false);
-  const [apiOutput, setApiOutput] = useState('api_test_report.md'); // Match default from API
+  const [apiOutput, setApiOutput] = useState('api_test_report.md');
   const [specFileObj, setSpecFileObj] = useState<File | null>(null);
+  const [provider, setProvider] = useState('openai');
 
   const handleApiTest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,15 +41,11 @@ function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
     setOutputText('Running API tests...');
 
     try {
-      const formData = new FormData();
-      formData.append('spec_upload', specFileObj);
-      formData.append('base_url', baseUrl.trim());
-      formData.append('output', apiOutput);
-
       const result = await apiService.testApi({
-        spec_file: specFileObj,
         base_url: baseUrl.trim(),
-        output: apiOutput
+        output: apiOutput,
+        spec_upload: specFileObj,
+        provider: provider,
       });
 
       setOutputText(
@@ -89,6 +86,16 @@ function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
             disabled={isTestingApi}
             required
           />
+          <Select
+            value={provider}
+            onChange={(e) => setProvider(e.target.value)}
+            disabled={isTestingApi}
+          >
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Gemini</option>
+            <option value="ollama">Ollama</option>
+            <option value="mistral">Mistral</option>
+          </Select>
           <Input
             type="text"
             placeholder="Output filename (e.g. api_test_report.md)"
@@ -99,10 +106,7 @@ function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
             title="Filename must end with .md extension"
           />
         </InputGroup>
-        <SubmitButton
-          type="submit"
-          disabled={isTestingApi || !specFileObj || !baseUrl}
-        >
+        <SubmitButton type="submit" disabled={isTestingApi || !specFileObj || !baseUrl}>
           {isTestingApi ? 'Running Tests...' : 'Run API Tests'}
         </SubmitButton>
       </form>

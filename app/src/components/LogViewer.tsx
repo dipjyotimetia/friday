@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Header, LogContainer, LogEntry, LogViewerContainer, Status, Timestamp } from '../css/LogViewer';
-
+import {
+  Header,
+  LogContainer,
+  LogEntry,
+  LogViewerContainer,
+  Status,
+  Timestamp,
+} from '../css/LogViewer';
 
 interface LogEntry {
   id: string;
@@ -8,6 +14,8 @@ interface LogEntry {
   timestamp: string;
   level?: 'info' | 'error' | 'warn';
 }
+
+const API_URL = 'localhost:8080';
 
 export function LogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -25,7 +33,7 @@ export function LogViewer() {
   }, []);
 
   const appendLog = useCallback((newLog: LogEntry) => {
-    setLogs(prev => {
+    setLogs((prev) => {
       // Keep only last 1000 logs to prevent memory issues
       const updatedLogs = [...prev, newLog];
       return updatedLogs.slice(-1000);
@@ -46,7 +54,7 @@ export function LogViewer() {
   }, [logs, autoScroll]);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8000/ws/logs');
+    const ws = new WebSocket(`ws://${API_URL}/api/v1/ws/logs`);
     socketRef.current = ws;
 
     ws.onopen = () => {
@@ -59,7 +67,8 @@ export function LogViewer() {
       // Attempt to reconnect after 3 seconds
       setTimeout(() => {
         if (socketRef.current?.readyState === WebSocket.CLOSED) {
-          socketRef.current = new WebSocket('ws://localhost:8000/ws/logs');
+          socketRef.current = new WebSocket(`ws://${API_URL}/api/v1/ws/logs`);
+          console.log('Attempting to reconnect...');
         }
       }, 3000);
     };
@@ -70,7 +79,7 @@ export function LogViewer() {
         appendLog({
           ...logEntry,
           timestamp: new Date().toISOString(),
-          id: crypto.randomUUID()
+          id: crypto.randomUUID(),
         });
       } catch (error) {
         console.error('Failed to parse log message:', error);
@@ -93,14 +102,11 @@ export function LogViewer() {
     <LogViewerContainer>
       <Header>
         <h3>Agent Logs</h3>
-        <Status isConnected={isConnected}>
+        <Status $isConnected={isConnected}>
           {isConnected ? 'Connected' : 'Disconnected'}
         </Status>
       </Header>
-      <LogContainer
-        ref={logContainerRef}
-        onScroll={handleScroll}
-      >
+      <LogContainer ref={logContainerRef} onScroll={handleScroll}>
         {logs.map(({ id, message, timestamp, level }) => (
           <LogEntry key={id} level={level}>
             <Timestamp>{timestamp}</Timestamp>

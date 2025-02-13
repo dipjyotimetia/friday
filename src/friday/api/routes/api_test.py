@@ -3,51 +3,69 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+import structlog
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from friday.api.schemas.api_test import ApiTestResponse
 from friday.agents.api_agent import ApiTestGenerator
+from friday.api.schemas.api_test import ApiTestRequest, ApiTestResponse
+from friday.llm.llm import ModelProvider
 
 router = APIRouter()
 
 
-@router.post("/testapi", response_model=ApiTestResponse)
-async def test_api(
+logger = structlog.get_logger(__name__)
+
+
+async def get_api_test_request(
     base_url: str = Form(..., description="Base URL for API testing"),
     output: str = Form("api_test_report.md", description="Output file path"),
     spec_file: Optional[str] = Form(None, description="Path to OpenAPI spec file"),
     spec_upload: Optional[UploadFile] = File(
         None, description="OpenAPI spec file upload"
     ),
-):
+    provider: ModelProvider = Form("openai", description="LLM Provider"),
+) -> ApiTestRequest:
+    return ApiTestRequest(
+        base_url=base_url,
+        output=output,
+        spec_file=spec_file,
+        spec_upload=spec_upload,
+        provider=provider,
+    )
+
+
+@router.post("/testapi", response_model=ApiTestResponse)
+async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_request)):
     """
     Run API tests using either a spec file path or uploaded spec file
     """
     try:
         # Validate required fields
-        if not base_url:
+        if not api_test_request.base_url:
             raise HTTPException(status_code=400, detail="base_url is required")
 
-        if not spec_file and not spec_upload:
+        if not api_test_request.spec_file and not api_test_request.spec_upload:
             raise HTTPException(
                 status_code=400,
                 detail="Either spec_file path or spec_upload file must be provided",
             )
 
         # Handle file upload
-        if spec_upload:
+        if api_test_request.spec_upload:
             # Validate file type
-            if not spec_upload.filename.endswith((".yaml", ".yml", ".json")):
+            if not api_test_request.spec_upload.filename.endswith(
+                (".yaml", ".yml", ".json")
+            ):
                 raise HTTPException(
                     status_code=400,
                     detail="Invalid file type. Must be .yaml, .yml or .json",
                 )
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".yaml") as tmp_file:
-                shutil.copyfileobj(spec_upload.file, tmp_file)
+                shutil.copyfileobj(api_test_request.spec_upload.file, tmp_file)
                 spec_path = Path(tmp_file.name)
         else:
-            spec_path = Path(spec_file)
+            spec_path = Path(api_test_request.spec_file)
 
         if not spec_path.exists():
             raise HTTPException(
@@ -55,7 +73,9 @@ async def test_api(
             )
 
         # Initialize generator
-        generator = ApiTestGenerator(openapi_spec_path=str(spec_path))
+        generator = ApiTestGenerator(
+            openapi_spec_path=str(spec_path), provider=api_test_request.provider
+        )
 
         # Load and validate spec
         spec = await generator.load_spec()
@@ -71,19 +91,21 @@ async def test_api(
             for method, details in methods.items():
                 test_cases = await generator.create_test_cases(path, method, spec)
                 total_tests += len(test_cases)
-                await generator.execute_tests(test_cases, base_url=base_url.rstrip("/"))
+                await generator.execute_tests(
+                    test_cases, base_url=api_test_request.base_url.rstrip("/")
+                )
 
         # Generate and save report
         report = await generator.generate_report()
-        output_path = Path(output)
+        output_path = Path(api_test_request.output)
         output_path.write_text(report)
 
         # Handle file upload
-        if spec_upload:
+        if api_test_request.spec_upload:
             spec_path.unlink()
 
         return {
-            "message": f"Test report generated at {output}",
+            "message": f"Test report generated at {api_test_request.output}",
             "total_tests": total_tests,
             "paths_tested": paths_tested,
         }

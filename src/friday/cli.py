@@ -1,4 +1,35 @@
-import asyncio
+"""
+Friday CLI Module
+
+This module provides the command-line interface for Friday, an AI-powered testing agent.
+It supports various commands for test case generation, web crawling, and environment setup.
+
+Features:
+- Test case generation from Jira or GitHub issues
+- Web crawling with multiple LLM provider support
+- Environment configuration management
+- Version information
+- Rich console output with colored formatting
+
+Commands:
+    generate: Generate test cases from Jira or GitHub issues
+    crawl: Crawl webpage content and store embeddings
+    version: Display Friday version
+    setup: Configure environment parameters
+
+Example:
+    ```bash
+    # Generate test cases from a Jira issue
+    friday generate --jira-key PROJECT-123 --output tests.md
+
+    # Crawl a website and store embeddings
+    friday crawl https://example.com --provider openai --max-pages 20
+
+    # Set up environment configuration
+    friday setup
+    ```
+"""
+
 import logging
 from pathlib import Path
 from typing import Optional
@@ -6,19 +37,16 @@ from typing import Optional
 import typer
 from rich import print
 
-from friday.config.config import validate_config
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
-from friday.agents.api_agent import ApiTestGenerator
-from friday.agents.perf_agent import PerfTestGenerator
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 from friday.services.test_generator import TestCaseGenerator
 from friday.utils.helpers import save_test_cases_as_markdown
 from friday.version import __version__
 
-app = typer.Typer(name="friday", help="AI-powered test case generator CLI")
+app = typer.Typer(name="friday", help="AI-powered testing agent")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -40,10 +68,32 @@ def generate(
         Path("test_cases.md"), "--output", "-o", help="Output file path"
     ),
 ):
-    """Generate test cases from Jira or GitHub issues"""
+    """
+    Generate test cases from Jira or GitHub issues.
 
-    if not validate_config():
-        raise typer.Exit(code=1)
+    This command fetches issue details from either Jira or GitHub and generates
+    test cases using AI. Additional context can be provided from Confluence pages.
+
+    Args:
+        jira_key: Jira issue key (e.g., PROJECT-123)
+        gh_issue: GitHub issue number
+        gh_repo: GitHub repository in owner/repo format
+        confluence_id: Confluence page ID for additional context
+        template: Template key for test case generation
+        output: Output file path for generated test cases
+
+    Example:
+        ```bash
+        # Generate from Jira issue
+        friday generate --jira-key PROJECT-123 --output tests.md
+
+        # Generate from GitHub issue with Confluence context
+        friday generate --gh-repo owner/repo --gh-issue 42 --confluence-id 123456
+        ```
+
+    Raises:
+        typer.Exit: If required parameters are missing or an error occurs
+    """
 
     if gh_issue and not gh_repo:
         typer.echo("Error: --gh-repo is required when using --gh-issue", err=True)
@@ -57,8 +107,6 @@ def generate(
         jira = JiraConnector()
         confluence = ConfluenceConnector()
         github = GitHubConnector()
-        # for openai provider
-        # test_generator = TestCaseGenerator(provider="openai")
         test_generator = TestCaseGenerator()
 
         if jira_key:
@@ -89,7 +137,7 @@ def generate(
 def crawl(
     url: str = typer.Argument(..., help="URL to crawl"),
     provider: str = typer.Option(
-        "vertex", help="Embedding provider (vertex or openai)"
+        "openai", help="Embedding provider (gemini, openai, ollama, mistral)"
     ),
     persist_dir: str = typer.Option(
         "./data/chroma", help="ChromaDB persistence directory"
@@ -99,7 +147,31 @@ def crawl(
         True, help="Only crawl pages from the same domain"
     ),
 ):
-    """Crawl webpage content and store embeddings in ChromaDB"""
+    """
+    Crawl webpage content and store embeddings in ChromaDB.
+
+    This command crawls web pages starting from the provided URL and stores
+    the extracted content as embeddings in a ChromaDB database.
+
+    Args:
+        url: Starting URL to crawl
+        provider: LLM provider for generating embeddings
+        persist_dir: Directory to store ChromaDB files
+        max_pages: Maximum number of pages to crawl
+        same_domain: Whether to restrict crawling to the same domain
+
+    Example:
+        ```bash
+        # Crawl with default settings
+        friday crawl https://example.com
+
+        # Crawl with custom settings
+        friday crawl https://example.com --provider gemini --max-pages 20 --persist-dir ./embeddings
+        ```
+
+    Raises:
+        typer.Exit: If crawling or embedding generation fails
+    """
     try:
         # Initialize crawler
         crawler = WebCrawler(max_pages=max_pages, same_domain_only=same_domain)
@@ -138,63 +210,42 @@ def crawl(
 
 
 @app.command()
-def perftest(
-    spec_file: Optional[Path] = typer.Option(
-        None, "--spec", "-s", help="Path to API specification file"
-    ),
-    curl: Optional[str] = typer.Option(
-        None, "--curl", "-c", help="Curl command to test"
-    ),
-    base_url: Optional[str] = typer.Option(
-        None, "--base-url", "-b", help="Base URL for API testing"
-    ),
-    users: int = typer.Option(10, "--users", "-u", help="Number of concurrent users"),
-    duration: int = typer.Option(
-        30, "--duration", "-d", help="Test duration in seconds"
-    ),
-    output: Path = typer.Option(
-        Path("perf_test_report.md"),
-        "--output",
-        "-o",
-        help="Output path for performance report",
-    ),
-):
-    """Run performance tests and generate a report"""
-    try:
-        if spec_file and not spec_file.exists():
-            print("[red]Error: OpenAPI specification file not found[/red]")
-            raise typer.Exit(code=1)
-
-        if not spec_file and not curl:
-            print("[red]Error: Either spec file or curl command must be provided[/red]")
-            raise typer.Exit(code=1)
-
-        generator = PerfTestGenerator(
-            openapi_spec_path=str(spec_file) if spec_file else None,
-            concurrent_users=users,
-            duration=duration,
-        )
-
-        asyncio.run(generator.execute_load_test(base_url=base_url, curl_command=curl))
-        report = generator.generate_report()
-        output.write_text(report)
-
-        print(f"\n[green]Performance test report generated at: {output}[/green]")
-
-    except Exception as e:
-        print(f"[red]Error running performance tests: {str(e)}[/red]")
-        raise typer.Exit(code=1)
-
-
-@app.command()
 def version():
-    """Show the version of Friday"""
+    """
+    Show the version of Friday.
+
+    Displays the current version number of the Friday CLI tool.
+
+    Example:
+        ```bash
+        friday version
+        ```
+    """
     print(f"Friday v{__version__}")
 
 
 @app.command()
 def setup():
-    """Verify and configure required environment parameters"""
+    """
+    Verify and configure required environment parameters.
+
+    This command helps set up the required environment variables for Friday.
+    It creates or updates a .env file with necessary configuration parameters.
+
+    Configuration includes:
+    - Google Cloud settings
+    - GitHub credentials
+    - Jira/Confluence credentials
+    - API keys for various LLM providers
+
+    Example:
+        ```bash
+        friday setup
+        ```
+
+    Note:
+        Existing values in .env file will be preserved unless new values are provided.
+    """
     required_params = {
         "GOOGLE_CLOUD_PROJECT": "Google Cloud project ID",
         "GOOGLE_CLOUD_REGION": "Google Cloud region (default: us-central1)",
@@ -206,6 +257,8 @@ def setup():
         "CONFLUENCE_URL": "Confluence URL (e.g. https://your-org.atlassian.net/wiki)",
         "CONFLUENCE_USERNAME": "Confluence username/email",
         "CONFLUENCE_API_TOKEN": "Confluence API token",
+        "OPENAI_API_KEY": "OpenAI API key",
+        "MISTRAL_API_KEY": "Mistral AI API key",
     }
 
     env_file = Path(".env")
@@ -246,72 +299,13 @@ def setup():
             f.write(f"{key}={value}\n")
 
     print("\n[green]Environment configuration saved to .env file[/green]")
-
-    # Verify configuration
-    if validate_config():
-        print("[green]✓ All required parameters are configured[/green]")
-    else:
-        print("[red]⨯ Some required parameters are missing[/red]")
-        print("Run 'friday setup' again to configure missing parameters")
-
-
-@app.command()
-def testapi(
-    spec_file: Path = typer.Option(
-        ..., "--spec", "-s", help="Path to API specification file"
-    ),
-    base_url: str = typer.Option(
-        ..., "--base-url", "-b", help="Base URL for API testing"
-    ),
-    output: Path = typer.Option(
-        Path("api_test_report.md"), "--output", "-o", help="Output path for test report"
-    ),
-):
-    """Run API tests and generate a report"""
-    try:
-        if not spec_file.exists():
-            print("[red]Error: OpenAPI specification file not found[/red]")
-            raise typer.Exit(code=1)
-
-        # Initialize the API test agent
-        generator = ApiTestGenerator(openapi_spec_path=str(spec_file))
-
-        # Load and validate spec
-        spec = generator.load_spec()
-        if not generator.validate_spec(spec):
-            print("[red]Error: Invalid OpenAPI specification[/red]")
-            raise typer.Exit(code=1)
-
-        # Track test execution statistics
-        total_tests = 0
-        paths_tested = 0
-
-        # Test each endpoint
-        for path, methods in spec["paths"].items():
-            paths_tested += 1
-            print(f"\n[blue]Testing path: {path}[/blue]")
-
-            for method, details in methods.items():
-                print(f"[yellow]Method: {method.upper()}[/yellow]")
-                test_cases = generator.create_test_cases(path, method, spec)
-                total_tests += len(test_cases)
-                generator.execute_tests(test_cases, base_url=base_url.rstrip("/"))
-
-        # Generate and save test report
-        report = generator.generate_report()
-        output.write_text(report)
-
-        print("\n[green]Test Summary:[/green]")
-        print(f"Paths tested: {paths_tested}")
-        print(f"Total test cases: {total_tests}")
-        print(f"Test report generated at: {output}")
-
-    except Exception as e:
-        print(f"[red]Error running API tests: {str(e)}[/red]")
-        raise typer.Exit(code=1)
+    print("[green]✓ Environment setup complete[/green]")
 
 
 def main():
+    """
+    Main entry point for the Friday CLI application.
+    """
     app()
 
 
