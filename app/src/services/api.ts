@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const API_URL = process.env.SERVICE_URL || 'http://localhost:8080';
+const API_URL = 'http://localhost:8080';
 
 interface RetryOptions {
   retries?: number;

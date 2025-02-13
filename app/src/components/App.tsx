@@ -75,7 +75,7 @@ function FridayApp() {
           {tabs.map((tab) => (
             <TabButton
               key={tab.id}
-              isActive={activeTab === tab.id}
+              $isActive={activeTab === tab.id}
               onClick={() => handleTabClick(tab.id)}
             >
               {tab.label}
@@ -84,7 +84,7 @@ function FridayApp() {
         </TabsContainer>
 
         {tabs.map((tab) => (
-          <TabContent key={tab.id} isActive={activeTab === tab.id}>
+          <TabContent key={tab.id} $isActive={activeTab === tab.id}>
             <tab.component
               key={tab.id}
               setOutputText={setOutputText}

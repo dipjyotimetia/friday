@@ -15,6 +15,8 @@ interface LogEntry {
   level?: 'info' | 'error' | 'warn';
 }
 
+const API_URL = 'localhost:8080';
+
 export function LogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -52,7 +54,7 @@ export function LogViewer() {
   }, [logs, autoScroll]);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8000/ws/logs');
+    const ws = new WebSocket(`ws://${API_URL}/api/v1/ws/logs`);
     socketRef.current = ws;
 
     ws.onopen = () => {
@@ -65,7 +67,8 @@ export function LogViewer() {
       // Attempt to reconnect after 3 seconds
       setTimeout(() => {
         if (socketRef.current?.readyState === WebSocket.CLOSED) {
-          socketRef.current = new WebSocket('ws://localhost:8000/ws/logs');
+          socketRef.current = new WebSocket(`ws://${API_URL}/api/v1/ws/logs`);
+          console.log('Attempting to reconnect...');
         }
       }, 3000);
     };
@@ -99,7 +102,7 @@ export function LogViewer() {
     <LogViewerContainer>
       <Header>
         <h3>Agent Logs</h3>
-        <Status isConnected={isConnected}>
+        <Status $isConnected={isConnected}>
           {isConnected ? 'Connected' : 'Disconnected'}
         </Status>
       </Header>

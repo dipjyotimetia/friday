@@ -21,9 +21,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:8080"
+    links:
+      - api
     environment:
-      - SERVICE_URL=http://api:8080
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - API_URL=api:8080
     depends_on:
       - api
 

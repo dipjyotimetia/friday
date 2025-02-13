@@ -53,12 +53,12 @@ export const Header = styled.div`
   }
 `;
 
-export const Status = styled.span<{ isConnected: boolean }>`
+export const Status = styled.span<{ $isConnected: boolean }>`
   padding: 0.6rem 1.2rem; /* Adjusted padding */
   border-radius: 16px; /* More rounded corners */
   font-size: 0.9rem;
   background: ${(props) =>
-    props.isConnected
+    props.$isConnected
       ? 'linear-gradient(135deg, #43a047, #2e7d32)'
       : 'linear-gradient(135deg, #d32f2f, #b71c1c)'};
   color: var(--text-primary);

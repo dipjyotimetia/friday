@@ -1,7 +1,8 @@
 # API
 
 ## Local Run
-`uvicorn friday.api.app:app --reload`
+`uvicorn friday.api.app:app --reload --port 8080`
+
 
 ## Docker Run
 ```bash
@@ -15,26 +16,26 @@ docker run -d -p 8080:8080 friday-api
 
 ```bash
 # Test with spec file path
-curl -X POST "http://localhost:8000/testapi" \
+curl -X POST "http://localhost:8000/api/v1/testapi" \
   -H "Content-Type: multipart/form-data" \
   -F "base_url=https://petstore.swagger.io/v2/pet" \
   -F "spec_file=./docs/specs/petstore.yaml" \
   -F "output=report.md"
 
 # Test with file upload
-curl -X POST "http://localhost:8000/testapi" \
+curl -X POST "http://localhost:8000/api/v1/testapi" \
   -H "Content-Type: multipart/form-data" \
   -F "base_url=https://petstore.swagger.io/v2/pet" \
   -F "spec_upload=@./docs/specs/petstore.yaml" \
   -F "output=report.md"
 ```
 
-```json
 # Get version
 curl http://localhost:8000/version
 
 # Generate test cases
-curl -X POST http://localhost:8000/generate \
+```bash
+curl -X POST http://localhost:8000/api/v1/generate \
   -H "Content-Type: application/json" \
   -d '{
     "jira_key": "PROJ-123",
@@ -44,7 +45,7 @@ curl -X POST http://localhost:8000/generate \
   }'
 
 # Crawl website
-curl -X POST http://localhost:8000/crawl \
+curl -X POST http://localhost:8000/api/v1/crawl \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com",

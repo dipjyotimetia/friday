@@ -75,8 +75,8 @@ export const CheckboxLabel = styled.label`
   }
 `;
 
-export const TabContent = styled.div<{ isActive: boolean }>`
-  display: ${(props) => (props.isActive ? 'block' : 'none')};
+export const TabContent = styled.div<{ $isActive: boolean }>`
+  display: ${(props) => (props.$isActive ? 'block' : 'none')};
   animation: ${fadeIn} 0.4s ease-out;
 `;
 
@@ -177,26 +177,26 @@ export const TabsContainer = styled.div`
   }
 `;
 
-export const TabButton = styled.button<{ isActive: boolean }>`
+export const TabButton = styled.button<{ $isActive: boolean }>`
   padding: 1.1rem 2.2rem;
   border: none;
   background: ${(props) =>
-    props.isActive
+    props.$isActive
       ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))'
       : 'transparent'};
-  color: ${(props) => (props.isActive ? '#fff' : 'var(--text-primary)')};
+  color: ${(props) => (props.$isActive ? '#fff' : 'var(--text-primary)')};
   cursor: pointer;
   border-radius: 10px;
   font-weight: 500;
   transition: all 0.3s ease;
   box-shadow: ${(props) =>
-    props.isActive ? '0 6px 20px rgba(66, 133, 244, 0.4)' : 'none'};
+    props.$isActive ? '0 6px 20px rgba(66, 133, 244, 0.4)' : 'none'};
   letter-spacing: 0.6px;
 
   &:hover {
     transform: translateY(-3px);
     background: ${(props) =>
-      props.isActive
+      props.$isActive
         ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))'
         : 'rgba(66, 133, 244, 0.1)'};
     box-shadow: 0 8px 24px rgba(66, 133, 244, 0.3);
