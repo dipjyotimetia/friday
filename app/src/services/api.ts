@@ -1,4 +1,43 @@
-const API_URL = 'http://localhost:8000';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+
+const API_URL = process.env.SERVICE_URL || 'http://localhost:8080';
+
+interface RetryOptions {
+  retries?: number;
+  retryDelay?: number;
+}
+
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 10000, // Adjust as needed
+});
+
+async function axiosWithRetry<T = any>(
+  url: string,
+  options: AxiosRequestConfig = {},
+  retryOptions: RetryOptions = { retries: 3, retryDelay: 1000 }
+): Promise<AxiosResponse<T>> {
+  const { retries = 3, retryDelay = 1000 } = retryOptions;
+
+  let attempt = 0;
+
+  while (attempt <= retries) {
+    try {
+      const response = await axiosInstance(url, options);
+      return response;
+    } catch (error: any) {
+      if (attempt === retries || !error.response || error.response.status >= 500) {
+        throw error;
+      }
+
+      attempt++;
+      console.log(`Retrying ${url}, attempt ${attempt}/${retries}`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
+  }
+
+  throw new Error(`Failed to fetch ${url} after ${retries} retries`); // Should not reach here
+}
 
 export interface GenerateRequest {
   jira_key: string;
@@ -23,43 +62,35 @@ export interface ApiTestRequest {
   output: string;
 }
 
-export interface PerfTestResponse {
-  report: string;
-}
-
-export interface PerfTestRequest {
-  spec_file?: File;
-  curl_command?: string;
-  base_url?: string;
-  users: number;
-  duration: number;
-}
-
 export const apiService = {
   async generateTests(data: GenerateRequest) {
-    const response = await fetch(`${API_URL}/generate`, {
+    const response = await axiosWithRetry<any>(`/api/v1/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      data: data,
     });
-    return response.json();
+    return response.data;
   },
 
   async crawlWebsite(data: CrawlRequest) {
-    const response = await fetch(`${API_URL}/crawl`, {
+    const response = await axiosWithRetry<any>(`/api/v1/crawl`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      data: data,
     });
-    return response.json();
+    return response.data;
   },
 
   async testApi({
     spec_file,
     spec_path,
     base_url,
-    output
-  }: ApiTestRequest): Promise<{ message: string; total_tests: number; paths_tested: number }> {
+    output,
+  }: ApiTestRequest): Promise<{
+    message: string;
+    total_tests: number;
+    paths_tested: number;
+  }> {
     const formData = new FormData();
 
     // Handle either spec_file upload or spec_path
@@ -72,54 +103,16 @@ export const apiService = {
     formData.append('base_url', base_url);
     formData.append('output', output);
 
-    const response = await fetch(`${API_URL}/testapi`, {
-      method: 'POST', 
-      body: formData
-    });
+    try {
+      const response = await axiosWithRetry<any>(`/api/v1/testapi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'multipart/form-data' },
+        data: formData,
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'API test request failed');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'API test request failed');
     }
-
-    return response.json();
   },
-
-  async runPerfTest({
-    spec_file,
-    curl_command,
-    base_url,
-    users,
-    duration
-  }: PerfTestRequest): Promise<{ report: string }> {
-    const formData = new FormData();
-
-    // Only append if values are provided
-    if (spec_file) {
-      formData.append('spec_file', spec_file);
-    }
-
-    if (curl_command) {
-      formData.append('curl_command', curl_command);
-    }
-
-    if (base_url) {
-      formData.append('base_url', base_url);
-    }
-
-    formData.append('users', users.toString());
-    formData.append('duration', duration.toString());
-
-    const response = await fetch(`${API_URL}/perftest`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to run performance test');
-    }
-
-    return response.json();
-  }
 };

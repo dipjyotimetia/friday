@@ -3,12 +3,16 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
+import structlog
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from friday.api.schemas.api_test import ApiTestResponse
 from friday.agents.api_agent import ApiTestGenerator
+from friday.api.schemas.api_test import ApiTestResponse
 
 router = APIRouter()
+
+
+logger = structlog.get_logger(__name__)
 
 
 @router.post("/testapi", response_model=ApiTestResponse)

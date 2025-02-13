@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Header, LogContainer, LogEntry, LogViewerContainer, Status, Timestamp } from '../css/LogViewer';
-
+import {
+  Header,
+  LogContainer,
+  LogEntry,
+  LogViewerContainer,
+  Status,
+  Timestamp,
+} from '../css/LogViewer';
 
 interface LogEntry {
   id: string;
@@ -25,7 +31,7 @@ export function LogViewer() {
   }, []);
 
   const appendLog = useCallback((newLog: LogEntry) => {
-    setLogs(prev => {
+    setLogs((prev) => {
       // Keep only last 1000 logs to prevent memory issues
       const updatedLogs = [...prev, newLog];
       return updatedLogs.slice(-1000);
@@ -70,7 +76,7 @@ export function LogViewer() {
         appendLog({
           ...logEntry,
           timestamp: new Date().toISOString(),
-          id: crypto.randomUUID()
+          id: crypto.randomUUID(),
         });
       } catch (error) {
         console.error('Failed to parse log message:', error);
@@ -97,10 +103,7 @@ export function LogViewer() {
           {isConnected ? 'Connected' : 'Disconnected'}
         </Status>
       </Header>
-      <LogContainer
-        ref={logContainerRef}
-        onScroll={handleScroll}
-      >
+      <LogContainer ref={logContainerRef} onScroll={handleScroll}>
         {logs.map(({ id, message, timestamp, level }) => (
           <LogEntry key={id} level={level}>
             <Timestamp>{timestamp}</Timestamp>

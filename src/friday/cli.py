@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from pathlib import Path
 from typing import Optional
@@ -6,12 +5,11 @@ from typing import Optional
 import typer
 from rich import print
 
+from friday.agents.api_agent import ApiTestGenerator
 from friday.config.config import validate_config
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
-from friday.agents.api_agent import ApiTestGenerator
-from friday.agents.perf_agent import PerfTestGenerator
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 from friday.services.test_generator import TestCaseGenerator
@@ -134,55 +132,6 @@ def crawl(
 
     except Exception as e:
         typer.echo(f"Error: {str(e)}", err=True)
-        raise typer.Exit(code=1)
-
-
-@app.command()
-def perftest(
-    spec_file: Optional[Path] = typer.Option(
-        None, "--spec", "-s", help="Path to API specification file"
-    ),
-    curl: Optional[str] = typer.Option(
-        None, "--curl", "-c", help="Curl command to test"
-    ),
-    base_url: Optional[str] = typer.Option(
-        None, "--base-url", "-b", help="Base URL for API testing"
-    ),
-    users: int = typer.Option(10, "--users", "-u", help="Number of concurrent users"),
-    duration: int = typer.Option(
-        30, "--duration", "-d", help="Test duration in seconds"
-    ),
-    output: Path = typer.Option(
-        Path("perf_test_report.md"),
-        "--output",
-        "-o",
-        help="Output path for performance report",
-    ),
-):
-    """Run performance tests and generate a report"""
-    try:
-        if spec_file and not spec_file.exists():
-            print("[red]Error: OpenAPI specification file not found[/red]")
-            raise typer.Exit(code=1)
-
-        if not spec_file and not curl:
-            print("[red]Error: Either spec file or curl command must be provided[/red]")
-            raise typer.Exit(code=1)
-
-        generator = PerfTestGenerator(
-            openapi_spec_path=str(spec_file) if spec_file else None,
-            concurrent_users=users,
-            duration=duration,
-        )
-
-        asyncio.run(generator.execute_load_test(base_url=base_url, curl_command=curl))
-        report = generator.generate_report()
-        output.write_text(report)
-
-        print(f"\n[green]Performance test report generated at: {output}[/green]")
-
-    except Exception as e:
-        print(f"[red]Error running performance tests: {str(e)}[/red]")
         raise typer.Exit(code=1)
 
 

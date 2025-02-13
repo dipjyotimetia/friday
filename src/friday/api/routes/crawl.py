@@ -1,12 +1,11 @@
-import logging
-
+import structlog
 from fastapi import APIRouter, HTTPException
 
 from friday.api.schemas.crawl import CrawlRequest
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter()
 

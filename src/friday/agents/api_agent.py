@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Dict, List
 
 import httpx
+import structlog
 import yaml
 from langchain_community.agent_toolkits import OpenAPIToolkit
 from langchain_community.agent_toolkits.openapi.base import create_openapi_agent
@@ -11,23 +12,34 @@ from langchain_community.tools.json.tool import JsonSpec
 from langchain_community.utilities import RequestsWrapper
 from langchain_core.exceptions import OutputParserException
 from langchain_google_vertexai import VertexAI
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from friday.services.logger import ws_logger
+
+logger = structlog.get_logger(__name__)
 
 
 class ApiTestGenerator:
     def __init__(self, openapi_spec_path: str):
         self.spec_path = openapi_spec_path
-        self.http_client = httpx.AsyncClient(verify=True, timeout=30.0)
+        self.http_client = httpx.AsyncClient(
+            verify=True,
+            timeout=httpx.Timeout(30.0),
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+        )
         self.max_retries = 3  # Add max retries
         self.llm = VertexAI(
             model_name="gemini-pro",
             kwargs={"temperature": 0.5, "max_tokens": 1024, "timeout": None},
         )
         self.test_results = []
-        with open(self.spec_path) as f:
-            raw_api_spec = yaml.safe_load(f)
-        self.api_spec = JsonSpec(dict_=raw_api_spec, max_value_length=4000)
+        try:
+            with open(self.spec_path) as f:
+                raw_api_spec = yaml.safe_load(f)
+                self.api_spec = JsonSpec(dict_=raw_api_spec, max_value_length=4000)
+        except Exception as e:
+            logger.error("Failed to load API spec", error=str(e), path=self.spec_path)
+            raise RuntimeError(f"Failed to initialize API generator: {str(e)}")
         self.requests_wrapper = RequestsWrapper(
             headers={},  # Add any default headers here
             verify=True,  # Enable SSL verification
@@ -196,6 +208,11 @@ class ApiTestGenerator:
                     await self._send_log("Max retries reached, using default test")
                     return [default_test]
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        reraise=True,
+    )
     async def execute_tests(self, test_cases: List[Dict], base_url: str) -> None:
         try:
             for test in test_cases:
@@ -206,6 +223,7 @@ class ApiTestGenerator:
                         url=f"{base_url.rstrip('/')}/{test['endpoint'].lstrip('/')}",
                         json=test.get("payload"),
                         headers=test.get("headers", {}),
+                        timeout=30.0,
                     )
 
                     try:

@@ -4,7 +4,7 @@ from typing import List
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from friday.api.routes import api_test, crawl, generate, health, perf_test, ws
+from friday.api.routes import api_test, crawl, generate, health, ws
 from friday.version import __version__
 
 app = FastAPI(
@@ -29,12 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(generate.router, tags=["Test Generation"])
-app.include_router(crawl.router, tags=["Web Crawling"])
-app.include_router(health.router, tags=["System"])
-app.include_router(api_test.router, tags=["API Testing"])
-app.include_router(ws.router, tags=["WebSocket"])
-app.include_router(perf_test.router, tags=["Performance Testing"])
+app.include_router(generate.router, prefix="/api/v1", tags=["Test Generation"])
+app.include_router(crawl.router, prefix="/api/v1", tags=["Web Crawling"])
+app.include_router(health.router, prefix="/api/v1", tags=["Health Check"])
+app.include_router(api_test.router, prefix="/api/v1", tags=["API Testing"])
+app.include_router(ws.router, prefix="/api/v1", tags=["WebSocket"])
+
 
 if __name__ == "__main__":
     import uvicorn
