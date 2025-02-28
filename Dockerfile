@@ -2,7 +2,7 @@
 FROM python:3.12-slim AS builder
 
 # Set build arguments and environment variables
-ARG POETRY_VERSION=2.0.1
+ARG POETRY_VERSION=2.1.1
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \

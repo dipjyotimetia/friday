@@ -1,7 +1,7 @@
 # API
 
 ## Local Run
-`uvicorn friday.api.app:app --reload --port 8080 --log-level info`
+`uvicorn friday.api.app:app --host 0.0.0.0 --port 8080 --reload`
 
 
 ## Docker Run
