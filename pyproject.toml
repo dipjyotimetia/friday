@@ -23,7 +23,7 @@ Homepage = "https://github.com/dipjyotimetia/friday"
 friday = "friday.cli:main"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.12,<3.13"
 google-cloud-aiplatform = "^1.81.0"
 google-genai = "^1.2.0"
 python-dotenv = "^1.0.1"
@@ -46,9 +46,10 @@ scrapy = "^2.12.0"
 sentence-transformers = "^3.4.1"
 jsonschema = "^4.23.0"
 websocket = "^0.2.1"
-httpx = "^0.28.1"
+httpx = ">=0.27.0,<0.28.0"
 python-multipart = "^0.0.20"
 structlog = "^25.1.0"
+crewai = "^0.114.0"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
