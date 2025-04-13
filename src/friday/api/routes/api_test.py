@@ -6,7 +6,7 @@ from typing import Optional
 import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from friday.agents.api_agent import ApiTestGenerator
+from friday.agents.api_agents import ApiTestCreator, ApiTestExecutor
 from friday.api.schemas.api_test import ApiTestRequest, ApiTestResponse
 from friday.llm.llm import ModelProvider
 
@@ -25,6 +25,28 @@ async def get_api_test_request(
     ),
     provider: ModelProvider = Form("openai", description="LLM Provider"),
 ) -> ApiTestRequest:
+    """
+    Extract and validate API test request from form data.
+
+    This function validates that either spec_file or spec_upload is provided.
+
+    Args:
+        base_url: Base URL for API testing
+        output: Output file path for test results
+        spec_file: Path to an existing OpenAPI spec file
+        spec_upload: Uploaded OpenAPI spec file
+        provider: LLM provider for test generation
+
+    Returns:
+        ApiTestRequest: Validated request object
+
+    Raises:
+        HTTPException: If neither spec_file nor spec_upload is provided
+    """
+    if not spec_file and not spec_upload:
+        raise HTTPException(
+            status_code=400, detail="Either spec_file or spec_upload must be provided"
+        )
     return ApiTestRequest(
         base_url=base_url,
         output=output,
@@ -35,80 +57,92 @@ async def get_api_test_request(
 
 
 @router.post("/testapi", response_model=ApiTestResponse)
-async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_request)):
+async def test_api(request: ApiTestRequest = Depends(get_api_test_request)):
     """
-    Run API tests using either a spec file path or uploaded spec file
+    Generate and execute API tests using OpenAPI specification.
+
+    This endpoint:
+    1. Accepts an OpenAPI specification file
+    2. Generates test cases for API endpoints
+    3. Executes tests against the specified base URL
+    4. Generates a comprehensive test report
+
+    Args:
+        request: API test request with specification and parameters
+
+    Returns:
+        ApiTestResponse: Summary of test execution
+
+    Raises:
+        HTTPException: For various error conditions during test generation/execution
     """
     try:
-        # Validate required fields
-        if not api_test_request.base_url:
-            raise HTTPException(status_code=400, detail="base_url is required")
-
-        if not api_test_request.spec_file and not api_test_request.spec_upload:
-            raise HTTPException(
-                status_code=400,
-                detail="Either spec_file path or spec_upload file must be provided",
+        spec_path = request.spec_file
+        if request.spec_upload:
+            # Create a temporary file for the uploaded spec
+            fd, temp_path = tempfile.mkstemp(
+                suffix=Path(request.spec_upload.filename).suffix
             )
+            spec_path = temp_path
+            with open(spec_path, "wb") as f:
+                shutil.copyfileobj(request.spec_upload.file, f)
 
-        # Handle file upload
-        if api_test_request.spec_upload:
-            # Validate file type
-            if not api_test_request.spec_upload.filename.endswith(
-                (".yaml", ".yml", ".json")
-            ):
+        paths_tested = 0
+        total_tests = 0
+
+        # Create a test creator to generate test cases
+        async with ApiTestCreator(spec_path, provider=request.provider) as creator:
+            spec = await creator.load_spec()
+
+            if not creator.validate_spec(spec):
                 raise HTTPException(
-                    status_code=400,
-                    detail="Invalid file type. Must be .yaml, .yml or .json",
+                    status_code=422, detail="Invalid OpenAPI specification"
                 )
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".yaml") as tmp_file:
-                shutil.copyfileobj(api_test_request.spec_upload.file, tmp_file)
-                spec_path = Path(tmp_file.name)
-        else:
-            spec_path = Path(api_test_request.spec_file)
+            test_cases_by_endpoint = {}
 
-        if not spec_path.exists():
-            raise HTTPException(
-                status_code=400, detail="OpenAPI specification file not found"
-            )
+            # Generate test cases for each endpoint
+            for path, path_details in spec["paths"].items():
+                for method in path_details.keys():
+                    # Skip parameters and other non-method keys
+                    if method.lower() not in ["get", "post", "put", "delete", "patch"]:
+                        continue
 
-        # Initialize generator
-        generator = ApiTestGenerator(
-            openapi_spec_path=str(spec_path), provider=api_test_request.provider
+                    # Generate test cases for this endpoint/method
+                    test_cases = await creator.create_test_cases(
+                        path, method.upper(), spec
+                    )
+                    if test_cases:
+                        test_cases_by_endpoint[(path, method.upper())] = test_cases
+                        paths_tested += 1
+                        total_tests += len(test_cases)
+
+        # Use a test executor to run the tests and generate reports
+        async with ApiTestExecutor(provider=request.provider) as executor:
+            # Execute all the test cases
+            for endpoint_method, test_cases in test_cases_by_endpoint.items():
+                await executor.execute_tests(test_cases, request.base_url)
+
+            # Generate a comprehensive report
+            report = await executor.generate_report()
+
+            # Save the report to the specified output file
+            with open(request.output, "w") as f:
+                f.write(report)
+
+        # Clean up temporary file if created
+        if request.spec_upload:
+            Path(spec_path).unlink(missing_ok=True)
+
+        # Return a summary of the test execution
+        return ApiTestResponse(
+            message=f"API tests executed successfully. Report saved to {request.output}",
+            total_tests=total_tests,
+            paths_tested=paths_tested,
         )
 
-        # Load and validate spec
-        spec = await generator.load_spec()
-        if not generator.validate_spec(spec):
-            raise HTTPException(status_code=400, detail="Invalid OpenAPI specification")
-
-        total_tests = 0
-        paths_tested = 0
-
-        # Test each endpoint
-        for path, methods in spec["paths"].items():
-            paths_tested += 1
-            for method, details in methods.items():
-                test_cases = await generator.create_test_cases(path, method, spec)
-                total_tests += len(test_cases)
-                await generator.execute_tests(
-                    test_cases, base_url=api_test_request.base_url.rstrip("/")
-                )
-
-        # Generate and save report
-        report = await generator.generate_report()
-        output_path = Path(api_test_request.output)
-        output_path.write_text(report)
-
-        # Handle file upload
-        if api_test_request.spec_upload:
-            spec_path.unlink()
-
-        return {
-            "message": f"Test report generated at {api_test_request.output}",
-            "total_tests": total_tests,
-            "paths_tested": paths_tested,
-        }
-
     except Exception as e:
+        logger.error("API test failed", error=str(e))
+        if request.spec_upload and spec_path != request.spec_file:
+            Path(spec_path).unlink(missing_ok=True)
         raise HTTPException(status_code=500, detail=str(e))
