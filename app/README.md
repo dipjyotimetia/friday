@@ -14,6 +14,7 @@ A stunning, modern React frontend built with Next.js 15, featuring AI-powered te
 
 ## 🚀 Quick Start
 
+### Local Development
 ```bash
 # Install dependencies
 npm install
@@ -28,6 +29,22 @@ npm run build
 npm start
 ```
 
+### Docker Development
+```bash
+# Build and run with Docker Compose
+npm run docker:dev
+
+# Or build Docker image manually
+npm run docker:build
+npm run docker:run
+
+# View logs
+npm run docker:logs
+
+# Stop containers
+npm run docker:stop
+```
+
 ## 🎯 Migration Highlights
 
 - **Preserved Original Design**: All beautiful styling from src/index.css maintained
@@ -35,6 +52,35 @@ npm start
 - **Cross-Origin Ready**: Network access configured for development team
 - **Type Safety**: Full TypeScript support with strict mode
 - **Modern Patterns**: Client/Server components separation
+
+## 📁 Project Structure (Optimized for Maintainability)
+
+```
+app/
+├── components/
+│   ├── features/           # Feature-specific components
+│   │   ├── api-tester/    # API testing functionality
+│   │   ├── test-generator/ # Test case generation
+│   │   └── web-crawler/   # Web crawling functionality
+│   ├── shared/            # Reusable components
+│   └── ui/                # shadcn/ui components
+├── hooks/                 # Custom React hooks
+├── types/                 # TypeScript definitions
+├── config/                # Constants and configuration
+├── services/              # API service layer
+└── lib/                   # Utility functions
+```
+
+## 🔧 Architecture Benefits
+
+- **Feature-Based Organization**: Components grouped by functionality
+- **Type Safety**: Comprehensive TypeScript coverage
+- **Custom Hooks**: Reusable business logic extraction
+- **Barrel Exports**: Clean import statements
+- **Configuration Management**: Centralized constants
+- **Error Handling**: Robust API error management
+- **Docker Ready**: Multi-stage builds with health monitoring
+- **Production Optimized**: Standalone output for containers
 
 ## 🎨 UI Components
 

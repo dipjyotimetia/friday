@@ -5,21 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { FileUploader } from './file-uploader'
+import { FileUploader } from '@/components/shared'
 import { apiService } from '@/services/api'
+import { AI_PROVIDERS, FILE_CONFIG, DEFAULT_VALUES } from '@/config/constants'
+import { useApiTester } from '@/hooks'
+import type { BaseComponentProps, AIProvider } from '@/types'
 import { Upload, Zap, Globe, Settings } from 'lucide-react'
 
-interface ApiTesterProps {
-  setOutputText: (text: string) => void
-  setIsGenerating: (isGenerating: boolean) => void
-}
-
-export function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
+export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps) {
   const [baseUrl, setBaseUrl] = useState('')
-  const [isTestingApi, setIsTestingApi] = useState(false)
-  const [apiOutput, setApiOutput] = useState('api_test_report.md')
+  const [apiOutput, setApiOutput] = useState<string>(DEFAULT_VALUES.API_OUTPUT_FILENAME)
   const [specFileObj, setSpecFileObj] = useState<File | null>(null)
-  const [provider, setProvider] = useState('openai')
+  const [provider, setProvider] = useState<AIProvider>('openai')
+  
+  const { testApi, loading: isTestingApi } = useApiTester()
 
   const handleApiTest = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,12 +38,11 @@ export function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
       return
     }
 
-    setIsTestingApi(true)
     setIsGenerating(true)
     setOutputText('Running API tests...')
 
     try {
-      const result = await apiService.testApi({
+      const result = await testApi({
         base_url: baseUrl.trim(),
         output: apiOutput,
         spec_upload: specFileObj,
@@ -60,7 +58,6 @@ export function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
     } catch (err) {
       setOutputText(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`)
     } finally {
-      setIsTestingApi(false)
       setIsGenerating(false)
     }
   }
@@ -70,12 +67,6 @@ export function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
     setOutputText('')
   }
 
-  const providers = [
-    { value: 'openai', label: 'OpenAI' },
-    { value: 'gemini', label: 'Gemini' },
-    { value: 'ollama', label: 'Ollama' },
-    { value: 'mistral', label: 'Mistral' },
-  ]
 
   return (
     <Card className="w-full">
@@ -101,7 +92,7 @@ export function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
                 API Specification
               </label>
               <FileUploader
-                accept=".yaml,.yml,.json"
+                accept={FILE_CONFIG.ACCEPTED_SPEC_FORMATS}
                 onChange={handleFileChange}
                 placeholder="Upload OpenAPI/Swagger Spec"
                 disabled={isTestingApi}
@@ -136,11 +127,11 @@ export function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
                 </label>
                 <select
                   value={provider}
-                  onChange={(e) => setProvider(e.target.value)}
+                  onChange={(e) => setProvider(e.target.value as AIProvider)}
                   disabled={isTestingApi}
                   className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 glass-card"
                 >
-                  {providers.map((p) => (
+                  {AI_PROVIDERS.map((p) => (
                     <option key={p.value} value={p.value}>
                       {p.label}
                     </option>
@@ -154,7 +145,7 @@ export function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
                   type="text"
                   placeholder="api_test_report.md"
                   value={apiOutput}
-                  onChange={(e) => setApiOutput(e.target.value.trim() || 'api_test_report.md')}
+                  onChange={(e) => setApiOutput(e.target.value.trim() || DEFAULT_VALUES.API_OUTPUT_FILENAME)}
                   disabled={isTestingApi}
                   pattern="^[\w-]+\.md$"
                 />

@@ -1,6 +1,11 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-
-const API_URL = 'http://localhost:8080';
+import { API_CONFIG, API_ENDPOINTS } from '@/config/constants';
+import type { 
+  GenerateRequest, 
+  CrawlRequest, 
+  ApiTestRequest, 
+  ApiTestResponse 
+} from '@/types';
 
 interface RetryOptions {
   retries?: number;
@@ -8,16 +13,19 @@ interface RetryOptions {
 }
 
 const axiosInstance = axios.create({
-  baseURL: API_URL,
-  timeout: 10000, // Adjust as needed
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
 });
 
 async function axiosWithRetry<T = any>(
   url: string,
   options: AxiosRequestConfig = {},
-  retryOptions: RetryOptions = { retries: 3, retryDelay: 1000 }
+  retryOptions: RetryOptions = { 
+    retries: API_CONFIG.RETRY_ATTEMPTS, 
+    retryDelay: API_CONFIG.RETRY_DELAY 
+  }
 ): Promise<AxiosResponse<T>> {
-  const { retries = 3, retryDelay = 1000 } = retryOptions;
+  const { retries = API_CONFIG.RETRY_ATTEMPTS, retryDelay = API_CONFIG.RETRY_DELAY } = retryOptions;
 
   let attempt = 0;
 
@@ -36,36 +44,12 @@ async function axiosWithRetry<T = any>(
     }
   }
 
-  throw new Error(`Failed to fetch ${url} after ${retries} retries`); // Should not reach here
-}
-
-export interface GenerateRequest {
-  jira_key: string;
-  gh_issue: string;
-  gh_repo: string;
-  confluence_id: string;
-  output: string;
-}
-
-export interface CrawlRequest {
-  url: string;
-  provider: string;
-  persist_dir: string;
-  max_pages: number;
-  same_domain: boolean;
-}
-
-export interface ApiTestRequest {
-  base_url: string;
-  output: string;
-  spec_file?: string;
-  spec_upload?: File;
-  provider: string;
+  throw new Error(`Failed to fetch ${url} after ${retries} retries`);
 }
 
 export const apiService = {
   async generateTests(data: GenerateRequest) {
-    const response = await axiosWithRetry<any>(`/api/v1/generate`, {
+    const response = await axiosWithRetry<any>(API_ENDPOINTS.GENERATE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: data,
@@ -74,7 +58,7 @@ export const apiService = {
   },
 
   async crawlWebsite(data: CrawlRequest) {
-    const response = await axiosWithRetry<any>(`/api/v1/crawl`, {
+    const response = await axiosWithRetry<any>(API_ENDPOINTS.CRAWL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: data,
@@ -82,11 +66,7 @@ export const apiService = {
     return response.data;
   },
 
-  async testApi(request: ApiTestRequest): Promise<{
-    message: string;
-    total_tests: number;
-    paths_tested: number;
-  }> {
+  async testApi(request: ApiTestRequest): Promise<ApiTestResponse> {
     const formData = new FormData();
     formData.append('base_url', request.base_url);
     formData.append('output', request.output);
@@ -99,7 +79,7 @@ export const apiService = {
     }
 
     try {
-      const response = await axiosWithRetry<any>(`/api/v1/testapi`, {
+      const response = await axiosWithRetry<ApiTestResponse>(API_ENDPOINTS.TEST_API, {
         method: 'POST',
         headers: { 'Content-Type': 'multipart/form-data' },
         data: formData,

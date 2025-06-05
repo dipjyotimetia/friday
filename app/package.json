@@ -14,7 +14,13 @@
     "build": "next build",
     "start": "next start",
     "format": "prettier --write .",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "docker build -t friday-frontend .",
+    "docker:run": "docker run -p 3000:3000 --name friday-app friday-frontend",
+    "docker:dev": "docker-compose up --build",
+    "docker:prod": "docker-compose -f docker-compose.yml up -d",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f friday-frontend"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

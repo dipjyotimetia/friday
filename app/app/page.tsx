@@ -5,10 +5,7 @@ import { motion } from 'framer-motion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TestGenerator } from '@/components/test-generator'
-import { WebCrawler } from '@/components/web-crawler'
-import { ApiTester } from '@/components/api-tester'
-import { OutputViewer } from '@/components/output-viewer'
+import { TestGenerator, WebCrawler, ApiTester, OutputViewer } from '@/components'
 import { Bot, Globe, TestTube, Zap } from 'lucide-react'
 
 export default function HomePage() {

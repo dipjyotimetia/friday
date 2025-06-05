@@ -48,7 +48,7 @@ app = FastAPI(
 
 # Get allowed origins from environment variable
 def get_allowed_origins() -> List[str]:
-    origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+    origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://192.168.1.40:3000")
     return origins_env.split(",")
 
 

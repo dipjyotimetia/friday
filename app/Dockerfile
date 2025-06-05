@@ -1,51 +1,71 @@
 # Build stage
-FROM node:22-slim AS builder
+FROM node:22-alpine AS base
 
-# Set working directory
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+
+# Install dependencies only when needed
+FROM base AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json package-lock.json* ./
 
-# Install dependencies with exact versions
-RUN npm ci
+# Install dependencies with exact versions for security
+RUN npm ci && npm cache clean --force
 
-# Copy application files
-COPY . .
-
-# Build the application
-RUN npm run build
-
-# Production stage
-FROM node:22-slim
-
-# Create a non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Set working directory
+# Rebuild the source code only when needed
+FROM base AS builder
 WORKDIR /app
 
-# Install serve globally
-RUN npm install -g serve
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy source code
+COPY . .
 
-# Set ownership to non-root user
-RUN chown -R appuser:appuser /app
+# Set environment variables for build
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
+
+# Build the Next.js application
+RUN npm run build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+# Set environment variables
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV PORT 3000
+
+# Create a non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Switch to non-root user
-USER appuser
+USER nextjs
 
-# Cloud Run will use the PORT environment variable
-ENV PORT=8080
+# Expose the port
+EXPOSE 3000
 
-# Expose port
-EXPOSE 8080
+# Set environment variable for port
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:$PORT/ || exit 1
+# Health check for Next.js application
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node healthcheck.js
 
-# Start the server
-CMD ["serve", "-s", "dist", "-l", "8080"]
+# Start the Next.js application
+CMD ["node", "server.js"]

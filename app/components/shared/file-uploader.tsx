@@ -1,17 +1,11 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Upload, X, File } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface FileUploaderProps {
-  accept?: string
-  onChange: (file: File | null) => void
-  placeholder?: string
-  disabled?: boolean
-  className?: string
-}
+import { useFileUpload } from '@/hooks'
+import type { FileUploaderProps } from '@/types'
 
 export function FileUploader({ 
   accept, 
@@ -20,46 +14,34 @@ export function FileUploader({
   disabled = false,
   className 
 }: FileUploaderProps) {
-  const [file, setFile] = useState<File | null>(null)
-  const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleFileSelect = (selectedFile: File | null) => {
-    setFile(selectedFile)
-    onChange(selectedFile)
-  }
+  
+  const {
+    file,
+    isDragOver,
+    handleFileSelect,
+    clearFile: clearFileHook,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useFileUpload({
+    acceptedFormats: accept,
+    onError: (error) => console.error('File upload error:', error),
+  })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null
     handleFileSelect(selectedFile)
+    onChange(selectedFile)
   }
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    
-    if (disabled) return
-    
-    const droppedFile = e.dataTransfer.files[0]
-    if (droppedFile) {
-      handleFileSelect(droppedFile)
-    }
-  }
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    if (!disabled) {
-      setIsDragOver(true)
-    }
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
+  const handleDropWrapper = (e: React.DragEvent) => {
+    handleDrop(e)
+    if (file) onChange(file)
   }
 
   const clearFile = () => {
-    setFile(null)
+    clearFileHook()
     onChange(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -74,7 +56,7 @@ export function FileUploader({
           isDragOver && !disabled ? "border-blue-400 bg-blue-50/10" : "border-gray-300",
           disabled ? "opacity-50 cursor-not-allowed" : "hover:border-gray-400"
         )}
-        onDrop={handleDrop}
+        onDrop={handleDropWrapper}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => !disabled && fileInputRef.current?.click()}
