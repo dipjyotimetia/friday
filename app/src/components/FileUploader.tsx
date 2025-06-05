@@ -1,5 +1,4 @@
 import React from 'react';
-import { FileInput, FileLabel } from '../css/friday';
 
 interface FileUploaderProps {
   accept?: string;
@@ -21,16 +20,24 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   return (
     <div>
-      <FileInput
+      <input
         type="file"
         id="file-upload"
         accept={accept}
         onChange={handleChange}
         disabled={disabled}
+        className="hidden"
       />
-      <FileLabel htmlFor="file-upload" $disabled={disabled}>
+      <label 
+        htmlFor="file-upload" 
+        className={`block w-full p-9 border-2 border-dashed rounded-xl text-center text-lg transition-all duration-300 ${
+          disabled 
+            ? 'border-primary-600 bg-primary-700 text-primary-400 cursor-not-allowed opacity-60' 
+            : 'border-accent-500 bg-primary-700 text-primary-100 cursor-pointer hover:bg-accent-500/5 hover:-translate-y-1 hover:shadow-glow active:scale-95'
+        }`}
+      >
         {placeholder}
-      </FileLabel>
+      </label>
     </div>
   );
 };

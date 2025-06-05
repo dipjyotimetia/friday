@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { FormSection, Input, InputGroup, SubmitButton } from '../../css/friday';
 import { apiService } from '../../services/api';
 
 interface TestGeneratorProps {
@@ -39,53 +38,62 @@ function TestGenerator({
   };
 
   return (
-    <>
-      <FormSection>
-        <h2>Generate Test Cases</h2>
-        <form onSubmit={handleGenerate}>
-          <InputGroup>
-            <Input
-              type="text"
-              placeholder="Jira Key (e.g. PROJ-123)"
-              value={jiraKey}
-              onChange={(e) => setJiraKey(e.target.value)}
-              disabled={isGenerating}
-            />
-            <Input
-              type="text"
-              placeholder="GitHub Issue Number"
-              value={ghIssue}
-              onChange={(e) => setGhIssue(e.target.value)}
-              disabled={isGenerating}
-            />
-            <Input
-              type="text"
-              placeholder="GitHub Repo (owner/repo)"
-              value={ghRepo}
-              onChange={(e) => setGhRepo(e.target.value)}
-              disabled={isGenerating}
-            />
-            <Input
-              type="text"
-              placeholder="Confluence Page ID"
-              value={confluenceId}
-              onChange={(e) => setConfluenceId(e.target.value)}
-              disabled={isGenerating}
-            />
-            <Input
-              type="text"
-              placeholder="Output filename"
-              value={outputFilename}
-              onChange={(e) => setOutputFilename(e.target.value)}
-              disabled={isGenerating}
-            />
-          </InputGroup>
-          <SubmitButton type="submit" disabled={isGenerating}>
-            {isGenerating ? 'Generating...' : 'Generate Test Cases'}
-          </SubmitButton>
-        </form>
-      </FormSection>
-    </>
+    <div className="card">
+      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent-500 to-secondary-500 bg-clip-text text-transparent">Generate Test Cases</h2>
+      <form onSubmit={handleGenerate}>
+        <div className="flex flex-col gap-5 mb-8 md:gap-4 md:mb-6">
+          <input
+            type="text"
+            placeholder="Jira Key (e.g. PROJ-123)"
+            value={jiraKey}
+            onChange={(e) => setJiraKey(e.target.value)}
+            disabled={isGenerating}
+            className="input-field placeholder:text-white/50 md:p-4 md:text-lg"
+          />
+          <input
+            type="text"
+            placeholder="GitHub Issue Number"
+            value={ghIssue}
+            onChange={(e) => setGhIssue(e.target.value)}
+            disabled={isGenerating}
+            className="input-field placeholder:text-white/50 md:p-4 md:text-lg"
+          />
+          <input
+            type="text"
+            placeholder="GitHub Repo (owner/repo)"
+            value={ghRepo}
+            onChange={(e) => setGhRepo(e.target.value)}
+            disabled={isGenerating}
+            className="input-field placeholder:text-white/50 md:p-4 md:text-lg"
+          />
+          <input
+            type="text"
+            placeholder="Confluence Page ID"
+            value={confluenceId}
+            onChange={(e) => setConfluenceId(e.target.value)}
+            disabled={isGenerating}
+            className="input-field placeholder:text-white/50 md:p-4 md:text-lg"
+          />
+          <input
+            type="text"
+            placeholder="Output filename"
+            value={outputFilename}
+            onChange={(e) => setOutputFilename(e.target.value)}
+            disabled={isGenerating}
+            className="input-field placeholder:text-white/50 md:p-4 md:text-lg"
+          />
+        </div>
+        <button 
+          type="submit" 
+          disabled={isGenerating}
+          className={`btn-primary w-full text-xl md:text-lg md:px-6 md:py-3 ${
+            isGenerating ? 'opacity-70 cursor-not-allowed' : ''
+          }`}
+        >
+          {isGenerating ? 'Generating...' : 'Generate Test Cases'}
+        </button>
+      </form>
+    </div>
   );
 }
 

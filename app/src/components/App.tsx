@@ -1,15 +1,5 @@
 import { useState, JSX } from 'react';
 import { LogViewer } from './LogViewer';
-import {
-  Container,
-  Description,
-  OutputSection,
-  TabButton,
-  TabContent,
-  TabsContainer,
-  Title,
-} from '../css/friday';
-import { GlobalStyle } from '../css/GlobalStyle';
 import TestGenerator from './generator/testGenerator';
 import Crawler from './crawler/webCrawler';
 import ApiTester from './apitest/apiTester';
@@ -62,44 +52,45 @@ function FridayApp() {
   };
 
   return (
-    <>
-      <GlobalStyle />
-      <Container>
-        <Title>FRIDAY Test Agent</Title>
-        <Description>
-          FRIDAY is a test agent that can generate test cases, crawl websites,
-          and test APIs. Select the tab below to get started.
-        </Description>
+    <div className="max-w-6xl mx-auto p-6 md:p-12 animate-fade-in bg-primary-800/60 backdrop-blur-lg rounded-3xl border border-white/10 shadow-2xl transition-all duration-300 hover:shadow-glow hover:-translate-y-1">
+      <h1 className="text-center mb-12 text-6xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-accent-500 to-secondary-500 bg-clip-text text-transparent animate-float transition-all duration-300 hover:scale-105">
+        FRIDAY Test Agent
+      </h1>
+      <p className="text-center text-primary-200 mb-10 text-xl leading-relaxed max-w-4xl mx-auto transition-colors duration-300 hover:text-primary-100">
+        FRIDAY is a test agent that can generate test cases, crawl websites,
+        and test APIs. Select the tab below to get started.
+      </p>
 
-        <TabsContainer>
-          {tabs.map((tab) => (
-            <TabButton
-              key={tab.id}
-              $isActive={activeTab === tab.id}
-              onClick={() => handleTabClick(tab.id)}
-            >
-              {tab.label}
-            </TabButton>
-          ))}
-        </TabsContainer>
-
+      <div className="flex gap-5 justify-center mb-14 relative p-2 rounded-xl bg-primary-700/30 backdrop-blur-md transition-all duration-300 hover:shadow-glow">
         {tabs.map((tab) => (
-          <TabContent key={tab.id} $isActive={activeTab === tab.id}>
-            <tab.component
-              key={tab.id}
-              setOutputText={setOutputText}
-              setIsGenerating={setIsGenerating}
-            />
-          </TabContent>
+          <button
+            key={tab.id}
+            className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => handleTabClick(tab.id)}
+          >
+            {tab.label}
+          </button>
         ))}
+      </div>
 
-        <OutputSection>
-          <h2>Output</h2>
-          <pre>{outputText}</pre>
-        </OutputSection>
-        <LogViewer />
-      </Container>
-    </>
+      {tabs.map((tab) => (
+        <div key={tab.id} className={`${activeTab === tab.id ? 'block animate-fade-in' : 'hidden'}`}>
+          <tab.component
+            key={tab.id}
+            setOutputText={setOutputText}
+            setIsGenerating={setIsGenerating}
+          />
+        </div>
+      ))}
+
+      <div className="card mt-12">
+        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent-500 to-secondary-500 bg-clip-text text-transparent">Output</h2>
+        <pre className="bg-primary-900 p-7 rounded-lg text-primary-100 overflow-x-auto font-mono leading-relaxed border border-primary-600 text-base">
+          {outputText}
+        </pre>
+      </div>
+      <LogViewer />
+    </div>
   );
 }
 

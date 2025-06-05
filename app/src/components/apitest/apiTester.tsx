@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { FormSection, Input, InputGroup, Select, SubmitButton } from '../../css/friday';
 import { apiService } from '../../services/api';
 import { FileUploader } from '../FileUploader';
 
@@ -68,35 +67,37 @@ function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
   };
 
   return (
-    <FormSection>
-      <h2>API Testing</h2>
+    <div className="card">
+      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-accent-500 to-secondary-500 bg-clip-text text-transparent">API Testing</h2>
       <form onSubmit={handleApiTest}>
-        <InputGroup>
+        <div className="flex flex-col gap-5 mb-8 md:gap-4 md:mb-6">
           <FileUploader
             accept=".yaml,.yml,.json"
             onChange={handleFileChange}
             placeholder="Upload OpenAPI/Swagger Spec"
             disabled={isTestingApi}
           />
-          <Input
+          <input
             type="url"
             placeholder="Base URL (e.g. https://api.example.com)"
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
             disabled={isTestingApi}
             required
+            className="input-field placeholder:text-white/50 md:p-4 md:text-lg"
           />
-          <Select
+          <select
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
             disabled={isTestingApi}
+            className="w-full p-4 border border-primary-600 bg-primary-700 text-primary-100 rounded-lg transition-all duration-300 cursor-pointer text-lg hover:border-accent-600 hover:shadow-glow focus:outline-none focus:border-accent-500 md:p-4 md:text-lg"
           >
             <option value="openai">OpenAI</option>
             <option value="gemini">Gemini</option>
             <option value="ollama">Ollama</option>
             <option value="mistral">Mistral</option>
-          </Select>
-          <Input
+          </select>
+          <input
             type="text"
             placeholder="Output filename (e.g. api_test_report.md)"
             value={apiOutput}
@@ -104,13 +105,20 @@ function ApiTester({ setOutputText, setIsGenerating }: ApiTesterProps) {
             disabled={isTestingApi}
             pattern="^[\w-]+\.md$"
             title="Filename must end with .md extension"
+            className="input-field placeholder:text-white/50 md:p-4 md:text-lg"
           />
-        </InputGroup>
-        <SubmitButton type="submit" disabled={isTestingApi || !specFileObj || !baseUrl}>
+        </div>
+        <button 
+          type="submit" 
+          disabled={isTestingApi || !specFileObj || !baseUrl}
+          className={`btn-primary w-full text-xl md:text-lg md:px-6 md:py-3 ${
+            (isTestingApi || !specFileObj || !baseUrl) ? 'opacity-70 cursor-not-allowed' : ''
+          }`}
+        >
           {isTestingApi ? 'Running Tests...' : 'Run API Tests'}
-        </SubmitButton>
+        </button>
       </form>
-    </FormSection>
+    </div>
   );
 }
 
