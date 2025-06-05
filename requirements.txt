@@ -40,7 +40,7 @@ google-ai-generativelanguage==0.6.15 ; python_version >= "3.12" and python_versi
 google-api-core==2.24.1 ; python_version >= "3.12" and python_version < "4.0"
 google-api-python-client==2.160.0 ; python_version >= "3.12" and python_version < "4.0"
 google-auth-httplib2==0.2.0 ; python_version >= "3.12" and python_version < "4.0"
-google-auth==2.38.0 ; python_version >= "3.12" and python_version < "4.0"
+google-auth==2.40.3 ; python_version >= "3.12" and python_version < "4.0"
 google-cloud-aiplatform==1.80.0 ; python_version >= "3.12" and python_version < "4.0"
 google-cloud-bigquery==3.29.0 ; python_version >= "3.12" and python_version < "4.0"
 google-cloud-core==2.4.1 ; python_version >= "3.12" and python_version < "4.0"
