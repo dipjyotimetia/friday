@@ -17,40 +17,34 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install poetry
-      uses: abatilo/actions-poetry@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
       with:
-        poetry-version: 'latest'
+        version: "latest"
   
-    - name: Cache poetry dependencies
+    - name: Cache uv dependencies
       uses: actions/cache@v4
       with:
         path: |
-          ~/.cache/pypoetry
+          ~/.cache/uv
           .venv
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
         restore-keys: |
-          ${{ runner.os }}-poetry-
-    
-    - name: Configure poetry
-      run: |
-        poetry config virtualenvs.create true --local
-        poetry config virtualenvs.in-project true --local
+          ${{ runner.os }}-uv-
 
     - name: Install dependencies
-      run: poetry install --no-interaction
+      run: uv sync
 
     - name: Build package
-      run: poetry build
+      run: uv build
 
     - name: Verify CLI
       run: |
-        poetry install
-        poetry run friday --help
-        poetry run friday version
+        uv run friday --help
+        uv run friday version
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: friday-dist-${{ matrix.os }}-py${{ matrix.python-version }}
+        name: friday-dist-ubuntu-latest-py3.12
         path: dist/

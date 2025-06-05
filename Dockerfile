@@ -2,40 +2,34 @@
 FROM python:3.12-slim AS builder
 
 # Set build arguments and environment variables
-ARG POETRY_VERSION=2.1.1
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=false \
-    POETRY_HOME="/opt/poetry" \
-    PATH="/opt/poetry/bin:$PATH"
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies and Poetry
+# Install system dependencies and uv
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
         gcc \
         libc6-dev && \
-    curl -sSL https://install.python-poetry.org | python3 - --version ${POETRY_VERSION} && \
-    poetry --version
+    pip install uv
 
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml poetry.lock README.md ./
+COPY pyproject.toml uv.lock README.md ./
 
-# Configure poetry and install dependencies
-RUN --mount=type=cache,target=/root/.cache/pypoetry \
-    poetry install --only main --no-root --compile
+# Install dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 # Copy application code
 COPY . .
 
 # Build the package
-RUN poetry build --format wheel
+RUN uv build
 
 # Production stage
 FROM python:3.12-slim AS runtime
@@ -59,15 +53,15 @@ WORKDIR /app
 
 # Copy only necessary files from builder
 COPY --from=builder --chown=appuser:appuser /app/dist/*.whl ./
-COPY --from=builder --chown=appuser:appuser /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 # Install the wheel package and clean up
 RUN pip install --no-cache-dir *.whl && \
     rm -f *.whl && \
-    pip cache purge && \
-    # Remove unnecessary files to reduce image size
-    find /usr/local/lib/python3.12/site-packages -name "*.pyc" -delete && \
-    find /usr/local/lib/python3.12/site-packages -name "__pycache__" -exec rm -r {} +
+    pip cache purge
+
+# Set PATH to use the virtual environment
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Switch to non-root user
 USER appuser
