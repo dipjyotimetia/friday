@@ -1,36 +1,36 @@
-.PHONY:install
+.PHONY: install
 install:
-    poetry install
-    poetry shell
-    cp .env.example .env
+	uv sync
+	cp .env.example .env
 
-.PHONY:clean
+.PHONY: clean
 clean:
-    find . -type d -name "__pycache__" -exec rm -rf {} +
-    find . -type f -name "*.pyc" -delete
-    find . -type f -name "*.pyo" -delete
-    find . -type f -name "*.pyd" -delete
-    find . -type f -name ".coverage" -delete
-    find . -type d -name "*.egg-info" -exec rm -rf {} +
-    find . -type d -name "*.egg" -exec rm -rf {} +
-    find . -type d -name ".pytest_cache" -exec rm -rf {} +
-    find . -type d -name ".tox" -exec rm -rf {} +
-    find . -type d -name "build" -exec rm -rf {} +
-    find . -type d -name "dist" -exec rm -rf {} +
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	find . -type f -name "*.pyo" -delete
+	find . -type f -name "*.pyd" -delete
+	find . -type f -name ".coverage" -delete
+	find . -type d -name "*.egg-info" -exec rm -rf {} +
+	find . -type d -name "*.egg" -exec rm -rf {} +
+	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	find . -type d -name ".tox" -exec rm -rf {} +
+	find . -type d -name "build" -exec rm -rf {} +
+	find . -type d -name "dist" -exec rm -rf {} +
+	rm -rf .venv uv.lock
 
-.PHONY:test
+.PHONY: test
 test:
-    poetry run pytest tests/ -v --cov=src
+	uv run pytest tests/ -v --cov=src
 
-.PHONY:lint
+.PHONY: lint
 lint:
-    ruff format
+	uv run ruff format
 
-.PHONY:format
+.PHONY: format
 format:
-    poetry run black .
+	uv run ruff format
 
-.PHONY:run
+.PHONY: run
 run:
-    poetry run python main.py --gh-issue 5 --gh-repo dipjyotimetia/FRIDAY --confluence-id "1540097" --output test_cases.md
-    poetry run python main.py --jira-key "FRID-1" --confluence-id "1540097" --output test_cases.md 
+	uv run python main.py --gh-issue 5 --gh-repo dipjyotimetia/FRIDAY --confluence-id "1540097" --output test_cases.md
+	uv run python main.py --jira-key "FRID-1" --confluence-id "1540097" --output test_cases.md 

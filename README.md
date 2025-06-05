@@ -28,6 +28,7 @@ An AI-powered test agent that uses Generative AI and LangChain to automatically 
 ### Prerequisites
 
 -   Python 3.12+
+-   [uv](https://docs.astral.sh/uv/) package manager
 -   Gemini enabled or OpenAI API key 
 -   Jira/GitHub and Confluence access credentials
 
@@ -113,8 +114,7 @@ Open http://localhost:3000 in your browser
     ```bash
     git clone https://github.com/dipjyotimetia/friday.git
     cd friday
-    chmod +x prerequisites.sh
-    ./prerequisites.sh
+    uv sync
     ```
 
 2.  **Configure environment:**
@@ -127,13 +127,13 @@ Open http://localhost:3000 in your browser
 3.  **Run Tests:**
 
     ```bash
-    poetry run pytest tests/ -v
+    uv run pytest tests/ -v
     ```
 
 4.  **Format Code:**
 
     ```bash
-    poetry run ruff format
+    uv run ruff format
     ```
 
 5.  **Deploy to Google Cloud:**
@@ -155,7 +155,7 @@ This project uses Visual Studio Code's Development Containers feature, providing
 
 ### Features
 
--   Python 3.12 with Poetry package management
+-   Python 3.12 with uv package management
 -   Node.js 22 with npm
 -   Docker-in-Docker support
 -   Pre-configured VS Code extensions:

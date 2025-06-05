@@ -1,0 +1,57 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "dipjyotimetia"
+    assignees:
+      - "dipjyotimetia"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # JavaScript dependencies for frontend
+  - package-ecosystem: "npm"
+    directory: "/app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "dipjyotimetia"
+    assignees:
+      - "dipjyotimetia"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "dipjyotimetia"
+    assignees:
+      - "dipjyotimetia"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "dipjyotimetia"
+    assignees:
+      - "dipjyotimetia"
+    commit-message:
+      prefix: "docker"
+      include: "scope"

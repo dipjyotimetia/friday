@@ -43,3 +43,5 @@ dist-electron
 release
 *.log
 .DS_Store
+.claude
+CLAUDE.md
