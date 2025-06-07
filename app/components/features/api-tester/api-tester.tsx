@@ -9,7 +9,7 @@ import { FileUploader, ResultDisplay } from '@/components/shared'
 import { apiService } from '@/services/api'
 import { useApiError } from '@/hooks/use-api-error'
 import { AI_PROVIDERS, FILE_CONFIG, DEFAULT_VALUES } from '@/config/constants'
-import type { BaseComponentProps, AIProvider, APITestResponse } from '@/types'
+import type { BaseComponentProps, AIProvider, ExtendedAPITestResponse } from '@/types'
 import { Upload, Zap, Globe, Settings } from 'lucide-react'
 
 export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps) {
@@ -17,7 +17,7 @@ export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps
   const [specFileObj, setSpecFileObj] = useState<File | null>(null)
   const [provider, setProvider] = useState<AIProvider>('openai')
   const [isTestingApi, setIsTestingApi] = useState(false)
-  const [testResult, setTestResult] = useState<APITestResponse | null>(null)
+  const [testResult, setTestResult] = useState<ExtendedAPITestResponse | null>(null)
   
   const { handleError, showSuccess, showWarning } = useApiError()
 

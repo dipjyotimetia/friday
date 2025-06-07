@@ -2,11 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { APITestResponse, CrawlResponse, TestGenerationResponse } from '@/types';
+import { ExtendedAPITestResponse, ExtendedCrawlResponse, ExtendedTestGenerationResponse } from '@/types';
 import { CheckCircle, XCircle, Clock, Globe, FileText, AlertTriangle } from 'lucide-react';
 
 interface ResultDisplayProps {
-  result: APITestResponse | CrawlResponse | TestGenerationResponse | string;
+  result: ExtendedAPITestResponse | ExtendedCrawlResponse | ExtendedTestGenerationResponse | string;
   type: 'api-test' | 'crawl' | 'test-generation';
   isLoading?: boolean;
 }
@@ -45,17 +45,17 @@ export function ResultDisplay({ result, type, isLoading }: ResultDisplayProps) {
 
   switch (type) {
     case 'api-test':
-      return <APITestResultDisplay result={result as APITestResponse} />;
+      return <APITestResultDisplay result={result as ExtendedAPITestResponse} />;
     case 'crawl':
-      return <CrawlResultDisplay result={result as CrawlResponse} />;
+      return <CrawlResultDisplay result={result as ExtendedCrawlResponse} />;
     case 'test-generation':
-      return <TestGenerationResultDisplay result={result as TestGenerationResponse} />;
+      return <TestGenerationResultDisplay result={result as ExtendedTestGenerationResponse} />;
     default:
       return <GenericResultDisplay result={result} />;
   }
 }
 
-function APITestResultDisplay({ result }: { result: APITestResponse }) {
+function APITestResultDisplay({ result }: { result: ExtendedAPITestResponse }) {
   const successRate = result.total_tests ? 
     ((result.passed_tests || 0) / result.total_tests * 100).toFixed(1) : '0';
 
@@ -105,7 +105,7 @@ function APITestResultDisplay({ result }: { result: APITestResponse }) {
   );
 }
 
-function CrawlResultDisplay({ result }: { result: CrawlResponse }) {
+function CrawlResultDisplay({ result }: { result: ExtendedCrawlResponse }) {
   return (
     <div className="space-y-4">
       <Card>
@@ -144,7 +144,7 @@ function CrawlResultDisplay({ result }: { result: CrawlResponse }) {
   );
 }
 
-function TestGenerationResultDisplay({ result }: { result: TestGenerationResponse }) {
+function TestGenerationResultDisplay({ result }: { result: ExtendedTestGenerationResponse }) {
   return (
     <div className="space-y-4">
       <Card>

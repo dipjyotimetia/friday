@@ -1,12 +1,12 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG, API_ENDPOINTS } from '@/config/constants';
 import type { 
-  TestGenerationRequest,
-  TestGenerationResponse,
-  CrawlRequest, 
-  CrawlResponse,
-  APITestRequest, 
-  APITestResponse,
+  ExtendedTestGenerationRequest,
+  ExtendedTestGenerationResponse,
+  ExtendedCrawlRequest, 
+  ExtendedCrawlResponse,
+  ExtendedAPITestRequest, 
+  ExtendedAPITestResponse,
   APIResponse,
   ValidationErrorResponse
 } from '@/types';
@@ -127,8 +127,8 @@ async function axiosWithRetry<T = any>(
 }
 
 export const apiService = {
-  async generateTests(data: TestGenerationRequest): Promise<TestGenerationResponse> {
-    const response = await axiosWithRetry<TestGenerationResponse>(API_ENDPOINTS.GENERATE, {
+  async generateTests(data: ExtendedTestGenerationRequest): Promise<ExtendedTestGenerationResponse> {
+    const response = await axiosWithRetry<ExtendedTestGenerationResponse>(API_ENDPOINTS.GENERATE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: data,
@@ -137,7 +137,7 @@ export const apiService = {
     // Handle both standardized and legacy response formats
     const responseData = response.data as any;
     if (responseData.success !== undefined && responseData.timestamp !== undefined) {
-      return responseData as TestGenerationResponse;
+      return responseData as ExtendedTestGenerationResponse;
     } else {
       // Legacy format - convert to standardized format
       return {
@@ -148,8 +148,8 @@ export const apiService = {
     }
   },
 
-  async crawlWebsite(data: CrawlRequest): Promise<CrawlResponse> {
-    const response = await axiosWithRetry<CrawlResponse>(API_ENDPOINTS.CRAWL, {
+  async crawlWebsite(data: ExtendedCrawlRequest): Promise<ExtendedCrawlResponse> {
+    const response = await axiosWithRetry<ExtendedCrawlResponse>(API_ENDPOINTS.CRAWL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: data,
@@ -158,7 +158,7 @@ export const apiService = {
     // Handle both standardized and legacy response formats
     const responseData = response.data as any;
     if (responseData.success !== undefined && responseData.pages_crawled !== undefined) {
-      return responseData as CrawlResponse;
+      return responseData as ExtendedCrawlResponse;
     } else {
       // Legacy format - convert to standardized format  
       return {
@@ -171,7 +171,7 @@ export const apiService = {
     }
   },
 
-  async testApi(request: APITestRequest): Promise<APITestResponse> {
+  async testApi(request: ExtendedAPITestRequest): Promise<ExtendedAPITestResponse> {
     const formData = new FormData();
     
     // Handle both file upload and direct spec content
@@ -187,7 +187,7 @@ export const apiService = {
       formData.append('auth_config', JSON.stringify(request.auth_config));
     }
 
-    const response = await axiosWithRetry<APITestResponse>(API_ENDPOINTS.TEST_API, {
+    const response = await axiosWithRetry<ExtendedAPITestResponse>(API_ENDPOINTS.TEST_API, {
       method: 'POST',
       headers: { 'Content-Type': 'multipart/form-data' },
       data: formData,
@@ -196,15 +196,19 @@ export const apiService = {
     // Handle both standardized and legacy response formats
     const responseData = response.data as any;
     if (responseData.success !== undefined && responseData.timestamp !== undefined) {
-      return responseData as APITestResponse;
+      return responseData as ExtendedAPITestResponse;
     } else {
       // Legacy format - convert to standardized format
       return {
         success: true,
         test_results: responseData,
+        message: responseData.message || "API test completed",
         total_tests: responseData.total_tests || 0,
+        paths_tested: responseData.paths_tested || 0,
         passed_tests: responseData.passed_tests || 0,
         failed_tests: responseData.failed_tests || 0,
+        error_tests: responseData.error_tests || 0,
+        success_rate: responseData.success_rate || 0,
         timestamp: new Date().toISOString()
       };
     }

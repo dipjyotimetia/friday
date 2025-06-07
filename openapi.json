@@ -1,0 +1,402 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Friday API",
+    "description": "AI-powered testing agent with production-grade reliability",
+    "version": "0.1.47"
+  },
+  "paths": {
+    "/api/v1/generate": {
+      "post": {
+        "tags": [
+          "Test Generation"
+        ],
+        "summary": "Generate Tests",
+        "operationId": "generate_tests_api_v1_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/crawl": {
+      "post": {
+        "tags": [
+          "Web Crawling"
+        ],
+        "summary": "Crawl Site",
+        "operationId": "crawl_site_api_v1_crawl_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrawlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Health Check"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/testapi": {
+      "post": {
+        "tags": [
+          "API Testing"
+        ],
+        "summary": "Test Api",
+        "description": "Run API tests using either a spec file path or uploaded spec file",
+        "operationId": "test_api_api_v1_testapi_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_test_api_api_v1_testapi_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiTestResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "total_tests": {
+            "type": "integer",
+            "title": "Total Tests"
+          },
+          "paths_tested": {
+            "type": "integer",
+            "title": "Paths Tested"
+          },
+          "passed_tests": {
+            "type": "integer",
+            "title": "Passed Tests"
+          },
+          "failed_tests": {
+            "type": "integer",
+            "title": "Failed Tests"
+          },
+          "error_tests": {
+            "type": "integer",
+            "title": "Error Tests"
+          },
+          "success_rate": {
+            "type": "number",
+            "title": "Success Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "total_tests",
+          "paths_tested",
+          "passed_tests",
+          "failed_tests",
+          "error_tests",
+          "success_rate"
+        ],
+        "title": "ApiTestResponse"
+      },
+      "Body_test_api_api_v1_testapi_post": {
+        "properties": {
+          "base_url": {
+            "type": "string",
+            "title": "Base Url",
+            "description": "Base URL for API testing"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "description": "Output file path",
+            "default": "api_test_report.md"
+          },
+          "spec_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec File",
+            "description": "Path to OpenAPI spec file"
+          },
+          "spec_upload": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spec Upload",
+            "description": "OpenAPI spec file upload"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "gemini",
+              "openai",
+              "ollama",
+              "mistral"
+            ],
+            "title": "Provider",
+            "description": "LLM Provider",
+            "default": "openai"
+          }
+        },
+        "type": "object",
+        "required": [
+          "base_url"
+        ],
+        "title": "Body_test_api_api_v1_testapi_post"
+      },
+      "CrawlRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "default": "openai"
+          },
+          "max_pages": {
+            "type": "integer",
+            "title": "Max Pages",
+            "default": 10
+          },
+          "same_domain": {
+            "type": "boolean",
+            "title": "Same Domain",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "CrawlRequest"
+      },
+      "GenerateRequest": {
+        "properties": {
+          "jira_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Key"
+          },
+          "gh_issue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gh Issue"
+          },
+          "gh_repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gh Repo"
+          },
+          "confluence_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confluence Id"
+          },
+          "template": {
+            "type": "string",
+            "title": "Template",
+            "default": "test_case"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "default": "test_cases.md"
+          }
+        },
+        "type": "object",
+        "title": "GenerateRequest"
+      },
+      "GenerateResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "GenerateResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

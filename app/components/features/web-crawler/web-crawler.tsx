@@ -31,7 +31,7 @@ export function WebCrawler({ setOutputText, setIsGenerating }: WebCrawlerProps) 
         url,
         provider,
         max_pages: Number(maxPages),
-        include_external: !sameDomain,
+        same_domain: sameDomain,
       })
       
       if (result.success) {

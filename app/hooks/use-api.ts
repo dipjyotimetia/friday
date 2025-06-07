@@ -3,10 +3,10 @@
 import { useState, useCallback } from 'react';
 import { apiService } from '@/services/api';
 import type { 
-  TestGenerationRequest, 
-  CrawlRequest, 
-  APITestRequest, 
-  APITestResponse 
+  ExtendedTestGenerationRequest, 
+  ExtendedCrawlRequest, 
+  ExtendedAPITestRequest, 
+  ExtendedAPITestResponse 
 } from '@/types';
 
 interface UseApiState<T = any> {
@@ -22,7 +22,7 @@ export function useTestGenerator() {
     error: null,
   });
 
-  const generateTests = useCallback(async (request: TestGenerationRequest) => {
+  const generateTests = useCallback(async (request: ExtendedTestGenerationRequest) => {
     setState({ data: null, loading: true, error: null });
     
     try {
@@ -49,7 +49,7 @@ export function useWebCrawler() {
     error: null,
   });
 
-  const crawlWebsite = useCallback(async (request: CrawlRequest) => {
+  const crawlWebsite = useCallback(async (request: ExtendedCrawlRequest) => {
     setState({ data: null, loading: true, error: null });
     
     try {
@@ -70,13 +70,13 @@ export function useWebCrawler() {
 }
 
 export function useApiTester() {
-  const [state, setState] = useState<UseApiState<APITestResponse>>({
+  const [state, setState] = useState<UseApiState<ExtendedAPITestResponse>>({
     data: null,
     loading: false,
     error: null,
   });
 
-  const testApi = useCallback(async (request: APITestRequest) => {
+  const testApi = useCallback(async (request: ExtendedAPITestRequest) => {
     setState({ data: null, loading: true, error: null });
     
     try {
