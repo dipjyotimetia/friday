@@ -50,10 +50,16 @@ export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps
       })
 
       setOutputText(
-        `Test Results:\n` +
-        `- Total Tests: ${result.total_tests}\n` +
-        `- Paths Tested: ${result.paths_tested}\n` +
-        `- Message: ${result.message}`
+        `🎯 API Test Results:\n\n` +
+        `📊 **Test Statistics:**\n` +
+        `• Total Tests: ${result.total_tests}\n` +
+        `• Paths Tested: ${result.paths_tested}\n` +
+        `• Success Rate: ${result.success_rate}%\n\n` +
+        `✅ Passed: ${result.passed_tests}\n` +
+        `❌ Failed: ${result.failed_tests}\n` +
+        `⚠️  Errors: ${result.error_tests}\n\n` +
+        `📄 ${result.message}\n\n` +
+        `The detailed test report has been generated with comprehensive results for each endpoint and method tested.`
       )
     } catch (err) {
       setOutputText(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`)

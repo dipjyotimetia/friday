@@ -26,6 +26,10 @@ export interface ApiTestResponse {
   message: string;
   total_tests: number;
   paths_tested: number;
+  passed_tests: number;
+  failed_tests: number;
+  error_tests: number;
+  success_rate: number;
 }
 
 // Component Props Types

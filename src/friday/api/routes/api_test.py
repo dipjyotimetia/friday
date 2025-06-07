@@ -84,11 +84,16 @@ async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_reque
 
         total_tests = 0
         paths_tested = 0
+        test_results = []
 
         # Test each endpoint
         for path, methods in spec["paths"].items():
             paths_tested += 1
             for method, details in methods.items():
+                # Skip non-HTTP methods like parameters, summary, etc.
+                if method.lower() not in ['get', 'post', 'put', 'delete', 'patch', 'head', 'options']:
+                    continue
+                    
                 test_cases = await generator.create_test_cases(path, method, spec)
                 total_tests += len(test_cases)
                 await generator.execute_tests(
@@ -100,7 +105,12 @@ async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_reque
         output_path = Path(api_test_request.output)
         output_path.write_text(report)
 
-        # Handle file upload
+        # Calculate test statistics
+        passed_tests = sum(1 for result in generator.test_results if result.get("status") == "PASS")
+        failed_tests = sum(1 for result in generator.test_results if result.get("status") == "FAIL")
+        error_tests = sum(1 for result in generator.test_results if result.get("status") == "ERROR")
+
+        # Handle file upload cleanup
         if api_test_request.spec_upload:
             spec_path.unlink()
 
@@ -108,6 +118,10 @@ async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_reque
             "message": f"Test report generated at {api_test_request.output}",
             "total_tests": total_tests,
             "paths_tested": paths_tested,
+            "passed_tests": passed_tests,
+            "failed_tests": failed_tests,
+            "error_tests": error_tests,
+            "success_rate": round((passed_tests / total_tests * 100) if total_tests > 0 else 0, 2)
         }
 
     except Exception as e:
