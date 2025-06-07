@@ -32,15 +32,15 @@ Before creating bug reports, please check existing issues. When creating a bug r
 1. Fork the repo and create your branch from `main`
 2. Install development dependencies:
    ```sh
-   poetry install
+   uv sync --all-extras
    ```
 3. Run tests:
    ```sh
-   poetry run pytest tests/ -v
+   uv run pytest tests/ -v
    ```
 4. Format code:
    ```sh
-   poetry run ruff format
+   uv run ruff format
    ```
 5. Make your changes and write clear commit messages
 6. Add tests in [tests/](tests/) directory for new functionality

@@ -63,18 +63,12 @@ dependencies = [
 name = "Dipjyoti Metia"
 email = "dipjyotimetia@gmail.com"
 
-[project.optional-dependencies]
-dev = ["pytest>=8.3.4", "pytest-asyncio>=0.23.5"]
-
 [project.urls]
 Homepage = "https://github.com/dipjyotimetia/friday"
 "Bug Tracker" = "https://github.com/dipjyotimetia/friday/issues"
 
 [project.scripts]
 friday = "friday.cli:main"
-
-[tool.poetry]
-version = "0.1.47"
 
 [tool.action.branding]
 icon = "book-open"
@@ -84,10 +78,10 @@ color = "blue"
 minversion = "8.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
-
-[tool.poetry.dependencies.uvicorn]
-extras = ["standard"]
-version = "^0.34.0"
+filterwarnings = [
+    "ignore::DeprecationWarning:github.*",
+    "ignore::DeprecationWarning:httpx.*"
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/friday"]
@@ -96,8 +90,7 @@ packages = ["src/friday"]
 dev = [
     "pytest>=8.4.0",
     "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.0.0",
+    "httpx>=0.28.1",
+    "pip-audit>=2.7.0",
 ]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.4"
-pytest-asyncio = "^0.23.5"
