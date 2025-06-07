@@ -1,0 +1,257 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Core colors - Darker and more nuanced */
+  --bg-primary: #0B0D1A;
+  --bg-secondary: #161A2E;
+  --text-primary: #E2E8F0;
+  --text-secondary: #A1AABF;
+
+  /* Accent colors - More vibrant and harmonious */
+  --accent-primary: #7983FF;
+  --accent-secondary: #FF6B6B;
+  --accent-hover: #9CB4FF;
+
+  /* UI Elements - Refined for better aesthetics */
+  --border-color: rgba(255, 255, 255, 0.08);
+  --input-bg: #1E223A;
+  --input-bg-disabled: #242946;
+  --glass-bg: rgba(22, 26, 47, 0.7);
+
+  /* Effects - Subtler and more sophisticated */
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --glow: 0 0 15px rgba(121, 131, 255, 0.2);
+  --gradient-primary: linear-gradient(135deg, var(--accent-primary), #5C67FF);
+  --gradient-secondary: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+
+  /* Common transitions - Slightly faster for responsiveness */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* shadcn/ui variables for compatibility */
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 84% 4.9%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+}
+
+/* Animations */
+@keyframes shimmer {
+  from { background-position: -1000px 0; }
+  to { background-position: 1000px 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) scale(0.98);
+    filter: blur(8px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.6); }
+}
+
+* {
+  transition: all 0.3s ease-out;
+}
+
+body {
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background: #0B0D1A;
+  background-image:
+    radial-gradient(circle at 100% 0%, rgba(121, 131, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(255, 107, 107, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(92, 103, 255, 0.05) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: #E2E8F0;
+  line-height: 1.6;
+  padding: clamp(16px, 5vw, 20px);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: #7983FF;
+  text-decoration: none;
+  background: linear-gradient(to right, #FF6B6B, #7983FF);
+  background-size: 0% 1.5px;
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  transition: background-size 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+a:hover {
+  background-size: 100% 1.5px;
+}
+
+/* Utility classes */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.loading {
+  background: linear-gradient(90deg,
+    var(--bg-secondary) 0%,
+    var(--accent-primary) 50%,
+    var(--bg-secondary) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #7983FF, #FF6B6B);
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(121, 131, 255, 0.3);
+}
+
+.input-field {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 34, 58, 0.6);
+  color: #E2E8F0;
+  border-radius: 0.75rem;
+  font-size: 1.125rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #7983FF;
+  box-shadow: 0 0 0 4px rgba(121, 131, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.card {
+  background: rgba(22, 26, 46, 0.8);
+  padding: 2rem;
+  border-radius: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.tab-button {
+  padding: 1rem 2rem;
+  border: none;
+  background: transparent;
+  color: #E2E8F0;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  letter-spacing: 0.025em;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #7983FF, #9CB4FF);
+  color: white;
+  box-shadow: 0 6px 20px rgba(121, 131, 255, 0.4);
+}
+
+.tab-button:hover {
+  transform: translateY(-2px);
+  background: rgba(121, 131, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(121, 131, 255, 0.3);
+}
+
+.tab-button.active:hover {
+  background: linear-gradient(135deg, #7983FF, #9CB4FF);
+  box-shadow: 0 0 20px rgba(121, 131, 255, 0.5);
+}
+
+/* shadcn/ui component overrides */
+.glass-card {
+  backdrop-filter: blur(20px);
+  background: rgba(22, 26, 46, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #7983FF, #FF6B6B);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glow-effect {
+  box-shadow: 0 0 20px rgba(121, 131, 255, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-effect:hover {
+  box-shadow: 0 0 30px rgba(121, 131, 255, 0.5);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  * { touch-action: manipulation; }
+  input, select, button { font-size: 16px; }
+}

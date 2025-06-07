@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import UploadFile
-from openai import BaseModel
+from pydantic import BaseModel
 
 
 class ApiTestRequest(BaseModel):
@@ -16,3 +16,7 @@ class ApiTestResponse(BaseModel):
     message: str
     total_tests: int
     paths_tested: int
+    passed_tests: int
+    failed_tests: int
+    error_tests: int
+    success_rate: float

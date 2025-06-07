@@ -107,7 +107,17 @@ Open http://localhost:3000 in your browser
 * View real-time test execution logs
 ```
 
+## 📚 Documentation
+
+- **[System Architecture](docs/SYSTEM_ARCHITECTURE.md)** - Comprehensive system design and component overview
+- **[Developer Onboarding](docs/DEVELOPER_ONBOARDING.md)** - Complete setup guide for new contributors
+- **[API Documentation](docs/apis.md)** - REST API endpoint specifications
+- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute to the project
+- **[Sequence Diagrams](docs/sequence_diagram.md)** - System interaction flows
+
 ## 🛠️ Development
+
+### Quick Start for Contributors
 
 1.  **Clone and setup:**
 
@@ -136,12 +146,46 @@ Open http://localhost:3000 in your browser
     uv run ruff format
     ```
 
-5.  **Deploy to Google Cloud:**
+5.  **Start Development Servers:**
 
     ```bash
-    chmod +x deploy.sh
-    PROJECT_ID="your-project" REGION="us-west1" ./deploy.sh
+    # Backend API (Terminal 1)
+    uv run uvicorn src.friday.api.main:app --reload --port 8080
+    
+    # Frontend Web App (Terminal 2)
+    cd app && npm run dev
     ```
+
+### Development Environment Options
+
+- **VS Code Dev Container** (Recommended): Open in VS Code and click "Reopen in Container"
+- **Local Setup**: Follow the [Developer Onboarding Guide](docs/DEVELOPER_ONBOARDING.md)
+- **Docker Compose**: `docker-compose up --build`
+
+For detailed setup instructions, see our [Developer Onboarding Guide](docs/DEVELOPER_ONBOARDING.md).
+
+## 🚀 Deployment
+
+### Quick Deployment Options
+
+#### Docker Compose (Recommended for local testing)
+```bash
+docker-compose up --build
+```
+
+#### Google Cloud Platform
+```bash
+chmod +x deploy/deploy.sh
+PROJECT_ID="your-project" REGION="us-west1" ./deploy/deploy.sh
+```
+
+#### Production Deployment
+For production deployments, see our comprehensive [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) which covers:
+- Docker containerization
+- Cloud deployment strategies
+- Scaling considerations
+- Monitoring and logging
+- Security best practices
 
 ## 🐳 Development Container Setup
 

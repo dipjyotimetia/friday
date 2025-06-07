@@ -570,6 +570,7 @@ dependencies = [
     { name = "langchain-mistralai" },
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
+    { name = "pydantic-settings" },
     { name = "pygithub" },
     { name = "python-dotenv" },
     { name = "python-json-logger" },
@@ -584,6 +585,12 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.dev-dependencies]
 dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -606,6 +613,7 @@ requires-dist = [
     { name = "langchain-mistralai", specifier = ">=0.2.7" },
     { name = "langchain-ollama", specifier = ">=0.2.3" },
     { name = "langchain-openai", specifier = ">=0.3.6" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "pygithub", specifier = ">=2.6.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.5" },
@@ -621,6 +629,12 @@ requires-dist = [
     { name = "websocket", specifier = ">=0.2.1" },
 ]
 provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.4.0" },
+    { name = "pytest-asyncio", specifier = ">=1.0.0" },
+]
 
 [[package]]
 name = "frozenlist"

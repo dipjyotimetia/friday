@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  friday-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: friday-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      # Add any other environment variables here
+      # - API_URL=http://backend:8080
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - friday-network
+
+  # Uncomment and configure if you have a backend service
+  # friday-backend:
+  #   image: your-backend-image
+  #   container_name: friday-backend
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - NODE_ENV=production
+  #   networks:
+  #     - friday-network
+
+networks:
+  friday-network:
+    driver: bridge
+
+volumes:
+  friday-data:
+    driver: local

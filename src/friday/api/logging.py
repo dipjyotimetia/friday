@@ -1,11 +1,7 @@
-import structlog
+# This file is deprecated - use friday.logging_config instead
+import logging
 
-structlog.configure(
-    processors=[
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer(),
-    ],
-    wrapper_class=structlog.BoundLogger,
-    context_class=dict,
-    logger_factory=structlog.PrintLoggerFactory(),
+# Simple logging configuration
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )

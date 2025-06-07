@@ -1,6 +1,6 @@
 from typing import Optional
 
-from openai import BaseModel
+from pydantic import BaseModel
 
 
 class GenerateRequest(BaseModel):

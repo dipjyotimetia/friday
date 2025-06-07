@@ -33,4 +33,21 @@ format:
 .PHONY: run
 run:
 	uv run python main.py --gh-issue 5 --gh-repo dipjyotimetia/FRIDAY --confluence-id "1540097" --output test_cases.md
-	uv run python main.py --jira-key "FRID-1" --confluence-id "1540097" --output test_cases.md 
+	uv run python main.py --jira-key "FRID-1" --confluence-id "1540097" --output test_cases.md
+
+.PHONY: api-spec
+api-spec:
+	@echo "Generating OpenAPI specification..."
+	uv run python -c "from friday.api.app import app; import json; json.dump(app.openapi(), open('openapi.json', 'w'), indent=2)"
+	@echo "OpenAPI spec generated at openapi.json"
+
+.PHONY: api-types
+api-types: api-spec
+	@echo "Installing openapi-typescript if not present..."
+	cd app && npm list openapi-typescript >/dev/null 2>&1 || npm install --save-dev openapi-typescript
+	@echo "Generating TypeScript types from OpenAPI spec..."
+	npx openapi-typescript openapi.json --output app/types/api.ts
+	@echo "TypeScript types generated at app/types/api.ts"
+
+.PHONY: types
+types: api-types
