@@ -23,7 +23,7 @@ import logging
 from typing import Dict, List, Optional, Set
 from urllib.parse import urljoin, urlparse
 
-from scrapy.crawler import CrawlerProcess
+# Scrapy imports are done dynamically in crawl method to avoid conflicts
 from scrapy.http import Response
 from scrapy.spiders import Spider
 
@@ -210,7 +210,7 @@ class WebCrawler:
 
     def crawl(self, start_url: str) -> List[Dict[str, str]]:
         """
-        Start crawling from a specified URL.
+        Start crawling from a specified URL using a simple requests-based approach.
 
         Args:
             start_url (str): The URL to start crawling from
@@ -225,19 +225,83 @@ class WebCrawler:
             >>> for page in results:
             ...     print(f"Found page: {page['url']}")
         """
-
+        import requests
+        from urllib.parse import urljoin
+        import re
+        
         self.visited_urls.clear()
         self.pages_data.clear()
-
-        process = CrawlerProcess(
-            {
-                "LOG_LEVEL": "ERROR",
-                "ROBOTSTXT_OBEY": True,
-                "COOKIES_ENABLED": False,
-            }
-        )
-
-        process.crawl(self._CustomSpider, start_url=start_url, crawler_instance=self)
-        process.start()
-
+        
+        # Use a simple BFS approach instead of Scrapy to avoid event loop issues
+        urls_to_visit = [start_url]
+        session = requests.Session()
+        session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (compatible; FridayBot/1.0)'
+        })
+        
+        while urls_to_visit and len(self.visited_urls) < self.max_pages:
+            current_url = urls_to_visit.pop(0)
+            
+            if current_url in self.visited_urls:
+                continue
+                
+            try:
+                logger.info(f"Crawling {current_url}")
+                response = session.get(current_url, timeout=30)
+                response.raise_for_status()
+                
+                self.visited_urls.add(current_url)
+                
+                # Parse HTML content using simple regex
+                html_content = response.text
+                
+                # Extract title
+                title_match = re.search(r'<title[^>]*>(.*?)</title>', html_content, re.IGNORECASE | re.DOTALL)
+                title = title_match.group(1).strip() if title_match else ""
+                
+                # Remove script and style elements
+                clean_content = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.IGNORECASE | re.DOTALL)
+                clean_content = re.sub(r'<style[^>]*>.*?</style>', '', clean_content, flags=re.IGNORECASE | re.DOTALL)
+                
+                # Remove HTML tags
+                text_content = re.sub(r'<[^>]+>', ' ', clean_content)
+                
+                # Clean up text - remove extra whitespace
+                text_content = ' '.join(text_content.split())
+                
+                page_data = {
+                    "url": current_url,
+                    "text": text_content,
+                    "title": title.strip()
+                }
+                
+                self.pages_data.append(page_data)
+                
+                # Find more links if we haven't reached the limit
+                if len(self.visited_urls) < self.max_pages:
+                    domain = self._get_domain(current_url)
+                    
+                    # Extract links using regex
+                    links = re.findall(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>', html_content, re.IGNORECASE)
+                    
+                    for link in links:
+                        next_url = urljoin(current_url, link)
+                        
+                        # Skip non-HTTP(S) links
+                        if not next_url.startswith(("http://", "https://")):
+                            continue
+                            
+                        # Check domain restriction
+                        if (self.same_domain_only and 
+                            domain != self._get_domain(next_url)):
+                            continue
+                            
+                        if (next_url not in self.visited_urls and 
+                            next_url not in urls_to_visit):
+                            urls_to_visit.append(next_url)
+                            
+            except Exception as e:
+                logger.error(f"Error crawling {current_url}: {str(e)}")
+                continue
+        
         return self.pages_data

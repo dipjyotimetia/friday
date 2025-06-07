@@ -87,6 +87,7 @@ class EmbeddingsService:
         try:
             db = Chroma(
                 persist_directory=str(self.persist_directory),
+                embedding_function=self.embeddings,
             )
             print("Loaded existing Chroma DB")  # Debugging
             return db
@@ -95,6 +96,7 @@ class EmbeddingsService:
             print("Creating a new Chroma DB")  # Debugging
             return Chroma(
                 persist_directory=str(self.persist_directory),
+                embedding_function=self.embeddings,
             )
 
     def create_database(

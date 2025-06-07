@@ -13,12 +13,21 @@ router = APIRouter()
 @router.post("/crawl")
 async def crawl_site(request: CrawlRequest):
     try:
+        import asyncio
+        
         crawler = WebCrawler(
             max_pages=request.max_pages, same_domain_only=request.same_domain
         )
 
-        pages_data = crawler.crawl(request.url)
+        # Run crawler in thread pool to avoid blocking the event loop
+        loop = asyncio.get_event_loop()
+        pages_data = await loop.run_in_executor(None, crawler.crawl, request.url)
 
+        import time
+        
+        # Use a unique collection name to avoid embedding dimension conflicts
+        collection_name = f"crawl_{int(time.time())}"
+        
         embeddings_service = EmbeddingsService(
             provider=request.provider, persist_directory="./data/chroma"
         )
@@ -32,7 +41,8 @@ async def crawl_site(request: CrawlRequest):
                 {"source": page["url"], "type": "webpage", "title": page["title"]}
             )
 
-        embeddings_service.create_database(texts, metadata)
+        # Run embeddings creation in thread pool as well with unique collection name
+        await loop.run_in_executor(None, embeddings_service.create_database, texts, metadata, collection_name)
 
         stats = embeddings_service.get_collection_stats()
 
@@ -43,4 +53,5 @@ async def crawl_site(request: CrawlRequest):
         }
 
     except Exception as e:
+        logger.error(f"Error in crawl endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

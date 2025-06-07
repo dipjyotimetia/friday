@@ -2,7 +2,7 @@ import type { ProviderOption } from '@/types';
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:8080',
+  BASE_URL: process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,

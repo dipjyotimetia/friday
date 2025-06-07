@@ -10,7 +10,6 @@ export interface GenerateRequest {
 export interface CrawlRequest {
   url: string;
   provider: string;
-  persist_dir: string;
   max_pages: number;
   same_domain: boolean;
 }

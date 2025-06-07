@@ -30,7 +30,6 @@ export function WebCrawler({ setOutputText, setIsGenerating }: WebCrawlerProps) 
       const result = await apiService.crawlWebsite({
         url,
         provider,
-        persist_dir: './data/chroma',
         max_pages: Number(maxPages),
         same_domain: sameDomain,
       })

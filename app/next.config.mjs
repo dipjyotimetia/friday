@@ -45,6 +45,7 @@ const nextConfig = {
   // Environment variables for runtime
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
+    API_URL: process.env.API_URL,
   },
 }
 
