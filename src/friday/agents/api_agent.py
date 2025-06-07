@@ -25,25 +25,22 @@ Example:
     ```
 """
 
-import asyncio
 import json
+import logging
 from datetime import datetime
 from typing import Dict, List
 
 import httpx
-import structlog
 import yaml
 from langchain_community.agent_toolkits import OpenAPIToolkit
 from langchain_community.agent_toolkits.openapi.base import create_openapi_agent
 from langchain_community.tools.json.tool import JsonSpec
 from langchain_community.utilities import RequestsWrapper
-from langchain_core.exceptions import OutputParserException
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from friday.llm.llm import ModelProvider, get_llm_client
-from friday.services.logger import ws_logger
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ApiTestGenerator:
@@ -131,15 +128,12 @@ class ApiTestGenerator:
             message (str): Message to be logged
 
         Note:
-            Falls back to print if WebSocket logger is not available
+            Uses standard logger instead of WebSocket broadcasting
         """
         try:
-            if ws_logger:
-                await ws_logger.broadcast(message)  # Call broadcast directly
-            else:
-                print(f"Warning: WebSocket logger not initialized: {message}")
+            logger.info(message)
         except Exception as e:
-            print(f"Error sending log: {message} - {str(e)}")
+            logger.error(f"Error logging message: {message} - {str(e)}")
 
     async def load_spec(self) -> Dict:
         """
@@ -166,10 +160,10 @@ class ApiTestGenerator:
         """Extract sample data from OpenAPI schema definition."""
         if not isinstance(schema, dict):
             return {}
-        
+
         if "example" in schema:
             return schema["example"]
-        
+
         if "properties" in schema:
             sample = {}
             for prop, prop_schema in schema["properties"].items():
@@ -184,20 +178,22 @@ class ApiTestGenerator:
                 elif prop_schema.get("type") == "array":
                     sample[prop] = []
             return sample
-        
+
         # Handle schema references
         if "$ref" in schema:
             # For now, return empty dict for references
             # In a full implementation, you'd resolve the reference
             return {}
-        
+
         return {}
 
-    def _generate_test_scenarios_from_spec(self, endpoint: str, method: str, operation_spec: Dict) -> List[Dict]:
+    def _generate_test_scenarios_from_spec(
+        self, endpoint: str, method: str, operation_spec: Dict
+    ) -> List[Dict]:
         """Generate comprehensive test scenarios based on OpenAPI specification."""
         test_cases = []
         method_upper = method.upper()
-        
+
         # Basic successful test case
         basic_test = {
             "name": f"Valid {method_upper} {endpoint} - Success",
@@ -205,20 +201,25 @@ class ApiTestGenerator:
             "endpoint": endpoint,
             "payload": {},
             "headers": {"Content-Type": "application/json"},
-            "expected_status": [200, 201]
+            "expected_status": [200, 201],
         }
-        
+
         # Extract request body schema for POST/PUT/PATCH
-        if method.lower() in ["post", "put", "patch"] and "requestBody" in operation_spec:
+        if (
+            method.lower() in ["post", "put", "patch"]
+            and "requestBody" in operation_spec
+        ):
             request_body = operation_spec["requestBody"]
             if "content" in request_body:
                 for content_type, content_spec in request_body["content"].items():
                     if "schema" in content_spec:
-                        sample_payload = self._extract_sample_data_from_schema(content_spec["schema"])
+                        sample_payload = self._extract_sample_data_from_schema(
+                            content_spec["schema"]
+                        )
                         basic_test["payload"] = sample_payload
                         basic_test["headers"]["Content-Type"] = content_type
                         break
-        
+
         # Extract path parameters
         path_params = {}
         if "parameters" in operation_spec:
@@ -228,22 +229,24 @@ class ApiTestGenerator:
                         path_params[param["name"]] = 1
                     else:
                         path_params[param["name"]] = f"test_{param['name']}"
-        
+
         # Replace path parameters in endpoint
         for param_name, param_value in path_params.items():
             endpoint = endpoint.replace(f"{{{param_name}}}", str(param_value))
             basic_test["endpoint"] = endpoint
-        
+
         test_cases.append(basic_test)
-        
+
         # Authentication/Authorization tests
         if "security" in operation_spec:
             auth_test = basic_test.copy()
             auth_test["name"] = f"Unauthorized {method_upper} {endpoint} - 401"
-            auth_test["headers"] = {"Content-Type": "application/json"}  # Remove auth headers
+            auth_test["headers"] = {
+                "Content-Type": "application/json"
+            }  # Remove auth headers
             auth_test["expected_status"] = [401, 403]
             test_cases.append(auth_test)
-        
+
         # Invalid request body test for POST/PUT/PATCH
         if method.lower() in ["post", "put", "patch"]:
             invalid_test = basic_test.copy()
@@ -251,7 +254,7 @@ class ApiTestGenerator:
             invalid_test["payload"] = {"invalid": "data"}
             invalid_test["expected_status"] = [400]
             test_cases.append(invalid_test)
-        
+
         # Not found test for operations with path parameters
         if path_params:
             not_found_test = basic_test.copy()
@@ -263,7 +266,7 @@ class ApiTestGenerator:
                 )
             not_found_test["expected_status"] = [404]
             test_cases.append(not_found_test)
-        
+
         # Validation tests based on response schemas
         responses = operation_spec.get("responses", {})
         for status_code, response_spec in responses.items():
@@ -273,9 +276,11 @@ class ApiTestGenerator:
                 error_test["expected_status"] = [int(status_code)]
                 # Modify request to trigger this error
                 if status_code == "400":
-                    error_test["payload"] = None if method.lower() in ["post", "put", "patch"] else {}
+                    error_test["payload"] = (
+                        None if method.lower() in ["post", "put", "patch"] else {}
+                    )
                 test_cases.append(error_test)
-        
+
         return test_cases
 
     async def create_test_cases(
@@ -309,7 +314,7 @@ class ApiTestGenerator:
             ```
         """
         await self._send_log(f"Generating test cases for {method} {endpoint}")
-        
+
         # Early validation
         if "paths" not in spec or endpoint not in spec["paths"]:
             await self._send_log(f"Endpoint {endpoint} not found in spec")
@@ -321,28 +326,34 @@ class ApiTestGenerator:
             return self._generate_default_test_case(endpoint, method)
 
         operation_spec = endpoint_spec[method.lower()]
-        
+
         try:
             # Generate test scenarios from OpenAPI spec
-            test_cases = self._generate_test_scenarios_from_spec(endpoint, method, operation_spec)
-            
-            await self._send_log(f"Generated {len(test_cases)} test cases for {method} {endpoint}")
+            test_cases = self._generate_test_scenarios_from_spec(
+                endpoint, method, operation_spec
+            )
+
+            await self._send_log(
+                f"Generated {len(test_cases)} test cases for {method} {endpoint}"
+            )
             return test_cases
-            
+
         except Exception as e:
             await self._send_log(f"Error generating test cases: {str(e)}")
             return self._generate_default_test_case(endpoint, method)
 
     def _generate_default_test_case(self, endpoint: str, method: str) -> List[Dict]:
         """Generate a basic default test case."""
-        return [{
-            "name": f"Basic {method} {endpoint} test",
-            "method": method.upper(),
-            "endpoint": endpoint,
-            "payload": {},
-            "headers": {"Content-Type": "application/json"},
-            "expected_status": [200, 201]
-        }]
+        return [
+            {
+                "name": f"Basic {method} {endpoint} test",
+                "method": method.upper(),
+                "endpoint": endpoint,
+                "payload": {},
+                "headers": {"Content-Type": "application/json"},
+                "expected_status": [200, 201],
+            }
+        ]
 
     @retry(
         stop=stop_after_attempt(3),
@@ -391,7 +402,7 @@ class ApiTestGenerator:
                     # Check if response status matches expected status codes
                     expected_statuses = test.get("expected_status", [200, 201])
                     is_pass = response.status_code in expected_statuses
-                    
+
                     self.test_results.append(
                         {
                             "test_name": test["name"],

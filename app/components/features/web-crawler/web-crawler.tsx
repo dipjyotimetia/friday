@@ -31,9 +31,18 @@ export function WebCrawler({ setOutputText, setIsGenerating }: WebCrawlerProps) 
         url,
         provider,
         max_pages: Number(maxPages),
-        same_domain: sameDomain,
+        include_external: !sameDomain,
       })
-      setOutputText(JSON.stringify(result, null, 2))
+      
+      if (result.success) {
+        const summary = `Web Crawling Complete!\n\n` +
+          `Pages Crawled: ${result.pages_crawled}\n` +
+          `Embeddings Created: ${result.embeddings_created || 0}\n\n` +
+          `${result.content_summary || 'Crawl completed successfully.'}`;
+        setOutputText(summary)
+      } else {
+        setOutputText(JSON.stringify(result, null, 2))
+      }
     } catch (err) {
       setOutputText(`Error: ${(err as Error).message}`)
     } finally {

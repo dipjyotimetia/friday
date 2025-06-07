@@ -18,12 +18,13 @@ RUN groupadd -r -g 1000 appuser && \
 
 WORKDIR /app
 
-# Copy dependency files and install dependencies
-COPY pyproject.toml uv.lock README.md ./
+# Copy all files first (needed for package build)
+COPY . .
+
+# Install dependencies
 RUN uv sync --frozen
 
-# Copy application code
-COPY . .
+# Set ownership after installation
 RUN chown -R appuser:appuser /app
 
 # Switch to non-root user

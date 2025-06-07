@@ -1,4 +1,5 @@
-import structlog
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from friday.api.schemas.generate import GenerateRequest, GenerateResponse
@@ -10,7 +11,7 @@ from friday.utils.helpers import save_test_cases_as_markdown
 
 router = APIRouter()
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @router.post("/generate", response_model=GenerateResponse)

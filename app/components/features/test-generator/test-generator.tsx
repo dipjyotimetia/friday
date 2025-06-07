@@ -32,13 +32,19 @@ export function TestGenerator({
     
     try {
       const result = await apiService.generateTests({
-        jira_key: jiraKey,
-        gh_issue: ghIssue,
-        gh_repo: ghRepo,
-        confluence_id: confluenceId,
-        output: outputFilename,
+        jira_key: jiraKey || undefined,
+        github_issue: ghIssue || undefined,
+        custom_requirements: ghRepo || undefined, // Using as custom requirements for now
+        include_confluence: !!confluenceId,
+        test_type: 'api',
+        provider: 'openai'
       })
-      setOutputText(JSON.stringify(result, null, 2))
+      
+      if (result.success && result.test_content) {
+        setOutputText(result.test_content)
+      } else {
+        setOutputText(JSON.stringify(result, null, 2))
+      }
     } catch (err) {
       setOutputText(`Error: ${(err as Error).message}`)
     } finally {

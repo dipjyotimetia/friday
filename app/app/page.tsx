@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TestGenerator, WebCrawler, ApiTester, OutputViewer } from '@/components'
+import { TestGenerator, WebCrawler, ApiTester, OutputViewer, LogViewer } from '@/components'
 import { Bot, Globe, TestTube, Zap } from 'lucide-react'
 
 export default function HomePage() {
@@ -96,6 +96,9 @@ export default function HomePage() {
         >
           <OutputViewer outputText={outputText} isGenerating={isGenerating} />
         </motion.div>
+
+        {/* Real-time Log Viewer */}
+        <LogViewer />
       </div>
     </div>
   )
