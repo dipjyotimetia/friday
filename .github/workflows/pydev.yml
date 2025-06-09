@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.13"]
         os: [ubuntu-latest]
     
     runs-on: ${{ matrix.os }}
@@ -38,10 +38,10 @@ jobs:
           ${{ runner.os }}-uv-
     
     - name: Install dependencies
-      run: uv sync --all-extras
+      run: uv sync
     
     - name: Run security audit
-      run: uv run --group dev pip-audit --format=json --output=audit-results.json || true
+      run: uv run pip-audit --format=json --output=audit-results.json || true
     
     - name: Upload security audit results
       uses: actions/upload-artifact@v4
@@ -51,7 +51,7 @@ jobs:
         path: audit-results.json
     
     - name: Run tests with coverage
-      run: uv run --group dev pytest tests/ -v --cov=src/friday --cov-config=.coveragerc.ini --cov-report=xml --cov-report=html --cov-report=term
+      run: uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term
     
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4
