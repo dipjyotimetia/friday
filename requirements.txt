@@ -172,7 +172,7 @@ googleapis-common-protos==1.70.0
     #   grpc-google-iam-v1
     #   grpcio-status
     #   opentelemetry-exporter-otlp-proto-grpc
-greenlet==3.2.2
+greenlet==3.2.3
     # via
     #   gevent
     #   sqlalchemy
