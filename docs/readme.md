@@ -61,6 +61,7 @@ docs/
 ├── DEVELOPER_ONBOARDING.md     # New developer guide
 ├── DEVELOPMENT_WORKFLOWS.md    # Visual workflow processes
 ├── DEPLOYMENT_GUIDE.md         # Production deployment
+├── BROWSER_TESTING.md          # Browser testing guide
 ├── ROADMAP.md                  # Project future plans
 ├── sequence_diagram.md         # System interactions
 ├── apis.md                     # API documentation
@@ -81,11 +82,16 @@ docs/
    - [API Integration](apis.md)
    - [Web Interface](../README.md#web-application)
 
-2. **Web Crawling**
+2. **Browser Testing** ⭐ **NEW**
+   - [Browser Testing Guide](BROWSER_TESTING.md)
+   - [AI-Powered UI Testing](BROWSER_TESTING.md#features)
+   - [Natural Language Test Requirements](BROWSER_TESTING.md#usage)
+
+3. **Web Crawling**
    - [Context Building](SYSTEM_ARCHITECTURE.md#web-crawling-workflow)
    - [Embedding Storage](SYSTEM_ARCHITECTURE.md#data-flow-architecture)
 
-3. **API Testing**
+4. **API Testing**
    - [OpenAPI Integration](../README.md#rest-api)
    - [Test Execution](api-test-report.md)
 
@@ -113,13 +119,15 @@ docs/
 - ✅ **Developer Onboarding** - Complete with examples
 - ✅ **Deployment Guide** - Production-ready instructions
 - ✅ **Development Workflows** - Visual process diagrams
+- ✅ **Browser Testing Guide** - Comprehensive browser automation guide
 - ✅ **API Documentation** - Comprehensive endpoint coverage
 - ✅ **Contributing Guidelines** - Detailed contributor guide
 - ✅ **Project Roadmap** - Future planning document
 
 ### Recently Updated
-- **System Architecture** - Added comprehensive component diagrams
-- **Developer Onboarding** - Enhanced setup instructions
+- **Browser Testing Guide** - NEW comprehensive browser automation documentation
+- **System Architecture** - Added browser testing component integration
+- **Developer Onboarding** - Enhanced setup instructions with browser testing
 - **Deployment Guide** - Added cloud deployment strategies
 - **Development Workflows** - Created visual workflow diagrams
 

@@ -30,6 +30,7 @@ Example:
     ```
 """
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Optional
@@ -40,6 +41,7 @@ from rich import print
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
+from friday.services.browser_agent import BrowserTestingAgent
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 from friday.services.test_generator import TestCaseGenerator
@@ -222,6 +224,112 @@ def version():
         ```
     """
     print(f"Friday v{__version__}")
+
+
+@app.command()
+def browser_test(
+    url: str = typer.Argument(..., help="URL to test"),
+    requirement: str = typer.Option(..., "--requirement", "-r", help="Test requirement description"),
+    test_type: str = typer.Option("functional", "--test-type", "-t", help="Type of test (functional, ui, integration)"),
+    context: str = typer.Option("", "--context", "-c", help="Additional context for the test"),
+    provider: str = typer.Option("openai", "--provider", "-p", help="LLM provider (openai, gemini, ollama, mistral)"),
+    headless: bool = typer.Option(True, "--headless/--no-headless", help="Run browser in headless mode"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file for test report"),
+):
+    """
+    Run browser-based UI tests using AI agent.
+
+    This command uses the browser-use library to perform automated browser testing
+    based on natural language requirements. The AI agent will navigate the web page
+    and execute the specified test scenario.
+
+    Args:
+        url: Target URL to test
+        requirement: Test requirement description in natural language
+        test_type: Type of test to perform (functional, ui, integration, etc.)
+        context: Additional context or instructions for the test
+        provider: LLM provider for the AI agent
+        headless: Whether to run the browser in headless mode
+        output: Optional output file for the test report
+
+    Example:
+        ```bash
+        # Test login functionality
+        friday browser-test https://example.com/login \
+            --requirement "Test user login with valid credentials" \
+            --test-type functional \
+            --context "Use username 'testuser' and password 'testpass'"
+
+        # Test UI elements with visible browser
+        friday browser-test https://example.com \
+            --requirement "Verify navigation menu is functional" \
+            --test-type ui \
+            --no-headless \
+            --output ui_test_report.md
+        ```
+
+    Raises:
+        typer.Exit: If browser testing fails or encounters an error
+    """
+    try:
+        print(f"[blue]Starting browser test for: {url}[/blue]")
+        print(f"[blue]Requirement: {requirement}[/blue]")
+        
+        # Initialize browser testing agent
+        agent = BrowserTestingAgent(provider=provider)
+        
+        # Run the browser test
+        result = asyncio.run(agent.run_browser_test(
+            requirement=requirement,
+            url=url,
+            test_type=test_type,
+            context=context,
+            headless=headless,
+            take_screenshots=True
+        ))
+        
+        # Display results
+        if result["success"]:
+            print(f"[green]✓ Browser test completed successfully[/green]")
+            print(f"[green]Status: {result['status']}[/green]")
+            if result.get("execution_result"):
+                print(f"[cyan]Result: {result['execution_result'][:200]}...[/cyan]")
+        else:
+            print(f"[red]✗ Browser test failed[/red]")
+            print(f"[red]Error: {result.get('error', 'Unknown error')}[/red]")
+            raise typer.Exit(code=1)
+        
+        # Save report if output file specified
+        if output:
+            report = f"""# Browser Test Report
+
+## Test Details
+- **URL**: {url}
+- **Requirement**: {requirement}
+- **Test Type**: {test_type}
+- **Context**: {context}
+- **Provider**: {provider}
+- **Headless**: {headless}
+
+## Results
+- **Status**: {result['status']}
+- **Success**: {'✓' if result['success'] else '✗'}
+- **Timestamp**: {result.get('timestamp', 'N/A')}
+
+## Execution Details
+{result.get('execution_result', 'No detailed results available')}
+
+## Errors
+{chr(10).join(result.get('errors', [])) if result.get('errors') else 'No errors'}
+"""
+            with open(output, 'w') as f:
+                f.write(report)
+            print(f"[green]Test report saved to: {output}[/green]")
+        
+    except Exception as e:
+        logger.error(f"Error running browser test: {str(e)}")
+        print(f"[red]Error: {str(e)}[/red]")
+        raise typer.Exit(code=1)
 
 
 @app.command()

@@ -16,6 +16,10 @@ export const API_ENDPOINTS = {
   GENERATE: '/api/v1/generate',
   CRAWL: '/api/v1/crawl',
   TEST_API: '/api/v1/testapi',
+  BROWSER_TEST_SINGLE: '/api/v1/browser-test/single',
+  BROWSER_TEST_MULTIPLE: '/api/v1/browser-test/multiple',
+  BROWSER_TEST_REPORT: '/api/v1/browser-test/report',
+  BROWSER_TEST_HEALTH: '/api/v1/browser-test/health',
 } as const;
 
 // AI Providers
@@ -38,7 +42,22 @@ export const DEFAULT_VALUES = {
   MAX_PAGES: 10,
   OUTPUT_FILENAME: 'test_cases.md',
   API_OUTPUT_FILENAME: 'api_test_report.md',
+  BROWSER_TEST_OUTPUT_FILENAME: 'browser_test_report.md',
   CRAWL_PERSIST_DIR: './data/chroma',
+} as const;
+
+// Browser Test Configuration
+export const BROWSER_TEST_CONFIG = {
+  TEST_TYPES: [
+    { value: 'functional', label: 'Functional' },
+    { value: 'ui', label: 'UI/UX' },
+    { value: 'integration', label: 'Integration' },
+    { value: 'accessibility', label: 'Accessibility' },
+    { value: 'performance', label: 'Performance' },
+  ],
+  DEFAULT_TEST_TYPE: 'functional',
+  DEFAULT_HEADLESS: true,
+  DEFAULT_SCREENSHOTS: true,
 } as const;
 
 // UI Configuration

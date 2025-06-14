@@ -121,8 +121,27 @@ export interface ProviderOption {
   label: string;
 }
 
+// Browser Testing Types (from OpenAPI schema)
+export type BrowserTestRequest = components['schemas']['BrowserTestRequest'];
+export type BrowserTestCase = components['schemas']['BrowserTestCase'];
+export type MultipleBrowserTestRequest = components['schemas']['MultipleBrowserTestRequest'];
+export type BrowserTestResult = components['schemas']['BrowserTestResult'];
+export type BrowserTestResponse = components['schemas']['BrowserTestResponse'];
+export type MultipleBrowserTestResponse = components['schemas']['MultipleBrowserTestResponse'];
+export type BrowserTestReportRequest = components['schemas']['BrowserTestReportRequest'];
+export type BrowserTestReportResponse = components['schemas']['BrowserTestReportResponse'];
+
+// Extended browser testing types for better UX
+export interface ExtendedBrowserTestRequest extends BrowserTestRequest {
+  provider?: string;
+}
+
+export interface ExtendedBrowserTestCase extends BrowserTestCase {
+  provider?: string;
+}
+
 // Tab Types
-export type TabId = 'generator' | 'crawler' | 'api';
+export type TabId = 'generator' | 'crawler' | 'api' | 'browser';
 
 export interface Tab {
   id: TabId;
