@@ -10,8 +10,12 @@ export async function GET() {
       environment: process.env.NODE_ENV || 'development',
       version: process.env.npm_package_version || '1.0.0',
       memory: {
-        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100,
-        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024 * 100) / 100,
+        used:
+          Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) /
+          100,
+        total:
+          Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) /
+          100,
       },
       pid: process.pid,
     };
@@ -20,11 +24,11 @@ export async function GET() {
   } catch (error) {
     console.error('Health check failed:', error);
     return NextResponse.json(
-      { 
-        status: 'unhealthy', 
+      {
+        status: 'unhealthy',
         error: 'Health check failed',
         timestamp: new Date().toISOString(),
-      }, 
+      },
       { status: 500 }
     );
   }

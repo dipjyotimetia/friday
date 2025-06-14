@@ -1,12 +1,12 @@
-'use client'
+'use client';
 
 import { useState, useCallback } from 'react';
 import { apiService } from '@/services/api';
-import type { 
-  ExtendedTestGenerationRequest, 
-  ExtendedCrawlRequest, 
-  ExtendedAPITestRequest, 
-  ExtendedAPITestResponse 
+import type {
+  ExtendedTestGenerationRequest,
+  ExtendedCrawlRequest,
+  ExtendedAPITestRequest,
+  ExtendedAPITestResponse,
 } from '@/types';
 
 interface UseApiState<T = any> {
@@ -22,19 +22,23 @@ export function useTestGenerator() {
     error: null,
   });
 
-  const generateTests = useCallback(async (request: ExtendedTestGenerationRequest) => {
-    setState({ data: null, loading: true, error: null });
-    
-    try {
-      const result = await apiService.generateTests(request);
-      setState({ data: result, loading: false, error: null });
-      return result;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setState({ data: null, loading: false, error: errorMessage });
-      throw error;
-    }
-  }, []);
+  const generateTests = useCallback(
+    async (request: ExtendedTestGenerationRequest) => {
+      setState({ data: null, loading: true, error: null });
+
+      try {
+        const result = await apiService.generateTests(request);
+        setState({ data: result, loading: false, error: null });
+        return result;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error occurred';
+        setState({ data: null, loading: false, error: errorMessage });
+        throw error;
+      }
+    },
+    []
+  );
 
   return {
     ...state,
@@ -51,13 +55,14 @@ export function useWebCrawler() {
 
   const crawlWebsite = useCallback(async (request: ExtendedCrawlRequest) => {
     setState({ data: null, loading: true, error: null });
-    
+
     try {
       const result = await apiService.crawlWebsite(request);
       setState({ data: result, loading: false, error: null });
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
       setState({ data: null, loading: false, error: errorMessage });
       throw error;
     }
@@ -78,13 +83,14 @@ export function useApiTester() {
 
   const testApi = useCallback(async (request: ExtendedAPITestRequest) => {
     setState({ data: null, loading: true, error: null });
-    
+
     try {
       const result = await apiService.testApi(request);
       setState({ data: result, loading: false, error: null });
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
       setState({ data: null, loading: false, error: errorMessage });
       throw error;
     }

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { LogEntry } from '@/types';
@@ -20,19 +20,23 @@ interface UseWebSocketReturn {
   error: string | null;
 }
 
-export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
+export function useWebSocket(
+  options: UseWebSocketOptions = {}
+): UseWebSocketReturn {
   const {
-    url = process.env.NODE_ENV === 'production' 
+    url = process.env.NODE_ENV === 'production'
       ? 'wss://your-domain.com/api/v1/ws/logs'
       : 'ws://localhost:8080/api/v1/ws/logs',
     maxLogs = 100,
     autoReconnect = true,
-    reconnectInterval = 3000
+    reconnectInterval = 3000,
   } = options;
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'connecting' | 'connected' | 'disconnected' | 'error'
+  >('disconnected');
   const [error, setError] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -52,7 +56,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     try {
       setConnectionStatus('connecting');
       setError(null);
-      
+
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
@@ -67,15 +71,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       ws.onmessage = (event) => {
         try {
           const logEntry: LogEntry = JSON.parse(event.data);
-          
+
           // Validate log entry structure
           if (logEntry.timestamp && logEntry.message && logEntry.level) {
             // Filter out debug heartbeat messages from displaying
-            if (logEntry.level === 'DEBUG' && logEntry.source === 'websocket_heartbeat') {
+            if (
+              logEntry.level === 'DEBUG' &&
+              logEntry.source === 'websocket_heartbeat'
+            ) {
               return; // Don't display heartbeat messages
             }
-            
-            setLogs(prevLogs => {
+
+            setLogs((prevLogs) => {
               const newLogs = [...prevLogs, logEntry];
               // Keep only the last maxLogs entries
               return newLogs.slice(-maxLogs);
@@ -94,12 +101,19 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         setConnectionStatus('disconnected');
         wsRef.current = null;
 
-        if (!event.wasClean && autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+        if (
+          !event.wasClean &&
+          autoReconnect &&
+          reconnectAttemptsRef.current < maxReconnectAttempts
+        ) {
           reconnectAttemptsRef.current += 1;
-          const delay = reconnectInterval * Math.pow(2, reconnectAttemptsRef.current - 1); // Exponential backoff
-          
-          console.log(`WebSocket disconnected. Attempting reconnect ${reconnectAttemptsRef.current}/${maxReconnectAttempts} in ${delay}ms`);
-          
+          const delay =
+            reconnectInterval * Math.pow(2, reconnectAttemptsRef.current - 1); // Exponential backoff
+
+          console.log(
+            `WebSocket disconnected. Attempting reconnect ${reconnectAttemptsRef.current}/${maxReconnectAttempts} in ${delay}ms`
+          );
+
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
@@ -114,7 +128,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         setError('WebSocket connection error');
         setConnectionStatus('error');
       };
-
     } catch (connectError) {
       console.error('Failed to create WebSocket connection:', connectError);
       setError('Failed to create WebSocket connection');
@@ -164,6 +177,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     clearLogs,
     connect,
     disconnect,
-    error
+    error,
   };
 }

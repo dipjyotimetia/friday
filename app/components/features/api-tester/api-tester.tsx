@@ -1,87 +1,107 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { FileUploader, ResultDisplay } from '@/components/shared'
-import { apiService } from '@/services/api'
-import { useApiError } from '@/hooks/use-api-error'
-import { AI_PROVIDERS, FILE_CONFIG, DEFAULT_VALUES } from '@/config/constants'
-import type { BaseComponentProps, AIProvider, ExtendedAPITestResponse } from '@/types'
-import { Upload, Zap, Globe, Settings } from 'lucide-react'
+import React, { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { FileUploader, ResultDisplay } from '@/components/shared';
+import { apiService } from '@/services/api';
+import { useApiError } from '@/hooks/use-api-error';
+import { AI_PROVIDERS, FILE_CONFIG, DEFAULT_VALUES } from '@/config/constants';
+import type {
+  BaseComponentProps,
+  AIProvider,
+  ExtendedAPITestResponse,
+} from '@/types';
+import { Upload, Zap, Globe, Settings } from 'lucide-react';
 
-export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps) {
-  const [baseUrl, setBaseUrl] = useState('')
-  const [specFileObj, setSpecFileObj] = useState<File | null>(null)
-  const [provider, setProvider] = useState<AIProvider>('openai')
-  const [isTestingApi, setIsTestingApi] = useState(false)
-  const [testResult, setTestResult] = useState<ExtendedAPITestResponse | null>(null)
-  
-  const { handleError, showSuccess, showWarning } = useApiError()
+export function ApiTester({
+  setOutputText,
+  setIsGenerating,
+}: BaseComponentProps) {
+  const [baseUrl, setBaseUrl] = useState('');
+  const [specFileObj, setSpecFileObj] = useState<File | null>(null);
+  const [provider, setProvider] = useState<AIProvider>('openai');
+  const [isTestingApi, setIsTestingApi] = useState(false);
+  const [testResult, setTestResult] = useState<ExtendedAPITestResponse | null>(
+    null
+  );
+
+  const { handleError, showSuccess, showWarning } = useApiError();
 
   const handleApiTest = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!specFileObj) {
-      showWarning('Missing specification file', 'Please upload an OpenAPI/Swagger specification file')
-      return
+      showWarning(
+        'Missing specification file',
+        'Please upload an OpenAPI/Swagger specification file'
+      );
+      return;
     }
 
     if (!baseUrl) {
-      showWarning('Missing base URL', 'Please provide a base URL for testing')
-      return
+      showWarning('Missing base URL', 'Please provide a base URL for testing');
+      return;
     }
 
     if (!specFileObj.name.match(/\.(json|yaml|yml)$/i)) {
-      showWarning('Invalid file type', 'Must be .yaml, .yml or .json file')
-      return
+      showWarning('Invalid file type', 'Must be .yaml, .yml or .json file');
+      return;
     }
 
-    setIsTestingApi(true)
-    setIsGenerating(true)
-    setTestResult(null)
-    setOutputText('Initializing API tests...')
+    setIsTestingApi(true);
+    setIsGenerating(true);
+    setTestResult(null);
+    setOutputText('Initializing API tests...');
 
     try {
       // Read the spec file content
-      const specContent = await specFileObj.text()
+      const specContent = await specFileObj.text();
 
       const result = await apiService.testApi({
         spec_content: specContent,
         base_url: baseUrl.trim(),
-        auth_config: undefined // TODO: Add auth config support
-      })
+        auth_config: undefined, // TODO: Add auth config support
+      });
 
-      setTestResult(result)
-      setOutputText('')
-      
+      setTestResult(result);
+      setOutputText('');
+
       if (result.success) {
         showSuccess(
-          'API tests completed successfully', 
+          'API tests completed successfully',
           `${result.passed_tests}/${result.total_tests} tests passed`
-        )
+        );
       } else {
         showWarning(
           'API tests completed with issues',
           `${result.failed_tests} tests failed`
-        )
+        );
       }
     } catch (err) {
-      handleError(err, 'API Testing')
-      setOutputText(`Failed to run API tests. Please check your inputs and try again.`)
+      handleError(err, 'API Testing');
+      setOutputText(
+        `Failed to run API tests. Please check your inputs and try again.`
+      );
     } finally {
-      setIsTestingApi(false)
-      setIsGenerating(false)
+      setIsTestingApi(false);
+      setIsGenerating(false);
     }
-  }
+  };
 
   const handleFileChange = (file: File | null) => {
-    setSpecFileObj(file)
-    setTestResult(null)
-    setOutputText('')
-  }
+    setSpecFileObj(file);
+    setTestResult(null);
+    setOutputText('');
+  };
 
   return (
     <div className="space-y-6">
@@ -94,7 +114,8 @@ export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps
             <div>
               <CardTitle>API Testing</CardTitle>
               <CardDescription>
-                Test your APIs automatically using OpenAPI/Swagger specifications
+                Test your APIs automatically using OpenAPI/Swagger
+                specifications
               </CardDescription>
             </div>
           </div>
@@ -155,8 +176,8 @@ export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isTestingApi || !specFileObj || !baseUrl}
               variant="gradient"
               size="lg"
@@ -180,12 +201,12 @@ export function ApiTester({ setOutputText, setIsGenerating }: BaseComponentProps
 
       {/* Results Display */}
       {testResult && (
-        <ResultDisplay 
+        <ResultDisplay
           result={testResult}
           type="api-test"
           isLoading={isTestingApi}
         />
       )}
     </div>
-  )
+  );
 }

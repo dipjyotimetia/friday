@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
@@ -20,23 +20,31 @@ const levelColors = {
   INFO: 'bg-blue-100 text-blue-800',
   WARNING: 'bg-yellow-100 text-yellow-800',
   ERROR: 'bg-red-100 text-red-800',
-  CRITICAL: 'bg-red-200 text-red-900'
+  CRITICAL: 'bg-red-200 text-red-900',
 };
 
 const connectionStatusColors = {
   connecting: 'bg-yellow-100 text-yellow-800',
   connected: 'bg-green-100 text-green-800',
   disconnected: 'bg-gray-100 text-gray-800',
-  error: 'bg-red-100 text-red-800'
+  error: 'bg-red-100 text-red-800',
 };
 
-export function LogViewer({ 
-  className = '', 
+export function LogViewer({
+  className = '',
   maxHeight = '400px',
   showConnectionStatus = true,
-  autoScroll = true
+  autoScroll = true,
 }: LogViewerProps) {
-  const { logs, isConnected, connectionStatus, clearLogs, connect, disconnect, error } = useWebSocket();
+  const {
+    logs,
+    isConnected,
+    connectionStatus,
+    clearLogs,
+    connect,
+    disconnect,
+    error,
+  } = useWebSocket();
   const [isExpanded, setIsExpanded] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -60,14 +68,16 @@ export function LogViewer({
   if (!isExpanded) {
     return (
       <div className={`fixed bottom-4 right-4 z-50 ${className}`}>
-        <Button 
+        <Button
           onClick={toggleExpanded}
           variant="outline"
           className="shadow-lg"
           size="sm"
         >
           <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <div
+              className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+            />
             <span>Logs ({logs.length})</span>
           </div>
         </Button>
@@ -83,8 +93,8 @@ export function LogViewer({
             <div className="flex items-center space-x-2">
               <h3 className="font-semibold text-sm">Real-time Logs</h3>
               {showConnectionStatus && (
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={connectionStatusColors[connectionStatus]}
                 >
                   {connectionStatus}
@@ -120,7 +130,7 @@ export function LogViewer({
               </Button>
             </div>
           </div>
-          
+
           {error && (
             <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded">
               {error}
@@ -128,7 +138,7 @@ export function LogViewer({
           )}
         </div>
 
-        <div 
+        <div
           ref={scrollAreaRef}
           className="h-96 overflow-y-auto"
           style={{ maxHeight }}
@@ -136,11 +146,16 @@ export function LogViewer({
           <div className="p-3 space-y-2">
             {logs.length === 0 ? (
               <div className="text-center text-gray-500 text-sm py-8">
-                {isConnected ? 'Waiting for logs...' : 'Not connected to log stream'}
+                {isConnected
+                  ? 'Waiting for logs...'
+                  : 'Not connected to log stream'}
               </div>
             ) : (
               logs.map((log, index) => (
-                <LogEntryComponent key={`${log.timestamp}-${index}`} log={log} />
+                <LogEntryComponent
+                  key={`${log.timestamp}-${index}`}
+                  log={log}
+                />
               ))
             )}
           </div>
@@ -166,15 +181,15 @@ function LogEntryComponent({ log }: LogEntryComponentProps) {
   };
 
   return (
-    <div 
+    <div
       className="border rounded p-2 text-xs hover:bg-gray-50 transition-colors cursor-pointer"
       onClick={() => setIsExpanded(!isExpanded)}
     >
       <div className="flex items-start justify-between space-x-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={`text-xs px-1 py-0 ${levelColors[log.level]}`}
             >
               {log.level}
@@ -193,11 +208,15 @@ function LogEntryComponent({ log }: LogEntryComponentProps) {
           </div>
         </div>
       </div>
-      
+
       {isExpanded && log.request_id && (
         <div className="mt-2 pt-2 border-t text-xs text-gray-500">
-          <div><strong>Request ID:</strong> {log.request_id}</div>
-          <div><strong>Source:</strong> {log.source}</div>
+          <div>
+            <strong>Request ID:</strong> {log.request_id}
+          </div>
+          <div>
+            <strong>Source:</strong> {log.source}
+          </div>
         </div>
       )}
     </div>

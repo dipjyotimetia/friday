@@ -1,62 +1,72 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { apiService } from '@/services/api'
-import { Globe, Settings, Hash, CheckSquare } from 'lucide-react'
+import React, { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { apiService } from '@/services/api';
+import { Globe, Settings, Hash, CheckSquare } from 'lucide-react';
 
 interface WebCrawlerProps {
-  setOutputText: (text: string) => void
-  setIsGenerating: (isGenerating: boolean) => void
+  setOutputText: (text: string) => void;
+  setIsGenerating: (isGenerating: boolean) => void;
 }
 
-export function WebCrawler({ setOutputText, setIsGenerating }: WebCrawlerProps) {
-  const [url, setUrl] = useState('')
-  const [provider, setProvider] = useState('openai')
-  const [maxPages, setMaxPages] = useState(10)
-  const [sameDomain, setSameDomain] = useState(true)
-  const [isCrawling, setIsCrawling] = useState(false)
+export function WebCrawler({
+  setOutputText,
+  setIsGenerating,
+}: WebCrawlerProps) {
+  const [url, setUrl] = useState('');
+  const [provider, setProvider] = useState('openai');
+  const [maxPages, setMaxPages] = useState(10);
+  const [sameDomain, setSameDomain] = useState(true);
+  const [isCrawling, setIsCrawling] = useState(false);
 
   const handleCrawl = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsCrawling(true)
-    setIsGenerating(true)
-    setOutputText('Starting web crawl...')
-    
+    e.preventDefault();
+    setIsCrawling(true);
+    setIsGenerating(true);
+    setOutputText('Starting web crawl...');
+
     try {
       const result = await apiService.crawlWebsite({
         url,
         provider,
         max_pages: Number(maxPages),
         same_domain: sameDomain,
-      })
-      
+      });
+
       if (result.success) {
-        const summary = `Web Crawling Complete!\n\n` +
+        const summary =
+          `Web Crawling Complete!\n\n` +
           `Pages Crawled: ${result.pages_crawled}\n` +
           `Embeddings Created: ${result.embeddings_created || 0}\n\n` +
           `${result.content_summary || 'Crawl completed successfully.'}`;
-        setOutputText(summary)
+        setOutputText(summary);
       } else {
-        setOutputText(JSON.stringify(result, null, 2))
+        setOutputText(JSON.stringify(result, null, 2));
       }
     } catch (err) {
-      setOutputText(`Error: ${(err as Error).message}`)
+      setOutputText(`Error: ${(err as Error).message}`);
     } finally {
-      setIsCrawling(false)
-      setIsGenerating(false)
+      setIsCrawling(false);
+      setIsGenerating(false);
     }
-  }
+  };
 
   const providers = [
     { value: 'openai', label: 'OpenAI' },
     { value: 'gemini', label: 'Gemini' },
     { value: 'ollama', label: 'Ollama' },
     { value: 'mistral', label: 'Mistral' },
-  ]
+  ];
 
   return (
     <Card className="w-full">
@@ -68,7 +78,8 @@ export function WebCrawler({ setOutputText, setIsGenerating }: WebCrawlerProps) 
           <div>
             <CardTitle>Web Crawler</CardTitle>
             <CardDescription>
-              Crawl websites and extract content for AI-powered analysis and indexing
+              Crawl websites and extract content for AI-powered analysis and
+              indexing
             </CardDescription>
           </div>
         </div>
@@ -153,18 +164,25 @@ export function WebCrawler({ setOutputText, setIsGenerating }: WebCrawlerProps) 
                 <Globe className="h-3 w-3 text-blue-400" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-200">Crawling Options</p>
+                <p className="text-sm font-medium text-blue-200">
+                  Crawling Options
+                </p>
                 <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>• Content will be indexed using embeddings for semantic search</li>
-                  <li>• Same domain restriction helps focus on relevant content</li>
+                  <li>
+                    • Content will be indexed using embeddings for semantic
+                    search
+                  </li>
+                  <li>
+                    • Same domain restriction helps focus on relevant content
+                  </li>
                   <li>• Higher page limits may take longer to process</li>
                 </ul>
               </div>
             </div>
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isCrawling || !url}
             variant="gradient"
             size="lg"
@@ -185,5 +203,5 @@ export function WebCrawler({ setOutputText, setIsGenerating }: WebCrawlerProps) 
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

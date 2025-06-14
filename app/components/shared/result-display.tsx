@@ -1,12 +1,27 @@
-"use client";
+'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ExtendedAPITestResponse, ExtendedCrawlResponse, ExtendedTestGenerationResponse } from '@/types';
-import { CheckCircle, XCircle, Clock, Globe, FileText, AlertTriangle } from 'lucide-react';
+import {
+  ExtendedAPITestResponse,
+  ExtendedCrawlResponse,
+  ExtendedTestGenerationResponse,
+} from '@/types';
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  Globe,
+  FileText,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface ResultDisplayProps {
-  result: ExtendedAPITestResponse | ExtendedCrawlResponse | ExtendedTestGenerationResponse | string;
+  result:
+    | ExtendedAPITestResponse
+    | ExtendedCrawlResponse
+    | ExtendedTestGenerationResponse
+    | string;
   type: 'api-test' | 'crawl' | 'test-generation';
   isLoading?: boolean;
 }
@@ -45,19 +60,26 @@ export function ResultDisplay({ result, type, isLoading }: ResultDisplayProps) {
 
   switch (type) {
     case 'api-test':
-      return <APITestResultDisplay result={result as ExtendedAPITestResponse} />;
+      return (
+        <APITestResultDisplay result={result as ExtendedAPITestResponse} />
+      );
     case 'crawl':
       return <CrawlResultDisplay result={result as ExtendedCrawlResponse} />;
     case 'test-generation':
-      return <TestGenerationResultDisplay result={result as ExtendedTestGenerationResponse} />;
+      return (
+        <TestGenerationResultDisplay
+          result={result as ExtendedTestGenerationResponse}
+        />
+      );
     default:
       return <GenericResultDisplay result={result} />;
   }
 }
 
 function APITestResultDisplay({ result }: { result: ExtendedAPITestResponse }) {
-  const successRate = result.total_tests ? 
-    ((result.passed_tests || 0) / result.total_tests * 100).toFixed(1) : '0';
+  const successRate = result.total_tests
+    ? (((result.passed_tests || 0) / result.total_tests) * 100).toFixed(1)
+    : '0';
 
   return (
     <div className="space-y-4">
@@ -66,7 +88,7 @@ function APITestResultDisplay({ result }: { result: ExtendedAPITestResponse }) {
           <CardTitle className="flex items-center space-x-2">
             <CheckCircle className="h-5 w-5 text-green-500" />
             <span>API Test Results</span>
-            <Badge variant={result.success ? "default" : "destructive"}>
+            <Badge variant={result.success ? 'default' : 'destructive'}>
               {result.success ? 'Success' : 'Failed'}
             </Badge>
           </CardTitle>
@@ -74,19 +96,27 @@ function APITestResultDisplay({ result }: { result: ExtendedAPITestResponse }) {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{result.total_tests || 0}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {result.total_tests || 0}
+              </div>
               <div className="text-sm text-gray-600">Total Tests</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{result.passed_tests || 0}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {result.passed_tests || 0}
+              </div>
               <div className="text-sm text-gray-600">Passed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{result.failed_tests || 0}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {result.failed_tests || 0}
+              </div>
               <div className="text-sm text-gray-600">Failed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{successRate}%</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {successRate}%
+              </div>
               <div className="text-sm text-gray-600">Success Rate</div>
             </div>
           </div>
@@ -113,7 +143,7 @@ function CrawlResultDisplay({ result }: { result: ExtendedCrawlResponse }) {
           <CardTitle className="flex items-center space-x-2">
             <Globe className="h-5 w-5 text-blue-500" />
             <span>Web Crawl Results</span>
-            <Badge variant={result.success ? "default" : "destructive"}>
+            <Badge variant={result.success ? 'default' : 'destructive'}>
               {result.success ? 'Success' : 'Failed'}
             </Badge>
           </CardTitle>
@@ -121,11 +151,15 @@ function CrawlResultDisplay({ result }: { result: ExtendedCrawlResponse }) {
         <CardContent>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{result.pages_crawled}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {result.pages_crawled}
+              </div>
               <div className="text-sm text-gray-600">Pages Crawled</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{result.embeddings_created || 0}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {result.embeddings_created || 0}
+              </div>
               <div className="text-sm text-gray-600">Embeddings Created</div>
             </div>
           </div>
@@ -144,7 +178,11 @@ function CrawlResultDisplay({ result }: { result: ExtendedCrawlResponse }) {
   );
 }
 
-function TestGenerationResultDisplay({ result }: { result: ExtendedTestGenerationResponse }) {
+function TestGenerationResultDisplay({
+  result,
+}: {
+  result: ExtendedTestGenerationResponse;
+}) {
   return (
     <div className="space-y-4">
       <Card>
@@ -152,7 +190,7 @@ function TestGenerationResultDisplay({ result }: { result: ExtendedTestGeneratio
           <CardTitle className="flex items-center space-x-2">
             <FileText className="h-5 w-5 text-purple-500" />
             <span>Test Generation Results</span>
-            <Badge variant={result.success ? "default" : "destructive"}>
+            <Badge variant={result.success ? 'default' : 'destructive'}>
               {result.success ? 'Success' : 'Failed'}
             </Badge>
           </CardTitle>

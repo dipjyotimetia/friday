@@ -1,37 +1,46 @@
-'use client'
+'use client';
 
-import React from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Terminal, Copy, Download } from 'lucide-react'
-import { motion } from 'framer-motion'
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Terminal, Copy, Download } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface OutputViewerProps {
-  outputText: string
-  isGenerating?: boolean
+  outputText: string;
+  isGenerating?: boolean;
 }
 
-export function OutputViewer({ outputText, isGenerating = false }: OutputViewerProps) {
+export function OutputViewer({
+  outputText,
+  isGenerating = false,
+}: OutputViewerProps) {
   const copyToClipboard = async () => {
     if (outputText) {
-      await navigator.clipboard.writeText(outputText)
+      await navigator.clipboard.writeText(outputText);
     }
-  }
+  };
 
   const downloadOutput = () => {
     if (outputText) {
-      const blob = new Blob([outputText], { type: 'text/plain' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'friday-output.txt'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const blob = new Blob([outputText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'friday-output.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
-  }
+  };
 
   return (
     <Card className="w-full">
@@ -82,7 +91,7 @@ export function OutputViewer({ outputText, isGenerating = false }: OutputViewerP
       </CardHeader>
       <CardContent>
         <div className="relative">
-          <motion.pre 
+          <motion.pre
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -93,11 +102,13 @@ export function OutputViewer({ outputText, isGenerating = false }: OutputViewerP
           >
             {outputText || (
               <span className="text-slate-400 italic">
-                {isGenerating ? 'Processing your request...' : 'Output will appear here after running an operation'}
+                {isGenerating
+                  ? 'Processing your request...'
+                  : 'Output will appear here after running an operation'}
               </span>
             )}
           </motion.pre>
-          
+
           {isGenerating && (
             <div className="absolute top-4 right-4">
               <div className="flex items-center gap-2 bg-blue-500/20 backdrop-blur-sm rounded-full px-3 py-1 border border-blue-500/30">
@@ -109,5 +120,5 @@ export function OutputViewer({ outputText, isGenerating = false }: OutputViewerP
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

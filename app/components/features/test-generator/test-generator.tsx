@@ -1,17 +1,23 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { apiService } from '@/services/api'
-import { TestTube, Github, FileText, Building } from 'lucide-react'
+import React, { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { apiService } from '@/services/api';
+import { TestTube, Github, FileText, Building } from 'lucide-react';
 
 interface TestGeneratorProps {
-  setOutputText: (text: string) => void
-  isGenerating: boolean
-  setIsGenerating: (isGenerating: boolean) => void
+  setOutputText: (text: string) => void;
+  isGenerating: boolean;
+  setIsGenerating: (isGenerating: boolean) => void;
 }
 
 export function TestGenerator({
@@ -19,17 +25,17 @@ export function TestGenerator({
   isGenerating,
   setIsGenerating,
 }: TestGeneratorProps) {
-  const [jiraKey, setJiraKey] = useState('')
-  const [ghIssue, setGhIssue] = useState('')
-  const [ghRepo, setGhRepo] = useState('')
-  const [confluenceId, setConfluenceId] = useState('')
-  const [outputFilename, setOutputFilename] = useState('test_cases.md')
+  const [jiraKey, setJiraKey] = useState('');
+  const [ghIssue, setGhIssue] = useState('');
+  const [ghRepo, setGhRepo] = useState('');
+  const [confluenceId, setConfluenceId] = useState('');
+  const [outputFilename, setOutputFilename] = useState('test_cases.md');
 
   const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsGenerating(true)
-    setOutputText('Generating test cases...')
-    
+    e.preventDefault();
+    setIsGenerating(true);
+    setOutputText('Generating test cases...');
+
     try {
       const result = await apiService.generateTests({
         jira_key: jiraKey || undefined,
@@ -37,22 +43,22 @@ export function TestGenerator({
         custom_requirements: ghRepo || undefined, // Using as custom requirements for now
         include_confluence: !!confluenceId,
         test_type: 'api',
-        provider: 'openai'
-      })
-      
+        provider: 'openai',
+      });
+
       if (result.success && result.test_content) {
-        setOutputText(result.test_content)
+        setOutputText(result.test_content);
       } else {
-        setOutputText(JSON.stringify(result, null, 2))
+        setOutputText(JSON.stringify(result, null, 2));
       }
     } catch (err) {
-      setOutputText(`Error: ${(err as Error).message}`)
+      setOutputText(`Error: ${(err as Error).message}`);
     } finally {
-      setIsGenerating(false)
+      setIsGenerating(false);
     }
-  }
+  };
 
-  const hasRequiredFields = jiraKey || (ghIssue && ghRepo) || confluenceId
+  const hasRequiredFields = jiraKey || (ghIssue && ghRepo) || confluenceId;
 
   return (
     <Card className="w-full">
@@ -64,7 +70,8 @@ export function TestGenerator({
           <div>
             <CardTitle>Test Case Generator</CardTitle>
             <CardDescription>
-              Generate comprehensive test cases from Jira tickets, GitHub issues, or Confluence pages
+              Generate comprehensive test cases from Jira tickets, GitHub
+              issues, or Confluence pages
             </CardDescription>
           </div>
         </div>
@@ -140,11 +147,13 @@ export function TestGenerator({
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>•</span>
-            <span>At least one source is required (Jira, GitHub, or Confluence)</span>
+            <span>
+              At least one source is required (Jira, GitHub, or Confluence)
+            </span>
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isGenerating || !hasRequiredFields}
             variant="gradient"
             size="lg"
@@ -165,5 +174,5 @@ export function TestGenerator({
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

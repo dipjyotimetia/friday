@@ -1,6 +1,12 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+} from 'react';
 
 export interface Toast {
   id: string;
@@ -38,31 +44,36 @@ interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newToast: Toast = { ...toast, id };
-    
-    setToasts((prev) => [...prev, newToast]);
-
-    // Auto-remove toast after duration
-    const duration = toast.duration ?? (toast.type === 'error' ? 6000 : 4000);
-    setTimeout(() => {
-      removeToast(id);
-    }, duration);
-
-    return id;
-  }, []);
-
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
+
+  const addToast = useCallback(
+    (toast: Omit<Toast, 'id'>) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      const newToast: Toast = { ...toast, id };
+
+      setToasts((prev) => [...prev, newToast]);
+
+      // Auto-remove toast after duration
+      const duration = toast.duration ?? (toast.type === 'error' ? 6000 : 4000);
+      setTimeout(() => {
+        removeToast(id);
+      }, duration);
+
+      return id;
+    },
+    [removeToast]
+  );
 
   const clearToasts = useCallback(() => {
     setToasts([]);
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast, clearToasts }}>
+    <ToastContext.Provider
+      value={{ toasts, addToast, removeToast, clearToasts }}
+    >
       {children}
       <ToastContainer />
     </ToastContext.Provider>
@@ -79,7 +90,11 @@ function ToastContainer() {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full">
       {toasts.map((toast) => (
-        <ToastComponent key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+        <ToastComponent
+          key={toast.id}
+          toast={toast}
+          onClose={() => removeToast(toast.id)}
+        />
       ))}
     </div>
   );
@@ -114,9 +129,7 @@ function ToastComponent({ toast, onClose }: ToastComponentProps) {
       `}
     >
       <div className="flex items-start space-x-3">
-        <div className="flex-shrink-0 text-lg">
-          {iconStyles[toast.type]}
-        </div>
+        <div className="flex-shrink-0 text-lg">{iconStyles[toast.type]}</div>
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm">{toast.title}</div>
           {toast.description && (

@@ -9,11 +9,13 @@ import type { components } from './api';
 export type TestGenerationRequest = components['schemas']['GenerateRequest'];
 export type TestGenerationResponse = components['schemas']['GenerateResponse'];
 export type CrawlRequest = components['schemas']['CrawlRequest'];
-export type APITestRequest = components['schemas']['Body_test_api_api_v1_testapi_post'];
+export type APITestRequest =
+  components['schemas']['Body_test_api_api_v1_testapi_post'];
 export type APITestResponse = components['schemas']['ApiTestResponse'];
 
 // Extended types for better UX (these add fields not in the OpenAPI spec)
-export interface ExtendedTestGenerationRequest extends Omit<TestGenerationRequest, 'template' | 'output'> {
+export interface ExtendedTestGenerationRequest
+  extends Omit<TestGenerationRequest, 'template' | 'output'> {
   github_issue?: string;
   custom_requirements?: string;
   test_type?: string;

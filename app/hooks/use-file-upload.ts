@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState, useCallback } from 'react';
 import { FILE_CONFIG } from '@/config/constants';
@@ -19,39 +19,45 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
   const [file, setFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const validateFile = useCallback((file: File): string | null => {
-    // Check file size
-    if (file.size > maxSize) {
-      return `File size must be less than ${Math.round(maxSize / 1024 / 1024)}MB`;
-    }
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      // Check file size
+      if (file.size > maxSize) {
+        return `File size must be less than ${Math.round(maxSize / 1024 / 1024)}MB`;
+      }
 
-    // Check file extension
-    const extension = file.name.split('.').pop()?.toLowerCase();
-    const acceptedExtensions = acceptedFormats.split(',').map(format => 
-      format.replace('.', '').trim()
-    );
-    
-    if (!extension || !acceptedExtensions.includes(extension)) {
-      return `File must be one of: ${acceptedFormats}`;
-    }
+      // Check file extension
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      const acceptedExtensions = acceptedFormats
+        .split(',')
+        .map((format) => format.replace('.', '').trim());
 
-    return null;
-  }, [acceptedFormats, maxSize]);
+      if (!extension || !acceptedExtensions.includes(extension)) {
+        return `File must be one of: ${acceptedFormats}`;
+      }
 
-  const handleFileSelect = useCallback((selectedFile: File | null) => {
-    if (!selectedFile) {
-      setFile(null);
-      return;
-    }
+      return null;
+    },
+    [acceptedFormats, maxSize]
+  );
 
-    const validationError = validateFile(selectedFile);
-    if (validationError) {
-      onError?.(validationError);
-      return;
-    }
+  const handleFileSelect = useCallback(
+    (selectedFile: File | null) => {
+      if (!selectedFile) {
+        setFile(null);
+        return;
+      }
 
-    setFile(selectedFile);
-  }, [validateFile, onError]);
+      const validationError = validateFile(selectedFile);
+      if (validationError) {
+        onError?.(validationError);
+        return;
+      }
+
+      setFile(selectedFile);
+    },
+    [validateFile, onError]
+  );
 
   const clearFile = useCallback(() => {
     setFile(null);
@@ -67,15 +73,18 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) {
-      handleFileSelect(droppedFile);
-    }
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile) {
+        handleFileSelect(droppedFile);
+      }
+    },
+    [handleFileSelect]
+  );
 
   return {
     file,

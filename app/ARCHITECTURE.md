@@ -54,11 +54,13 @@
 ## Architecture Principles
 
 ### 1. Feature-Based Organization
+
 - Components are organized by feature rather than type
 - Each feature has its own directory with related components
 - Promotes colocation of related functionality
 
 ### 2. Separation of Concerns
+
 - **Types**: Centralized TypeScript definitions
 - **Hooks**: Custom logic extracted from components
 - **Services**: External API interactions
@@ -66,11 +68,13 @@
 - **Components**: Pure UI components
 
 ### 3. Barrel Exports
+
 - Each directory has an `index.ts` file for clean imports
 - Reduces import complexity and improves maintainability
 - Example: `import { TestGenerator, ApiTester } from '@/components'`
 
 ### 4. Type Safety
+
 - Comprehensive TypeScript coverage
 - Proper interface definitions for all props
 - Type-safe API interactions
@@ -78,26 +82,32 @@
 ## Component Architecture
 
 ### Feature Components
+
 ```typescript
 // Located in components/features/{feature-name}/
-export function FeatureComponent({ setOutputText, setIsGenerating }: BaseComponentProps) {
-  const { apiCall, loading } = useCustomHook()
-  
+export function FeatureComponent({
+  setOutputText,
+  setIsGenerating,
+}: BaseComponentProps) {
+  const { apiCall, loading } = useCustomHook();
+
   // Component logic
-  return JSX
+  return JSX;
 }
 ```
 
 ### Shared Components
+
 ```typescript
 // Located in components/shared/
 export function SharedComponent({ ...props }: ComponentProps) {
   // Reusable logic
-  return JSX
+  return JSX;
 }
 ```
 
 ### UI Components
+
 ```typescript
 // Located in components/ui/
 // Based on shadcn/ui patterns with custom styling
@@ -109,6 +119,7 @@ export function UIComponent({ className, ...props }: UIProps) {
 ## Custom Hooks Pattern
 
 ### API Hooks
+
 ```typescript
 // hooks/use-api.ts
 export function useFeatureAPI() {
@@ -116,17 +127,18 @@ export function useFeatureAPI() {
     data: null,
     loading: false,
     error: null,
-  })
+  });
 
   const performAction = useCallback(async (request) => {
     // API logic with error handling
-  }, [])
+  }, []);
 
-  return { ...state, performAction }
+  return { ...state, performAction };
 }
 ```
 
 ### File Upload Hook
+
 ```typescript
 // hooks/use-file-upload.ts
 export function useFileUpload(options) {
@@ -137,28 +149,30 @@ export function useFileUpload(options) {
     handleFileSelect,
     clearFile,
     // ... other handlers
-  }
+  };
 }
 ```
 
 ## Configuration Management
 
 ### Constants
+
 ```typescript
 // config/constants.ts
 export const API_CONFIG = {
   BASE_URL: 'http://localhost:8080',
   TIMEOUT: 10000,
   // ...
-} as const
+} as const;
 
 export const AI_PROVIDERS: ProviderOption[] = [
   { value: 'openai', label: 'OpenAI' },
   // ...
-] as const
+] as const;
 ```
 
 ### Environment-Specific Config
+
 - Development: `http://localhost:8080`
 - Production: Environment variables
 - Cross-origin support for team development
@@ -166,6 +180,7 @@ export const AI_PROVIDERS: ProviderOption[] = [
 ## Service Layer
 
 ### API Service
+
 ```typescript
 // services/api.ts
 export const apiService = {
@@ -173,14 +188,15 @@ export const apiService = {
     const response = await axiosWithRetry(API_ENDPOINTS.GENERATE, {
       method: 'POST',
       data,
-    })
-    return response.data
+    });
+    return response.data;
   },
   // ... other methods
-}
+};
 ```
 
 ### Error Handling
+
 - Centralized error handling in services
 - Retry logic with exponential backoff
 - Type-safe error responses
@@ -188,13 +204,16 @@ export const apiService = {
 ## Styling Architecture
 
 ### CSS Organization
+
 1. **Global Styles**: `app/globals.css`
+
    - Tailwind directives
    - Custom CSS variables
    - Global animations
    - Original beautiful styling preserved
 
-2. **Component Styles**: 
+2. **Component Styles**:
+
    - Tailwind classes for layout
    - Custom CSS classes for effects
    - shadcn/ui component overrides
@@ -208,6 +227,7 @@ export const apiService = {
 ## Development Workflow
 
 ### Adding New Features
+
 1. Create feature directory in `components/features/`
 2. Add types to `types/index.ts`
 3. Create custom hook if needed in `hooks/`
@@ -215,12 +235,13 @@ export const apiService = {
 5. Export through barrel files
 
 ### Import Patterns
+
 ```typescript
 // Preferred imports
-import { TestGenerator, ApiTester } from '@/components'
-import { useTestGenerator } from '@/hooks'
-import { API_PROVIDERS } from '@/config/constants'
-import type { BaseComponentProps } from '@/types'
+import { TestGenerator, ApiTester } from '@/components';
+import { useTestGenerator } from '@/hooks';
+import { API_PROVIDERS } from '@/config/constants';
+import type { BaseComponentProps } from '@/types';
 ```
 
 ## Benefits of This Structure

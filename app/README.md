@@ -10,11 +10,12 @@ A stunning, modern React frontend built with Next.js 15, featuring AI-powered te
 ✅ **Cross-Origin Support**: Configured for network access (192.168.1.40:3000)  
 ✅ **Component Library**: Modern shadcn/ui components with Radix UI primitives  
 ✅ **Responsive Design**: Mobile-first approach with adaptive layouts  
-✅ **Performance Optimized**: Static generation and code splitting enabled  
+✅ **Performance Optimized**: Static generation and code splitting enabled
 
 ## 🚀 Quick Start
 
 ### Local Development
+
 ```bash
 # Install dependencies
 npm install
@@ -30,6 +31,7 @@ npm start
 ```
 
 ### Docker Development
+
 ```bash
 # Build and run with Docker Compose
 npm run docker:dev
@@ -87,16 +89,19 @@ app/
 The app features three main sections:
 
 ### 1. Test Generator
+
 - Generate comprehensive test cases from Jira tickets, GitHub issues, or Confluence pages
 - Modern form design with validation and loading states
 - Supports multiple data sources simultaneously
 
 ### 2. Web Crawler
+
 - Crawl websites and extract content for AI analysis
 - Configurable crawling options (max pages, domain restrictions)
 - Real-time progress feedback with beautiful animations
 
 ### 3. API Tester
+
 - Test APIs using OpenAPI/Swagger specifications
 - Drag-and-drop file upload with visual feedback
 - Support for multiple AI providers (OpenAI, Gemini, Ollama, Mistral)
@@ -121,6 +126,7 @@ The app features three main sections:
 ## 📱 Responsive Design
 
 The interface adapts seamlessly across:
+
 - Desktop (1200px+)
 - Tablet (768px - 1199px)
 - Mobile (320px - 767px)
@@ -128,6 +134,7 @@ The interface adapts seamlessly across:
 ## 🔧 Development
 
 The codebase follows modern React patterns:
+
 - Server and Client Components separation
 - Custom hooks for state management
 - TypeScript for type safety
