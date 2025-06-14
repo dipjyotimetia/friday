@@ -10,6 +10,7 @@ class BrowserTestRequest(BaseModel):
     context: Optional[str] = Field(default="", description="Additional context for the test")
     headless: bool = Field(default=True, description="Run browser in headless mode")
     take_screenshots: bool = Field(default=True, description="Whether to take screenshots during execution")
+    provider: Optional[str] = Field(default="openai", description="LLM provider to use (openai, gemini, ollama, mistral)")
     
     class Config:
         schema_extra = {
@@ -37,6 +38,7 @@ class MultipleBrowserTestRequest(BaseModel):
     """Request model for running multiple browser tests"""
     test_cases: List[BrowserTestCase] = Field(..., description="List of browser test cases")
     headless: bool = Field(default=True, description="Run browser in headless mode")
+    provider: Optional[str] = Field(default="openai", description="LLM provider to use (openai, gemini, ollama, mistral)")
     
     class Config:
         schema_extra = {
@@ -111,6 +113,7 @@ class MultipleBrowserTestResponse(BaseModel):
 class BrowserTestReportRequest(BaseModel):
     """Request model for generating browser test report"""
     results: List[BrowserTestResult] = Field(..., description="List of browser test results")
+    provider: Optional[str] = Field(default="openai", description="LLM provider to use (openai, gemini, ollama, mistral)")
     
     class Config:
         schema_extra = {

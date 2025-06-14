@@ -15,7 +15,6 @@ from friday.api.schemas.browser_test import (
 )
 from friday.services.browser_agent import BrowserTestingAgent
 from friday.services.logger import get_logger
-from friday.llm.llm import ModelProvider
 
 logger = get_logger(__name__)
 
@@ -30,8 +29,8 @@ async def run_single_browser_test(request: BrowserTestRequest):
     try:
         logger.info(f"Starting single browser test for URL: {request.url}")
         
-        # Initialize browser testing agent
-        agent = BrowserTestingAgent(provider=ModelProvider.OPENAI)
+        # Initialize browser testing agent with flexible provider
+        agent = BrowserTestingAgent(provider=request.provider)
         
         # Run the browser test
         result = await agent.run_browser_test(
@@ -53,10 +52,11 @@ async def run_single_browser_test(request: BrowserTestRequest):
         )
         
     except Exception as e:
-        logger.error(f"Error running browser test: {str(e)}")
+        error_message = str(e)
+        logger.error(f"Error running browser test: {error_message}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to run browser test: {str(e)}"
+            detail=f"Failed to run browser test: {error_message}"
         )
 
 
@@ -68,8 +68,8 @@ async def run_multiple_browser_tests(request: MultipleBrowserTestRequest):
     try:
         logger.info(f"Starting multiple browser tests with {len(request.test_cases)} test cases")
         
-        # Initialize browser testing agent
-        agent = BrowserTestingAgent(provider=ModelProvider.OPENAI)
+        # Initialize browser testing agent with flexible provider
+        agent = BrowserTestingAgent(provider=request.provider)
         
         # Convert test cases to dict format
         test_cases = []
@@ -115,10 +115,11 @@ async def run_multiple_browser_tests(request: MultipleBrowserTestRequest):
         )
         
     except Exception as e:
-        logger.error(f"Error running multiple browser tests: {str(e)}")
+        error_message = str(e)
+        logger.error(f"Error running multiple browser tests: {error_message}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to run multiple browser tests: {str(e)}"
+            detail=f"Failed to run multiple browser tests: {error_message}"
         )
 
 
@@ -130,13 +131,13 @@ async def generate_browser_test_report(request: BrowserTestReportRequest):
     try:
         logger.info(f"Generating test report for {len(request.results)} test results")
         
-        # Initialize browser testing agent
-        agent = BrowserTestingAgent(provider=ModelProvider.OPENAI)
+        # Initialize browser testing agent with flexible provider
+        agent = BrowserTestingAgent(provider=request.provider)
         
         # Convert results to dict format for report generation
         results_dict = []
         for result in request.results:
-            results_dict.append(result.dict())
+            results_dict.append(result.model_dump())
         
         # Generate test report
         report = agent.generate_test_report(results_dict)
@@ -161,10 +162,11 @@ async def generate_browser_test_report(request: BrowserTestReportRequest):
         )
         
     except Exception as e:
-        logger.error(f"Error generating test report: {str(e)}")
+        error_message = str(e)
+        logger.error(f"Error generating test report: {error_message}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate test report: {str(e)}"
+            detail=f"Failed to generate test report: {error_message}"
         )
 
 
@@ -174,8 +176,8 @@ async def browser_test_health():
     Health check endpoint for browser testing service
     """
     try:
-        # Basic health check - try to initialize the agent
-        agent = BrowserTestingAgent(provider=ModelProvider.OPENAI)
+        # Basic health check - try to initialize the agent with default provider
+        agent = BrowserTestingAgent(provider="openai")
         
         return JSONResponse(
             status_code=200,
@@ -187,12 +189,13 @@ async def browser_test_health():
             }
         )
     except Exception as e:
-        logger.error(f"Browser testing service health check failed: {str(e)}")
+        error_message = str(e)
+        logger.error(f"Browser testing service health check failed: {error_message}", exc_info=True)
         return JSONResponse(
             status_code=503,
             content={
                 "status": "unhealthy",
-                "message": f"Browser testing service is not operational: {str(e)}",
+                "message": f"Browser testing service is not operational: {error_message}",
                 "service": "browser-testing",
                 "version": "1.0.0"
             }
