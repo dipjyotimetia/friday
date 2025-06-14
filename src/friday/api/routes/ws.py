@@ -65,12 +65,16 @@ root_logger.addHandler(websocket_handler)
 @router.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
     """WebSocket endpoint for real-time log streaming."""
-    client = f"{websocket.client.host}:{websocket.client.port}"
+    client = f"{websocket.client.host}:{websocket.client.port}" if websocket.client else "unknown"
     logger.info(f"New websocket connection request from {client}")
 
-    await websocket.accept()
-    active_connections.add(websocket)
-    logger.info(f"Client {client} connected successfully. Active connections: {len(active_connections)}")
+    try:
+        await websocket.accept()
+        active_connections.add(websocket)
+        logger.info(f"Client {client} connected successfully. Active connections: {len(active_connections)}")
+    except Exception as e:
+        logger.error(f"Failed to accept WebSocket connection from {client}: {e}")
+        return
     
     # Send initial welcome message
     welcome_msg = {

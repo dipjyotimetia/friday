@@ -23,14 +23,20 @@ interface UseWebSocketReturn {
 export function useWebSocket(
   options: UseWebSocketOptions = {}
 ): UseWebSocketReturn {
+  const defaultUrl = typeof window !== 'undefined' 
+    ? (process.env.NODE_ENV === 'production'
+        ? `wss://${window.location.host}/api/v1/ws/logs`
+        : 'ws://localhost:8080/api/v1/ws/logs')
+    : 'ws://localhost:8080/api/v1/ws/logs';
+
   const {
-    url = process.env.NODE_ENV === 'production'
-      ? 'wss://domain.com/api/v1/ws/logs'
-      : 'ws://localhost:8080/api/v1/ws/logs',
+    url = defaultUrl,
     maxLogs = 100,
     autoReconnect = true,
     reconnectInterval = 3000,
   } = options;
+
+  console.log('WebSocket hook initialized with URL:', url, 'NODE_ENV:', process.env.NODE_ENV);
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -53,10 +59,17 @@ export function useWebSocket(
       return; // Already connected
     }
 
+    // Close any existing connection first
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
     try {
       setConnectionStatus('connecting');
       setError(null);
-
+      
+      console.log('Attempting WebSocket connection to:', url);
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
@@ -125,7 +138,8 @@ export function useWebSocket(
 
       ws.onerror = (event) => {
         console.error('WebSocket error:', event);
-        setError('WebSocket connection error');
+        console.error('WebSocket URL was:', url);
+        setError(`WebSocket connection error: ${event.type}`);
         setConnectionStatus('error');
       };
     } catch (connectError) {
@@ -154,9 +168,13 @@ export function useWebSocket(
 
   // Auto-connect on mount and cleanup on unmount
   useEffect(() => {
-    connect();
+    // Small delay to ensure component is fully mounted
+    const connectTimer = setTimeout(() => {
+      connect();
+    }, 100);
 
     return () => {
+      clearTimeout(connectTimer);
       disconnect();
     };
   }, [connect, disconnect]);

@@ -130,7 +130,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Add CORS middleware
+# Add CORS middleware with WebSocket support
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
