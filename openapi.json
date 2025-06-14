@@ -146,6 +146,156 @@
           }
         }
       }
+    },
+    "/api/v1/browser-test/single": {
+      "post": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Run Single Browser Test",
+        "description": "Run a single browser test using the browser-use agent",
+        "operationId": "run_single_browser_test_api_v1_browser_test_single_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrowserTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/multiple": {
+      "post": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Run Multiple Browser Tests",
+        "description": "Run multiple browser tests in sequence",
+        "operationId": "run_multiple_browser_tests_api_v1_browser_test_multiple_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MultipleBrowserTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultipleBrowserTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/report": {
+      "post": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Generate Browser Test Report",
+        "description": "Generate a test report from browser test results",
+        "operationId": "generate_browser_test_report_api_v1_browser_test_report_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrowserTestReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrowserTestReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/health": {
+      "get": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Browser Test Health",
+        "description": "Health check endpoint for browser testing service",
+        "operationId": "browser_test_health_api_v1_browser_test_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -249,6 +399,323 @@
           "base_url"
         ],
         "title": "Body_test_api_api_v1_testapi_post"
+      },
+      "BrowserTestCase": {
+        "properties": {
+          "requirement": {
+            "type": "string",
+            "title": "Requirement",
+            "description": "Test requirement description"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url",
+            "description": "Target URL to test"
+          },
+          "test_type": {
+            "type": "string",
+            "title": "Test Type",
+            "description": "Type of test",
+            "default": "functional"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context",
+            "description": "Additional context",
+            "default": ""
+          },
+          "take_screenshots": {
+            "type": "boolean",
+            "title": "Take Screenshots",
+            "description": "Whether to take screenshots",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement",
+          "url"
+        ],
+        "title": "BrowserTestCase",
+        "description": "Individual browser test case"
+      },
+      "BrowserTestReportRequest": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserTestResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "List of browser test results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "BrowserTestReportRequest",
+        "description": "Request model for generating browser test report"
+      },
+      "BrowserTestReportResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the report generation was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Response message"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "description": "Generated test report"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "Test execution summary"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "BrowserTestReportResponse",
+        "description": "Response model for browser test report generation"
+      },
+      "BrowserTestRequest": {
+        "properties": {
+          "requirement": {
+            "type": "string",
+            "title": "Requirement",
+            "description": "Test requirement description"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url",
+            "description": "Target URL to test"
+          },
+          "test_type": {
+            "type": "string",
+            "title": "Test Type",
+            "description": "Type of test (functional, ui, integration, etc.)",
+            "default": "functional"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context",
+            "description": "Additional context for the test",
+            "default": ""
+          },
+          "headless": {
+            "type": "boolean",
+            "title": "Headless",
+            "description": "Run browser in headless mode",
+            "default": true
+          },
+          "take_screenshots": {
+            "type": "boolean",
+            "title": "Take Screenshots",
+            "description": "Whether to take screenshots during execution",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement",
+          "url"
+        ],
+        "title": "BrowserTestRequest",
+        "description": "Request model for browser testing"
+      },
+      "BrowserTestResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the API call was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Response message"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrowserTestResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Test result data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "BrowserTestResponse",
+        "description": "Response model for browser test API"
+      },
+      "BrowserTestResult": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Test execution status"
+          },
+          "requirement": {
+            "type": "string",
+            "title": "Requirement",
+            "description": "Test requirement that was executed"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "URL that was tested"
+          },
+          "test_type": {
+            "type": "string",
+            "title": "Test Type",
+            "description": "Type of test that was executed"
+          },
+          "task_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Description",
+            "description": "Generated task description"
+          },
+          "execution_result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Result",
+            "description": "Detailed execution result"
+          },
+          "screenshots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Screenshots",
+            "description": "List of screenshot paths/URLs",
+            "default": []
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp",
+            "description": "Execution timestamp"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the test was successful"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors",
+            "description": "List of errors if any",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "requirement",
+          "url",
+          "test_type",
+          "success"
+        ],
+        "title": "BrowserTestResult",
+        "description": "Result model for browser test execution"
       },
       "CrawlRequest": {
         "properties": {
@@ -363,6 +830,103 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "MultipleBrowserTestRequest": {
+        "properties": {
+          "test_cases": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserTestCase"
+            },
+            "type": "array",
+            "title": "Test Cases",
+            "description": "List of browser test cases"
+          },
+          "headless": {
+            "type": "boolean",
+            "title": "Headless",
+            "description": "Run browser in headless mode",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "test_cases"
+        ],
+        "title": "MultipleBrowserTestRequest",
+        "description": "Request model for running multiple browser tests"
+      },
+      "MultipleBrowserTestResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the API call was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Response message"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BrowserTestResult"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "List of test results"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "description": "Generated test report"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "Test execution summary"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "MultipleBrowserTestResponse",
+        "description": "Response model for multiple browser tests API"
       },
       "ValidationError": {
         "properties": {

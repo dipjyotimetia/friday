@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from friday.api.models import APIResponse, ErrorDetail, ValidationErrorResponse
-from friday.api.routes import api_test, crawl, generate, health, ws
+from friday.api.routes import api_test, crawl, generate, health, ws, browser_test
 from friday.config.config import settings
 from friday.exceptions import FridayError
 
@@ -143,6 +143,7 @@ app.include_router(generate.router, prefix="/api/v1", tags=["Test Generation"])
 app.include_router(crawl.router, prefix="/api/v1", tags=["Web Crawling"])
 app.include_router(health.router, prefix="/api/v1", tags=["Health Check"])
 app.include_router(api_test.router, prefix="/api/v1", tags=["API Testing"])
+app.include_router(browser_test.router, prefix="/api/v1", tags=["Browser Testing"])
 app.include_router(ws.router, prefix="/api/v1", tags=["WebSocket"])
 
 
