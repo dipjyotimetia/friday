@@ -60,6 +60,7 @@ dependencies = [
     "pydantic-settings>=2.9.1",
     "browser-use==0.2.7",
     "playwright>=1.48.0",
+    "pyyaml>=6.0.2",
 ]
 [[project.authors]]
 name = "Dipjyoti Metia"
