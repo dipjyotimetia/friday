@@ -3,7 +3,7 @@
 -e .
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.12.9
+aiohttp==3.12.12
     # via langchain-community
 aiosignal==1.3.2
     # via aiohttp
@@ -35,8 +35,12 @@ bcrypt==4.3.0
     # via chromadb
 beautifulsoup4==4.13.4
     # via atlassian-python-api
+boolean-py==5.0
+    # via license-expression
 build==1.2.2.post1
     # via chromadb
+cachecontrol==0.14.3
+    # via pip-audit
 cachetools==5.5.2
     # via google-auth
 certifi==2025.4.26
@@ -65,13 +69,16 @@ colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
     # via
     #   build
     #   click
+    #   pytest
     #   tqdm
     #   uvicorn
 coloredlogs==15.0.1
     # via onnxruntime
 constantly==23.10.4
     # via twisted
-cryptography==45.0.3
+coverage==7.9.1
+    # via pytest-cov
+cryptography==45.0.4
     # via
     #   pyjwt
     #   pyopenssl
@@ -81,10 +88,14 @@ cssselect==1.3.0
     # via
     #   parsel
     #   scrapy
+cyclonedx-python-lib==9.1.0
+    # via pip-audit
 dataclasses-json==0.6.7
     # via langchain-community
 defusedxml==0.7.1
-    # via scrapy
+    # via
+    #   py-serializable
+    #   scrapy
 deprecated==1.2.18
     # via
     #   atlassian-python-api
@@ -103,6 +114,7 @@ fastapi==0.115.9
     #   friday-cli
 filelock==3.18.0
     # via
+    #   cachecontrol
     #   huggingface-hub
     #   tldextract
     #   torch
@@ -111,7 +123,7 @@ filetype==1.2.0
     # via langchain-google-genai
 flatbuffers==25.2.10
     # via onnxruntime
-frozenlist==1.6.2
+frozenlist==1.7.0
     # via
     #   aiohttp
     #   aiosignal
@@ -123,7 +135,7 @@ gevent==25.5.1
     # via websocket
 google-ai-generativelanguage==0.6.18
     # via langchain-google-genai
-google-api-core==2.25.0
+google-api-core==2.25.1
     # via
     #   google-ai-generativelanguage
     #   google-cloud-aiplatform
@@ -142,7 +154,7 @@ google-auth==2.40.3
     #   google-cloud-storage
     #   google-genai
     #   kubernetes
-google-cloud-aiplatform==1.96.0
+google-cloud-aiplatform==1.97.0
     # via friday-cli
 google-cloud-bigquery==3.34.0
     # via google-cloud-aiplatform
@@ -158,7 +170,7 @@ google-crc32c==1.7.1
     # via
     #   google-cloud-storage
     #   google-resumable-media
-google-genai==1.19.0
+google-genai==1.20.0
     # via
     #   friday-cli
     #   google-cloud-aiplatform
@@ -172,14 +184,14 @@ googleapis-common-protos==1.70.0
     #   grpc-google-iam-v1
     #   grpcio-status
     #   opentelemetry-exporter-otlp-proto-grpc
-greenlet==3.2.2
+greenlet==3.2.3
     # via
     #   gevent
     #   sqlalchemy
     #   websocket
 grpc-google-iam-v1==0.14.2
     # via google-cloud-resource-manager
-grpcio==1.72.1
+grpcio==1.73.0
     # via
     #   chromadb
     #   google-api-core
@@ -212,7 +224,7 @@ httpx-sse==0.4.0
     # via
     #   langchain-community
     #   langchain-mistralai
-huggingface-hub==0.32.4
+huggingface-hub==0.33.0
     # via
     #   sentence-transformers
     #   tokenizers
@@ -235,6 +247,8 @@ importlib-resources==6.5.2
     # via chromadb
 incremental==24.7.2
     # via twisted
+iniconfig==2.1.0
+    # via pytest
 itemadapter==0.11.0
     # via
     #   itemloaders
@@ -262,7 +276,7 @@ jsonschema==4.24.0
     #   friday-cli
 jsonschema-specifications==2025.4.1
     # via jsonschema
-kubernetes==32.0.1
+kubernetes==33.1.0
     # via chromadb
 langchain==0.3.25
     # via
@@ -270,9 +284,9 @@ langchain==0.3.25
     #   langchain-community
 langchain-chroma==0.2.4
     # via friday-cli
-langchain-community==0.3.24
+langchain-community==0.3.25
     # via friday-cli
-langchain-core==0.3.63
+langchain-core==0.3.65
     # via
     #   friday-cli
     #   langchain
@@ -289,7 +303,7 @@ langchain-mistralai==0.2.10
     # via friday-cli
 langchain-ollama==0.3.3
     # via friday-cli
-langchain-openai==0.3.19
+langchain-openai==0.3.23
     # via friday-cli
 langchain-text-splitters==0.3.8
     # via langchain
@@ -298,6 +312,8 @@ langsmith==0.3.45
     #   langchain
     #   langchain-community
     #   langchain-core
+license-expression==30.4.1
+    # via cyclonedx-python-lib
 lxml==5.4.0
     # via
     #   parsel
@@ -314,6 +330,8 @@ mmh3==5.1.0
     # via chromadb
 mpmath==1.3.0
     # via sympy
+msgpack==1.1.1
+    # via cachecontrol
 multidict==6.4.4
     # via
     #   aiohttp
@@ -322,7 +340,7 @@ mypy-extensions==1.1.0
     # via typing-inspect
 networkx==3.5
     # via torch
-numpy==2.2.6
+numpy==2.3.0
     # via
     #   chromadb
     #   langchain-chroma
@@ -343,7 +361,7 @@ nvidia-cuda-nvrtc-cu12==12.6.77 ; platform_machine == 'x86_64' and sys_platform 
     # via torch
 nvidia-cuda-runtime-cu12==12.6.77 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cudnn-cu12==9.10.2.21 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+nvidia-cudnn-cu12==9.5.1.17 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
 nvidia-cufft-cu12==11.3.0.4 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
@@ -378,9 +396,9 @@ ollama==0.5.1
     # via langchain-ollama
 onnxruntime==1.22.0
     # via chromadb
-openai==1.84.0
+openai==1.86.0
     # via langchain-openai
-opentelemetry-api==1.34.0
+opentelemetry-api==1.34.1
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
@@ -389,33 +407,33 @@ opentelemetry-api==1.34.0
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp-proto-common==1.34.0
+opentelemetry-exporter-otlp-proto-common==1.34.1
     # via opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-otlp-proto-grpc==1.34.0
+opentelemetry-exporter-otlp-proto-grpc==1.34.1
     # via chromadb
-opentelemetry-instrumentation==0.55b0
+opentelemetry-instrumentation==0.55b1
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
-opentelemetry-instrumentation-asgi==0.55b0
+opentelemetry-instrumentation-asgi==0.55b1
     # via opentelemetry-instrumentation-fastapi
-opentelemetry-instrumentation-fastapi==0.55b0
+opentelemetry-instrumentation-fastapi==0.55b1
     # via chromadb
-opentelemetry-proto==1.34.0
+opentelemetry-proto==1.34.1
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-sdk==1.34.0
+opentelemetry-sdk==1.34.1
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-semantic-conventions==0.55b0
+opentelemetry-semantic-conventions==0.55b1
     # via
     #   opentelemetry-instrumentation
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
     #   opentelemetry-sdk
-opentelemetry-util-http==0.55b0
+opentelemetry-util-http==0.55b1
     # via
     #   opentelemetry-instrumentation-asgi
     #   opentelemetry-instrumentation-fastapi
@@ -425,6 +443,8 @@ orjson==3.10.18
     #   langsmith
 overrides==7.7.0
     # via chromadb
+packageurl-python==0.17.1
+    # via cyclonedx-python-lib
 packaging==24.2
     # via
     #   build
@@ -437,6 +457,9 @@ packaging==24.2
     #   onnxruntime
     #   opentelemetry-instrumentation
     #   parsel
+    #   pip-audit
+    #   pip-requirements-parser
+    #   pytest
     #   scrapy
     #   transformers
 parsel==1.10.0
@@ -445,9 +468,22 @@ parsel==1.10.0
     #   scrapy
 pillow==11.2.1
     # via sentence-transformers
-posthog==4.2.0
+pip==25.1.1
+    # via pip-api
+pip-api==0.0.34
+    # via pip-audit
+pip-audit==2.9.0
+pip-requirements-parser==32.0.1
+    # via pip-audit
+platformdirs==4.3.8
+    # via pip-audit
+pluggy==1.6.0
+    # via
+    #   pytest
+    #   pytest-cov
+posthog==4.10.0
     # via chromadb
-propcache==0.3.1
+propcache==0.3.2
     # via
     #   aiohttp
     #   yarl
@@ -471,6 +507,8 @@ protobuf==5.29.5
     #   onnxruntime
     #   opentelemetry-proto
     #   proto-plus
+py-serializable==2.0.0
+    # via cyclonedx-python-lib
 pyasn1==0.6.1
     # via
     #   pyasn1-modules
@@ -482,7 +520,7 @@ pyasn1-modules==0.4.2
     #   service-identity
 pycparser==2.22
     # via cffi
-pydantic==2.11.5
+pydantic==2.11.7
     # via
     #   chromadb
     #   fastapi
@@ -499,19 +537,25 @@ pydantic==2.11.5
 pydantic-core==2.33.2
     # via pydantic
 pydantic-settings==2.9.1
-    # via langchain-community
+    # via
+    #   friday-cli
+    #   langchain-community
 pydispatcher==2.0.7 ; platform_python_implementation == 'CPython'
     # via scrapy
 pygithub==2.6.1
     # via friday-cli
 pygments==2.19.1
-    # via rich
+    # via
+    #   pytest
+    #   rich
 pyjwt==2.10.1
     # via pygithub
 pynacl==1.5.0
     # via pygithub
 pyopenssl==25.1.0
     # via scrapy
+pyparsing==3.2.3
+    # via pip-requirements-parser
 pypika==0.48.9
     # via chromadb
 pyproject-hooks==1.2.0
@@ -520,6 +564,12 @@ pypydispatcher==2.1.2 ; platform_python_implementation == 'PyPy'
     # via scrapy
 pyreadline3==3.5.4 ; sys_platform == 'win32'
     # via humanfriendly
+pytest==8.4.0
+    # via
+    #   pytest-asyncio
+    #   pytest-cov
+pytest-asyncio==1.0.0
+pytest-cov==6.2.1
 python-dateutil==2.9.0.post0
     # via
     #   google-cloud-bigquery
@@ -557,6 +607,7 @@ regex==2024.11.6
 requests==2.32.4
     # via
     #   atlassian-python-api
+    #   cachecontrol
     #   google-api-core
     #   google-cloud-bigquery
     #   google-cloud-storage
@@ -566,6 +617,7 @@ requests==2.32.4
     #   langchain
     #   langchain-community
     #   langsmith
+    #   pip-audit
     #   posthog
     #   pygithub
     #   requests-file
@@ -587,6 +639,7 @@ retrying==1.3.4
 rich==14.0.0
     # via
     #   chromadb
+    #   pip-audit
     #   typer
 rpds-py==0.25.1
     # via
@@ -596,13 +649,13 @@ rsa==4.9.1
     # via google-auth
 safetensors==0.5.3
     # via transformers
-scikit-learn==1.6.1
+scikit-learn==1.7.0
     # via sentence-transformers
 scipy==1.15.3
     # via
     #   scikit-learn
     #   sentence-transformers
-scrapy==2.13.1
+scrapy==2.13.2
     # via friday-cli
 sentence-transformers==4.1.0
     # via friday-cli
@@ -629,6 +682,8 @@ sniffio==1.3.1
     # via
     #   anyio
     #   openai
+sortedcontainers==2.4.0
+    # via cyclonedx-python-lib
 soupsieve==2.7
     # via beautifulsoup4
 sqlalchemy==2.0.41
@@ -659,6 +714,8 @@ tokenizers==0.21.1
     #   chromadb
     #   langchain-mistralai
     #   transformers
+toml==0.10.2
+    # via pip-audit
 torch==2.7.1
     # via sentence-transformers
 tqdm==4.67.1
@@ -672,7 +729,7 @@ transformers==4.52.4
     # via sentence-transformers
 triton==3.3.1 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-twisted==24.11.0
+twisted==25.5.0
     # via scrapy
 typer==0.16.0
     # via
@@ -680,7 +737,6 @@ typer==0.16.0
     #   friday-cli
 typing-extensions==4.14.0
     # via
-    #   anyio
     #   atlassian-python-api
     #   beautifulsoup4
     #   chromadb
@@ -697,8 +753,6 @@ typing-extensions==4.14.0
     #   pydantic
     #   pydantic-core
     #   pygithub
-    #   pyopenssl
-    #   referencing
     #   sentence-transformers
     #   sqlalchemy
     #   torch
@@ -741,9 +795,9 @@ wrapt==1.17.2
     # via
     #   deprecated
     #   opentelemetry-instrumentation
-yarl==1.20.0
+yarl==1.20.1
     # via aiohttp
-zipp==3.22.0
+zipp==3.23.0
     # via importlib-metadata
 zope-event==5.0
     # via gevent

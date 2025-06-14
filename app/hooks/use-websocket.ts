@@ -25,7 +25,7 @@ export function useWebSocket(
 ): UseWebSocketReturn {
   const {
     url = process.env.NODE_ENV === 'production'
-      ? 'wss://your-domain.com/api/v1/ws/logs'
+      ? 'wss://domain.com/api/v1/ws/logs'
       : 'ws://localhost:8080/api/v1/ws/logs',
     maxLogs = 100,
     autoReconnect = true,
