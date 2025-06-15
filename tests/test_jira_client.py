@@ -1,6 +1,7 @@
 """Tests for Jira client functionality."""
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 from friday.connectors.jira_client import JiraConnector
@@ -14,18 +15,21 @@ class TestJiraConnector:
         """Test JiraConnector initialization."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
-        with patch.dict("os.environ", {
-            "JIRA_URL": "https://test.atlassian.net",
-            "JIRA_USERNAME": "test@example.com",
-            "JIRA_API_TOKEN": "test-token"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "JIRA_URL": "https://test.atlassian.net",
+                "JIRA_USERNAME": "test@example.com",
+                "JIRA_API_TOKEN": "test-token",
+            },
+        ):
             connector = JiraConnector()
-            
+
             mock_jira_class.assert_called_once_with(
                 url="https://test.atlassian.net",
                 username="test@example.com",
-                password="test-token"
+                password="test-token",
             )
             assert connector.jira == mock_jira_instance
 
@@ -34,7 +38,7 @@ class TestJiraConnector:
         """Test successful issue retrieval."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
+
         # Mock issue data
         mock_issue = {
             "key": "TEST-123",
@@ -47,19 +51,22 @@ class TestJiraConnector:
                 "assignee": {"displayName": "Test User"},
                 "reporter": {"displayName": "Reporter User"},
                 "created": "2023-01-01T00:00:00.000+0000",
-                "updated": "2023-01-02T00:00:00.000+0000"
-            }
+                "updated": "2023-01-02T00:00:00.000+0000",
+            },
         }
         mock_jira_instance.issue.return_value = mock_issue
-        
-        with patch.dict("os.environ", {
-            "JIRA_URL": "https://test.atlassian.net",
-            "JIRA_USERNAME": "test@example.com",
-            "JIRA_API_TOKEN": "test-token"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "JIRA_URL": "https://test.atlassian.net",
+                "JIRA_USERNAME": "test@example.com",
+                "JIRA_API_TOKEN": "test-token",
+            },
+        ):
             connector = JiraConnector()
             result = connector.get_issue("TEST-123")
-            
+
             mock_jira_instance.issue.assert_called_once_with("TEST-123")
             assert result == mock_issue
 
@@ -69,14 +76,17 @@ class TestJiraConnector:
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
         mock_jira_instance.issue.side_effect = Exception("Issue not found")
-        
-        with patch.dict("os.environ", {
-            "JIRA_URL": "https://test.atlassian.net",
-            "JIRA_USERNAME": "test@example.com",
-            "JIRA_API_TOKEN": "test-token"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "JIRA_URL": "https://test.atlassian.net",
+                "JIRA_USERNAME": "test@example.com",
+                "JIRA_API_TOKEN": "test-token",
+            },
+        ):
             connector = JiraConnector()
-            
+
             with pytest.raises(Exception, match="Issue not found"):
                 connector.get_issue("NONEXISTENT-123")
 
@@ -85,7 +95,7 @@ class TestJiraConnector:
         """Test acceptance criteria extraction."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
+
         # Mock issue with acceptance criteria in description
         mock_issue = {
             "fields": {
@@ -100,15 +110,18 @@ class TestJiraConnector:
                 """
             }
         }
-        
-        with patch.dict("os.environ", {
-            "JIRA_URL": "https://test.atlassian.net",
-            "JIRA_USERNAME": "test@example.com",
-            "JIRA_API_TOKEN": "test-token"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "JIRA_URL": "https://test.atlassian.net",
+                "JIRA_USERNAME": "test@example.com",
+                "JIRA_API_TOKEN": "test-token",
+            },
+        ):
             connector = JiraConnector()
             criteria = connector.extract_acceptance_criteria(mock_issue)
-            
+
             assert "User can enter username and password" in criteria
             assert "System validates credentials" in criteria
             assert "Error message shown on failure" in criteria
@@ -118,22 +131,23 @@ class TestJiraConnector:
         """Test acceptance criteria extraction when none exist."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
+
         # Mock issue without acceptance criteria
         mock_issue = {
-            "fields": {
-                "description": "Simple description without acceptance criteria"
-            }
+            "fields": {"description": "Simple description without acceptance criteria"}
         }
-        
-        with patch.dict("os.environ", {
-            "JIRA_URL": "https://test.atlassian.net",
-            "JIRA_USERNAME": "test@example.com",
-            "JIRA_API_TOKEN": "test-token"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "JIRA_URL": "https://test.atlassian.net",
+                "JIRA_USERNAME": "test@example.com",
+                "JIRA_API_TOKEN": "test-token",
+            },
+        ):
             connector = JiraConnector()
             criteria = connector.extract_acceptance_criteria(mock_issue)
-            
+
             # Should return the description or empty string
             assert isinstance(criteria, str)
 
@@ -142,22 +156,21 @@ class TestJiraConnector:
         """Test acceptance criteria extraction with empty description."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
+
         # Mock issue with empty description
-        mock_issue = {
-            "fields": {
-                "description": None
-            }
-        }
-        
-        with patch.dict("os.environ", {
-            "JIRA_URL": "https://test.atlassian.net",
-            "JIRA_USERNAME": "test@example.com",
-            "JIRA_API_TOKEN": "test-token"
-        }):
+        mock_issue = {"fields": {"description": None}}
+
+        with patch.dict(
+            "os.environ",
+            {
+                "JIRA_URL": "https://test.atlassian.net",
+                "JIRA_USERNAME": "test@example.com",
+                "JIRA_API_TOKEN": "test-token",
+            },
+        ):
             connector = JiraConnector()
             criteria = connector.extract_acceptance_criteria(mock_issue)
-            
+
             # Should handle None description gracefully
             assert criteria == ""
 
@@ -176,11 +189,14 @@ class TestJiraConnectorConfiguration:
     def test_connection_error(self, mock_jira_class):
         """Test connection error handling."""
         mock_jira_class.side_effect = Exception("Connection failed")
-        
-        with patch.dict("os.environ", {
-            "JIRA_URL": "https://invalid.atlassian.net",
-            "JIRA_USERNAME": "test@example.com",
-            "JIRA_API_TOKEN": "invalid-token"
-        }):
+
+        with patch.dict(
+            "os.environ",
+            {
+                "JIRA_URL": "https://invalid.atlassian.net",
+                "JIRA_USERNAME": "test@example.com",
+                "JIRA_API_TOKEN": "invalid-token",
+            },
+        ):
             with pytest.raises(Exception, match="Connection failed"):
                 JiraConnector()

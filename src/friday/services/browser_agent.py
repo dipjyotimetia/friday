@@ -1,7 +1,5 @@
 import asyncio
-import json
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+from typing import Any, Dict, List
 
 from browser_use import Agent
 from langchain_core.prompts import PromptTemplate

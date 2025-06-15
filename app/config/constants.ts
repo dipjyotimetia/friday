@@ -42,24 +42,3 @@ export const DEFAULT_VALUES = {
   BROWSER_TEST_OUTPUT_FILENAME: 'browser_test_report.md',
   CRAWL_PERSIST_DIR: './data/chroma',
 } as const;
-
-// Browser Test Configuration
-export const BROWSER_TEST_CONFIG = {
-  TEST_TYPES: [
-    { value: 'functional', label: 'Functional' },
-    { value: 'ui', label: 'UI/UX' },
-    { value: 'integration', label: 'Integration' },
-    { value: 'accessibility', label: 'Accessibility' },
-    { value: 'performance', label: 'Performance' },
-  ],
-  DEFAULT_TEST_TYPE: 'functional',
-  DEFAULT_HEADLESS: true,
-  DEFAULT_SCREENSHOTS: true,
-} as const;
-
-// UI Configuration
-export const UI_CONFIG = {
-  ANIMATION_DURATION: 300,
-  DEBOUNCE_DELAY: 500,
-  TOAST_DURATION: 3000,
-} as const;

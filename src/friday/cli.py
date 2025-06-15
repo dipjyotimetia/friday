@@ -244,10 +244,21 @@ def version():
 
 @app.command()
 def browser_test(
-    yaml_file: str = typer.Argument(..., help="Path to YAML file containing test scenarios"),
-    provider: str = typer.Option("openai", "--provider", "-p", help="LLM provider (openai, gemini, ollama, mistral)"),
-    headless: bool = typer.Option(True, "--headless/--no-headless", help="Run browser in headless mode"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file for test report"),
+    yaml_file: str = typer.Argument(
+        ..., help="Path to YAML file containing test scenarios"
+    ),
+    provider: str = typer.Option(
+        "openai",
+        "--provider",
+        "-p",
+        help="LLM provider (openai, gemini, ollama, mistral)",
+    ),
+    headless: bool = typer.Option(
+        True, "--headless/--no-headless", help="Run browser in headless mode"
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output file for test report"
+    ),
 ):
     """
     Run browser-based UI tests using AI agent from YAML scenarios.
@@ -276,49 +287,50 @@ def browser_test(
     """
     try:
         from friday.services.browser_agent import BrowserTestingAgent
-        
+
         yaml_path = Path(yaml_file)
         if not yaml_path.exists():
             print(f"[red]Error: YAML file not found: {yaml_file}[/red]")
             raise typer.Exit(code=1)
-        
+
         print(f"[blue]Loading test scenarios from: {yaml_file}[/blue]")
-        
+
         # Read and parse YAML content
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, "r") as f:
             yaml_content = f.read()
-        
+
         parser = YamlScenariosParser()
         test_suite = parser.parse_yaml_content(yaml_content)
         test_cases = parser.convert_to_browser_test_cases(test_suite)
-        
-        print(f"[blue]Found {len(test_cases)} test scenarios in suite: {test_suite.name}[/blue]")
-        
+
+        print(
+            f"[blue]Found {len(test_cases)} test scenarios in suite: {test_suite.name}[/blue]"
+        )
+
         # Initialize browser testing agent
         agent = BrowserTestingAgent(provider=provider)
-        
+
         # Run multiple browser tests
-        results = asyncio.run(agent.run_multiple_tests(
-            test_cases=test_cases,
-            headless=headless
-        ))
-        
+        results = asyncio.run(
+            agent.run_multiple_tests(test_cases=test_cases, headless=headless)
+        )
+
         # Generate test report
         report = agent.generate_test_report(results)
-        
+
         # Create summary
         total_tests = len(results)
         passed_tests = sum(1 for r in results if r.get("success", False))
         failed_tests = total_tests - passed_tests
         success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
-        
+
         # Display results
         print(f"\n[green]✓ Browser test execution completed[/green]")
         print(f"[cyan]Total Tests: {total_tests}[/cyan]")
         print(f"[green]Passed: {passed_tests}[/green]")
         print(f"[red]Failed: {failed_tests}[/red]")
         print(f"[purple]Success Rate: {success_rate:.1f}%[/purple]")
-        
+
         # Save report if output file specified
         if output:
             full_report = f"""# Browser Test Report - {test_suite.name}
@@ -334,10 +346,10 @@ def browser_test(
 ## Detailed Report
 {report}
 """
-            with open(output, 'w') as f:
+            with open(output, "w") as f:
                 f.write(full_report)
             print(f"[green]Test report saved to: {output}[/green]")
-        
+
     except Exception as e:
         logger.error(f"Error running browser tests: {str(e)}")
         print(f"[red]Error: {str(e)}[/red]")
@@ -348,9 +360,15 @@ def browser_test(
 def webui(
     port: int = typer.Option(3000, "--port", "-p", help="Port to run the web UI on"),
     api_port: int = typer.Option(8080, "--api-port", help="Port for the API server"),
-    open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser automatically"),
-    api_only: bool = typer.Option(False, "--api-only", help="Start only the API server"),
-    frontend_only: bool = typer.Option(False, "--frontend-only", help="Start only the frontend"),
+    open_browser: bool = typer.Option(
+        True, "--open/--no-open", help="Open browser automatically"
+    ),
+    api_only: bool = typer.Option(
+        False, "--api-only", help="Start only the API server"
+    ),
+    frontend_only: bool = typer.Option(
+        False, "--frontend-only", help="Start only the frontend"
+    ),
 ):
     """
     Start the Friday Web UI for interactive testing.
@@ -388,9 +406,11 @@ def webui(
         # Check if we're in the right directory structure
         current_dir = Path.cwd()
         app_dir = current_dir / "app"
-        
+
         if not app_dir.exists():
-            print("[red]Error: 'app' directory not found. Please run this command from the Friday project root directory.[/red]")
+            print(
+                "[red]Error: 'app' directory not found. Please run this command from the Friday project root directory.[/red]"
+            )
             raise typer.Exit(code=1)
 
         processes = []
@@ -399,19 +419,28 @@ def webui(
         if not frontend_only:
             print(f"[blue]Starting Friday API server on port {api_port}...[/blue]")
             try:
-                api_process = subprocess.Popen([
-                    sys.executable, "-m", "uvicorn", 
-                    "friday.api.app:app", 
-                    "--reload", 
-                    "--port", str(api_port),
-                    "--host", "0.0.0.0"
-                ], cwd=current_dir)
+                api_process = subprocess.Popen(
+                    [
+                        sys.executable,
+                        "-m",
+                        "uvicorn",
+                        "friday.api.app:app",
+                        "--reload",
+                        "--port",
+                        str(api_port),
+                        "--host",
+                        "0.0.0.0",
+                    ],
+                    cwd=current_dir,
+                )
                 processes.append(("API", api_process))
-                
+
                 # Wait a moment for API to start
                 time.sleep(2)
-                print(f"[green]✓ API server started on http://localhost:{api_port}[/green]")
-                
+                print(
+                    f"[green]✓ API server started on http://localhost:{api_port}[/green]"
+                )
+
             except Exception as e:
                 print(f"[red]Failed to start API server: {str(e)}[/red]")
                 if not api_only:
@@ -428,15 +457,15 @@ def webui(
                     print("[yellow]Installing frontend dependencies...[/yellow]")
                     subprocess.run(["npm", "install"], cwd=app_dir, check=True)
 
-                frontend_process = subprocess.Popen([
-                    "npm", "run", "dev", "--", "--port", str(port)
-                ], cwd=app_dir)
+                frontend_process = subprocess.Popen(
+                    ["npm", "run", "dev", "--", "--port", str(port)], cwd=app_dir
+                )
                 processes.append(("Frontend", frontend_process))
-                
+
                 # Wait for frontend to start
                 time.sleep(3)
                 print(f"[green]✓ Web UI started on http://localhost:{port}[/green]")
-                
+
                 # Open browser if requested
                 if open_browser:
                     print("[blue]Opening browser...[/blue]")
@@ -486,8 +515,15 @@ def webui(
 
 @app.command()
 def open(
-    port: int = typer.Option(3000, "--port", "-p", help="Port where the web UI is running"),
-    feature: str = typer.Option("", "--feature", "-f", help="Open specific feature (browser, generator, crawler, api)")
+    port: int = typer.Option(
+        3000, "--port", "-p", help="Port where the web UI is running"
+    ),
+    feature: str = typer.Option(
+        "",
+        "--feature",
+        "-f",
+        help="Open specific feature (browser, generator, crawler, api)",
+    ),
 ):
     """
     Open the Friday Web UI in your default browser.
@@ -516,7 +552,7 @@ def open(
     """
     try:
         import requests
-        
+
         # Check if the web UI is running
         try:
             response = requests.get(f"http://localhost:{port}", timeout=2)
@@ -526,15 +562,17 @@ def open(
                     url = f"http://localhost:{port}/?tab={feature}"
                 else:
                     url = f"http://localhost:{port}"
-                
+
                 print(f"[blue]Opening Friday Web UI: {url}[/blue]")
                 webbrowser.open(url)
                 print("[green]✓ Browser opened[/green]")
             else:
-                print(f"[yellow]Web UI is running but returned status {response.status_code}[/yellow]")
+                print(
+                    f"[yellow]Web UI is running but returned status {response.status_code}[/yellow]"
+                )
                 print(f"[blue]Opening anyway: http://localhost:{port}[/blue]")
                 webbrowser.open(f"http://localhost:{port}")
-        
+
         except requests.exceptions.ConnectionError:
             print(f"[red]✗ Friday Web UI is not running on port {port}[/red]")
             print(f"[cyan]To start the web UI, run:[/cyan]")
@@ -542,14 +580,16 @@ def open(
             print(f"[cyan]Or if you're running it on a different port:[/cyan]")
             print(f"[cyan]  friday open --port <PORT_NUMBER>[/cyan]")
             raise typer.Exit(code=1)
-            
+
         except Exception as e:
             print(f"[red]Error checking web UI status: {str(e)}[/red]")
             print(f"[blue]Attempting to open browser anyway...[/blue]")
             webbrowser.open(f"http://localhost:{port}")
 
     except ImportError:
-        print("[yellow]requests library not available, opening browser directly...[/yellow]")
+        print(
+            "[yellow]requests library not available, opening browser directly...[/yellow]"
+        )
         webbrowser.open(f"http://localhost:{port}")
     except Exception as e:
         print(f"[red]Error opening browser: {str(e)}[/red]")

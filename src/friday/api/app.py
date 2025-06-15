@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from friday.api.models import APIResponse, ErrorDetail, ValidationErrorResponse
-from friday.api.routes import api_test, crawl, generate, health, ws, browser_test
+from friday.api.routes import api_test, browser_test, crawl, generate, health, ws
 from friday.config.config import settings
 from friday.exceptions import FridayError
 
