@@ -16,9 +16,6 @@ export const API_ENDPOINTS = {
   GENERATE: '/api/v1/generate',
   CRAWL: '/api/v1/crawl',
   TEST_API: '/api/v1/testapi',
-  BROWSER_TEST_SINGLE: '/api/v1/browser-test/single',
-  BROWSER_TEST_MULTIPLE: '/api/v1/browser-test/multiple',
-  BROWSER_TEST_REPORT: '/api/v1/browser-test/report',
   BROWSER_TEST_HEALTH: '/api/v1/browser-test/health',
 } as const;
 

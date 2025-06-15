@@ -41,7 +41,7 @@ from rich import print
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
-from friday.services.browser_agent import BrowserTestingAgent
+from friday.services.yaml_scenarios import YamlScenariosParser
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 from friday.services.test_generator import TestCaseGenerator
@@ -228,106 +228,102 @@ def version():
 
 @app.command()
 def browser_test(
-    url: str = typer.Argument(..., help="URL to test"),
-    requirement: str = typer.Option(..., "--requirement", "-r", help="Test requirement description"),
-    test_type: str = typer.Option("functional", "--test-type", "-t", help="Type of test (functional, ui, integration)"),
-    context: str = typer.Option("", "--context", "-c", help="Additional context for the test"),
+    yaml_file: str = typer.Argument(..., help="Path to YAML file containing test scenarios"),
     provider: str = typer.Option("openai", "--provider", "-p", help="LLM provider (openai, gemini, ollama, mistral)"),
     headless: bool = typer.Option(True, "--headless/--no-headless", help="Run browser in headless mode"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file for test report"),
 ):
     """
-    Run browser-based UI tests using AI agent.
+    Run browser-based UI tests using AI agent from YAML scenarios.
 
     This command uses the browser-use library to perform automated browser testing
-    based on natural language requirements. The AI agent will navigate the web page
-    and execute the specified test scenario.
+    based on YAML test scenarios. The AI agent will navigate web pages and execute
+    the specified test scenarios defined in the YAML file.
 
     Args:
-        url: Target URL to test
-        requirement: Test requirement description in natural language
-        test_type: Type of test to perform (functional, ui, integration, etc.)
-        context: Additional context or instructions for the test
+        yaml_file: Path to YAML file containing test scenarios
         provider: LLM provider for the AI agent
         headless: Whether to run the browser in headless mode
         output: Optional output file for the test report
 
     Example:
         ```bash
-        # Test login functionality
-        friday browser-test https://example.com/login \
-            --requirement "Test user login with valid credentials" \
-            --test-type functional \
-            --context "Use username 'testuser' and password 'testpass'"
+        # Run browser tests from YAML file
+        friday browser-test test_scenarios.yaml --provider openai --headless
 
-        # Test UI elements with visible browser
-        friday browser-test https://example.com \
-            --requirement "Verify navigation menu is functional" \
-            --test-type ui \
-            --no-headless \
-            --output ui_test_report.md
+        # Run with visible browser and save report
+        friday browser-test my_tests.yaml --no-headless --output test_report.md
         ```
 
     Raises:
         typer.Exit: If browser testing fails or encounters an error
     """
     try:
-        print(f"[blue]Starting browser test for: {url}[/blue]")
-        print(f"[blue]Requirement: {requirement}[/blue]")
+        from friday.services.browser_agent import BrowserTestingAgent
+        
+        yaml_path = Path(yaml_file)
+        if not yaml_path.exists():
+            print(f"[red]Error: YAML file not found: {yaml_file}[/red]")
+            raise typer.Exit(code=1)
+        
+        print(f"[blue]Loading test scenarios from: {yaml_file}[/blue]")
+        
+        # Read and parse YAML content
+        with open(yaml_path, 'r') as f:
+            yaml_content = f.read()
+        
+        parser = YamlScenariosParser()
+        test_suite = parser.parse_yaml_content(yaml_content)
+        test_cases = parser.convert_to_browser_test_cases(test_suite)
+        
+        print(f"[blue]Found {len(test_cases)} test scenarios in suite: {test_suite.name}[/blue]")
         
         # Initialize browser testing agent
         agent = BrowserTestingAgent(provider=provider)
         
-        # Run the browser test
-        result = asyncio.run(agent.run_browser_test(
-            requirement=requirement,
-            url=url,
-            test_type=test_type,
-            context=context,
-            headless=headless,
-            take_screenshots=True
+        # Run multiple browser tests
+        results = asyncio.run(agent.run_multiple_tests(
+            test_cases=test_cases,
+            headless=headless
         ))
         
+        # Generate test report
+        report = agent.generate_test_report(results)
+        
+        # Create summary
+        total_tests = len(results)
+        passed_tests = sum(1 for r in results if r.get("success", False))
+        failed_tests = total_tests - passed_tests
+        success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
+        
         # Display results
-        if result["success"]:
-            print(f"[green]✓ Browser test completed successfully[/green]")
-            print(f"[green]Status: {result['status']}[/green]")
-            if result.get("execution_result"):
-                print(f"[cyan]Result: {result['execution_result'][:200]}...[/cyan]")
-        else:
-            print(f"[red]✗ Browser test failed[/red]")
-            print(f"[red]Error: {result.get('error', 'Unknown error')}[/red]")
-            raise typer.Exit(code=1)
+        print(f"\n[green]✓ Browser test execution completed[/green]")
+        print(f"[cyan]Total Tests: {total_tests}[/cyan]")
+        print(f"[green]Passed: {passed_tests}[/green]")
+        print(f"[red]Failed: {failed_tests}[/red]")
+        print(f"[purple]Success Rate: {success_rate:.1f}%[/purple]")
         
         # Save report if output file specified
         if output:
-            report = f"""# Browser Test Report
+            full_report = f"""# Browser Test Report - {test_suite.name}
 
-## Test Details
-- **URL**: {url}
-- **Requirement**: {requirement}
-- **Test Type**: {test_type}
-- **Context**: {context}
+## Test Summary
+- **Total Tests**: {total_tests}
+- **Passed**: {passed_tests}
+- **Failed**: {failed_tests}
+- **Success Rate**: {success_rate:.1f}%
 - **Provider**: {provider}
 - **Headless**: {headless}
 
-## Results
-- **Status**: {result['status']}
-- **Success**: {'✓' if result['success'] else '✗'}
-- **Timestamp**: {result.get('timestamp', 'N/A')}
-
-## Execution Details
-{result.get('execution_result', 'No detailed results available')}
-
-## Errors
-{chr(10).join(result.get('errors', [])) if result.get('errors') else 'No errors'}
+## Detailed Report
+{report}
 """
             with open(output, 'w') as f:
-                f.write(report)
+                f.write(full_report)
             print(f"[green]Test report saved to: {output}[/green]")
         
     except Exception as e:
-        logger.error(f"Error running browser test: {str(e)}")
+        logger.error(f"Error running browser tests: {str(e)}")
         print(f"[red]Error: {str(e)}[/red]")
         raise typer.Exit(code=1)
 

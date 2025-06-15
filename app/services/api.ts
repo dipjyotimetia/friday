@@ -7,12 +7,6 @@ import type {
   ExtendedCrawlResponse,
   ExtendedAPITestRequest,
   ExtendedAPITestResponse,
-  BrowserTestRequest,
-  BrowserTestResponse,
-  MultipleBrowserTestRequest,
-  MultipleBrowserTestResponse,
-  BrowserTestReportRequest,
-  BrowserTestReportResponse,
   APIResponse,
   ValidationErrorResponse,
 } from '@/types';
@@ -259,49 +253,6 @@ export const apiService = {
         timestamp: new Date().toISOString(),
       };
     }
-  },
-
-  // Browser Testing API methods
-  async runSingleBrowserTest(
-    data: BrowserTestRequest
-  ): Promise<BrowserTestResponse> {
-    const response = await axiosWithRetry(
-      API_ENDPOINTS.BROWSER_TEST_SINGLE,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        data: data,
-      }
-    );
-    return response.data as BrowserTestResponse;
-  },
-
-  async runMultipleBrowserTests(
-    data: MultipleBrowserTestRequest
-  ): Promise<MultipleBrowserTestResponse> {
-    const response = await axiosWithRetry(
-      API_ENDPOINTS.BROWSER_TEST_MULTIPLE,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        data: data,
-      }
-    );
-    return response.data as MultipleBrowserTestResponse;
-  },
-
-  async generateBrowserTestReport(
-    data: BrowserTestReportRequest
-  ): Promise<BrowserTestReportResponse> {
-    const response = await axiosWithRetry(
-      API_ENDPOINTS.BROWSER_TEST_REPORT,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        data: data,
-      }
-    );
-    return response.data as BrowserTestReportResponse;
   },
 
   async getBrowserTestHealth(): Promise<any> {

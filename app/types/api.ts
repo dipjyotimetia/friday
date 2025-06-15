@@ -75,66 +75,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/browser-test/single": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Run Single Browser Test
-         * @description Run a single browser test using the browser-use agent
-         */
-        post: operations["run_single_browser_test_api_v1_browser_test_single_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/browser-test/multiple": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Run Multiple Browser Tests
-         * @description Run multiple browser tests in sequence
-         */
-        post: operations["run_multiple_browser_tests_api_v1_browser_test_multiple_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/browser-test/report": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Generate Browser Test Report
-         * @description Generate a test report from browser test results
-         */
-        post: operations["generate_browser_test_report_api_v1_browser_test_report_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/browser-test/health": {
         parameters: {
             query?: never;
@@ -147,6 +87,66 @@ export interface paths {
          * @description Health check endpoint for browser testing service
          */
         get: operations["browser_test_health_api_v1_browser_test_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/browser-test/yaml/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Yaml Scenarios
+         * @description Upload YAML file containing test scenarios
+         */
+        post: operations["upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/browser-test/yaml/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute Yaml Scenarios
+         * @description Execute test scenarios from YAML content
+         */
+        post: operations["execute_yaml_scenarios_api_v1_browser_test_yaml_execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/browser-test/yaml/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Yaml Template
+         * @description Get a sample YAML template for test scenarios
+         */
+        get: operations["get_yaml_template_api_v1_browser_test_yaml_template_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -207,148 +207,28 @@ export interface components {
              */
             provider: "gemini" | "openai" | "ollama" | "mistral";
         };
-        /**
-         * BrowserTestCase
-         * @description Individual browser test case
-         */
-        BrowserTestCase: {
+        /** Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post */
+        Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post: {
             /**
-             * Requirement
-             * @description Test requirement description
+             * File
+             * Format: binary
              */
-            requirement: string;
+            file: string;
             /**
-             * Url
-             * Format: uri
-             * @description Target URL to test
+             * Provider
+             * @default openai
              */
-            url: string;
-            /**
-             * Test Type
-             * @description Type of test
-             * @default functional
-             */
-            test_type: string;
-            /**
-             * Context
-             * @description Additional context
-             * @default
-             */
-            context: string | null;
-            /**
-             * Take Screenshots
-             * @description Whether to take screenshots
-             * @default true
-             */
-            take_screenshots: boolean;
-        };
-        /**
-         * BrowserTestReportRequest
-         * @description Request model for generating browser test report
-         */
-        BrowserTestReportRequest: {
-            /**
-             * Results
-             * @description List of browser test results
-             */
-            results: components["schemas"]["BrowserTestResult"][];
-        };
-        /**
-         * BrowserTestReportResponse
-         * @description Response model for browser test report generation
-         */
-        BrowserTestReportResponse: {
-            /**
-             * Success
-             * @description Whether the report generation was successful
-             */
-            success: boolean;
-            /**
-             * Message
-             * @description Response message
-             */
-            message: string;
-            /**
-             * Report
-             * @description Generated test report
-             */
-            report?: string | null;
-            /**
-             * Summary
-             * @description Test execution summary
-             */
-            summary?: {
-                [key: string]: unknown;
-            } | null;
-            /**
-             * Error
-             * @description Error message if any
-             */
-            error?: string | null;
-        };
-        /**
-         * BrowserTestRequest
-         * @description Request model for browser testing
-         */
-        BrowserTestRequest: {
-            /**
-             * Requirement
-             * @description Test requirement description
-             */
-            requirement: string;
-            /**
-             * Url
-             * Format: uri
-             * @description Target URL to test
-             */
-            url: string;
-            /**
-             * Test Type
-             * @description Type of test (functional, ui, integration, etc.)
-             * @default functional
-             */
-            test_type: string;
-            /**
-             * Context
-             * @description Additional context for the test
-             * @default
-             */
-            context: string | null;
+            provider: string;
             /**
              * Headless
-             * @description Run browser in headless mode
              * @default true
              */
             headless: boolean;
             /**
-             * Take Screenshots
-             * @description Whether to take screenshots during execution
-             * @default true
+             * Execute Immediately
+             * @default false
              */
-            take_screenshots: boolean;
-        };
-        /**
-         * BrowserTestResponse
-         * @description Response model for browser test API
-         */
-        BrowserTestResponse: {
-            /**
-             * Success
-             * @description Whether the API call was successful
-             */
-            success: boolean;
-            /**
-             * Message
-             * @description Response message
-             */
-            message: string;
-            /** @description Test result data */
-            data?: components["schemas"]["BrowserTestResult"] | null;
-            /**
-             * Error
-             * @description Error message if any
-             */
-            error?: string | null;
+            execute_immediately: boolean;
         };
         /**
          * BrowserTestResult
@@ -459,16 +339,36 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
         /**
-         * MultipleBrowserTestRequest
-         * @description Request model for running multiple browser tests
+         * YamlScenarioExecuteRequest
+         * @description Request model for executing YAML scenarios
+         * @example {
+         *       "headless": true,
+         *       "provider": "openai",
+         *       "yaml_content": "name: 'Test Suite'\nscenarios:\n  - name: 'Homepage Test'\n    requirement: 'Test homepage loads'\n    url: 'https://example.com'"
+         *     }
          */
-        MultipleBrowserTestRequest: {
+        YamlScenarioExecuteRequest: {
             /**
-             * Test Cases
-             * @description List of browser test cases
+             * Yaml Content
+             * @description YAML content containing test scenarios
              */
-            test_cases: components["schemas"]["BrowserTestCase"][];
+            yaml_content: string;
+            /**
+             * Provider
+             * @description LLM provider to use
+             * @default openai
+             */
+            provider: string | null;
             /**
              * Headless
              * @description Run browser in headless mode
@@ -477,13 +377,13 @@ export interface components {
             headless: boolean;
         };
         /**
-         * MultipleBrowserTestResponse
-         * @description Response model for multiple browser tests API
+         * YamlScenarioExecuteResponse
+         * @description Response model for YAML scenario execution
          */
-        MultipleBrowserTestResponse: {
+        YamlScenarioExecuteResponse: {
             /**
              * Success
-             * @description Whether the API call was successful
+             * @description Whether the execution was successful
              */
             success: boolean;
             /**
@@ -492,18 +392,83 @@ export interface components {
              */
             message: string;
             /**
-             * Data
-             * @description List of test results
+             * Test Suite Name
+             * @description Name of the executed test suite
              */
-            data?: components["schemas"]["BrowserTestResult"][] | null;
+            test_suite_name: string;
+            /**
+             * Scenarios Count
+             * @description Number of scenarios executed
+             */
+            scenarios_count: number;
+            /**
+             * Results
+             * @description Test execution results
+             */
+            results: components["schemas"]["BrowserTestResult"][];
             /**
              * Report
              * @description Generated test report
              */
-            report?: string | null;
+            report: string;
             /**
              * Summary
              * @description Test execution summary
+             */
+            summary: {
+                [key: string]: unknown;
+            };
+            /**
+             * Error
+             * @description Error message if any
+             */
+            error?: string | null;
+        };
+        /**
+         * YamlScenarioUploadResponse
+         * @description Response model for YAML scenario upload
+         */
+        YamlScenarioUploadResponse: {
+            /**
+             * Success
+             * @description Whether the upload was successful
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Response message
+             */
+            message: string;
+            /**
+             * Test Suite Name
+             * @description Name of the uploaded test suite
+             */
+            test_suite_name?: string | null;
+            /**
+             * Scenarios Count
+             * @description Number of scenarios found
+             */
+            scenarios_count?: number | null;
+            /**
+             * Scenarios
+             * @description Parsed scenarios
+             */
+            scenarios?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Execution Results
+             * @description Test results if executed immediately
+             */
+            execution_results?: components["schemas"]["BrowserTestResult"][] | null;
+            /**
+             * Report
+             * @description Test report if executed immediately
+             */
+            report?: string | null;
+            /**
+             * Summary
+             * @description Test summary if executed immediately
              */
             summary?: {
                 [key: string]: unknown;
@@ -514,14 +479,25 @@ export interface components {
              */
             error?: string | null;
         };
-        /** ValidationError */
-        ValidationError: {
-            /** Location */
-            loc: (string | number)[];
-            /** Message */
-            msg: string;
-            /** Error Type */
-            type: string;
+        /**
+         * YamlTemplateSample
+         * @description Sample YAML template for test scenarios
+         * @example {
+         *       "description": "Sample YAML template for browser test scenarios",
+         *       "template_content": "name: 'Sample Test Suite'\nscenarios: []"
+         *     }
+         */
+        YamlTemplateSample: {
+            /**
+             * Template Content
+             * @description Sample YAML template content
+             */
+            template_content: string;
+            /**
+             * Description
+             * @description Template description
+             */
+            description: string;
         };
     };
     responses: never;
@@ -651,105 +627,6 @@ export interface operations {
             };
         };
     };
-    run_single_browser_test_api_v1_browser_test_single_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BrowserTestRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BrowserTestResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    run_multiple_browser_tests_api_v1_browser_test_multiple_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MultipleBrowserTestRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MultipleBrowserTestResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    generate_browser_test_report_api_v1_browser_test_report_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BrowserTestReportRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BrowserTestReportResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     browser_test_health_api_v1_browser_test_health_get: {
         parameters: {
             query?: never;
@@ -766,6 +643,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YamlScenarioUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    execute_yaml_scenarios_api_v1_browser_test_yaml_execute_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["YamlScenarioExecuteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YamlScenarioExecuteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_yaml_template_api_v1_browser_test_yaml_template_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YamlTemplateSample"];
                 };
             };
         };

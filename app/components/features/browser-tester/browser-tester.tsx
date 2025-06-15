@@ -3,18 +3,13 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { OutputViewer } from '@/components/shared/output-viewer'
 import { LogViewer } from '@/components/shared/log-viewer'
-import { apiService } from '@/services/api'
-import { BROWSER_TEST_CONFIG } from '@/config/constants'
+import { BROWSER_TEST_CONFIG, API_CONFIG } from '@/config/constants'
 import { useWebSocket } from '@/hooks/use-websocket'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { 
-  Play, 
-  Globe, 
   Monitor, 
   Eye, 
   EyeOff, 
@@ -26,37 +21,15 @@ import {
   Loader2,
   Upload,
   Download,
-  Code
+  Code,
+  Play
 } from 'lucide-react'
 
 import type {
-  BrowserTestRequest,
-  BrowserTestResult,
-  MultipleBrowserTestRequest
+  BrowserTestResult
 } from '@/types'
 
 export function BrowserTester() {
-  const [activeTab, setActiveTab] = useState('single')
-  const [singleTest, setSingleTest] = useState<BrowserTestRequest>({
-    requirement: '',
-    url: '',
-    test_type: BROWSER_TEST_CONFIG.DEFAULT_TEST_TYPE,
-    context: '',
-    headless: BROWSER_TEST_CONFIG.DEFAULT_HEADLESS,
-    take_screenshots: BROWSER_TEST_CONFIG.DEFAULT_SCREENSHOTS
-  })
-  
-  const [multipleTests, setMultipleTests] = useState<MultipleBrowserTestRequest>({
-    test_cases: [{
-      requirement: '',
-      url: '',
-      test_type: BROWSER_TEST_CONFIG.DEFAULT_TEST_TYPE,
-      context: '',
-      take_screenshots: BROWSER_TEST_CONFIG.DEFAULT_SCREENSHOTS
-    }],
-    headless: BROWSER_TEST_CONFIG.DEFAULT_HEADLESS
-  })
-
   const [testResults, setTestResults] = useState<BrowserTestResult[]>([])
   const [testReport, setTestReport] = useState<string>('')
   const [testSummary, setTestSummary] = useState<any>(null)
@@ -71,102 +44,6 @@ export function BrowserTester() {
   const [executeImmediately, setExecuteImmediately] = useState(false)
 
   const { logs, isConnected } = useWebSocket()
-
-  const testTypes = BROWSER_TEST_CONFIG.TEST_TYPES.map(type => ({
-    ...type,
-    icon: type.value === 'functional' ? '⚙️' :
-          type.value === 'ui' ? '🎨' :
-          type.value === 'integration' ? '🔗' :
-          type.value === 'accessibility' ? '♿' :
-          type.value === 'performance' ? '⚡' : '🔧'
-  }))
-
-  const handleSingleTest = async () => {
-    if (!singleTest.requirement || !singleTest.url) {
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await apiService.runSingleBrowserTest(singleTest)
-
-      if (response.success && response.data) {
-        setTestResults([response.data])
-        setTestReport('')
-        setTestSummary(null)
-      }
-    } catch (err: any) {
-      console.error('Browser test failed:', err)
-      setError(err.message || 'Failed to run browser test')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleMultipleTests = async () => {
-    const validTestCases = multipleTests.test_cases.filter(
-      tc => tc.requirement.trim() && tc.url.trim()
-    )
-
-    if (validTestCases.length === 0) {
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await apiService.runMultipleBrowserTests({
-        ...multipleTests,
-        test_cases: validTestCases
-      })
-
-      if (response.success && response.data) {
-        setTestResults(response.data)
-        setTestReport(response.report || '')
-        setTestSummary(response.summary || null)
-      }
-    } catch (err: any) {
-      console.error('Multiple browser tests failed:', err)
-      setError(err.message || 'Failed to run multiple browser tests')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addTestCase = () => {
-    setMultipleTests(prev => ({
-      ...prev,
-      test_cases: [
-        ...prev.test_cases,
-        {
-          requirement: '',
-          url: '',
-          test_type: BROWSER_TEST_CONFIG.DEFAULT_TEST_TYPE,
-          context: '',
-          take_screenshots: BROWSER_TEST_CONFIG.DEFAULT_SCREENSHOTS
-        }
-      ]
-    }))
-  }
-
-  const removeTestCase = (index: number) => {
-    setMultipleTests(prev => ({
-      ...prev,
-      test_cases: prev.test_cases.filter((_, i) => i !== index)
-    }))
-  }
-
-  const updateTestCase = (index: number, field: string, value: any) => {
-    setMultipleTests(prev => ({
-      ...prev,
-      test_cases: prev.test_cases.map((tc, i) => 
-        i === index ? { ...tc, [field]: value } : tc
-      )
-    }))
-  }
 
   const getStatusIcon = (result: BrowserTestResult) => {
     if (result.success) {
@@ -219,7 +96,7 @@ export function BrowserTester() {
       formData.append('headless', yamlHeadless.toString())
       formData.append('execute_immediately', executeImmediately.toString())
 
-      const response = await fetch('/api/v1/browser-test/yaml/upload', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/browser-test/yaml/upload`, {
         method: 'POST',
         body: formData
       })
@@ -257,7 +134,7 @@ export function BrowserTester() {
     setError(null)
 
     try {
-      const response = await fetch('/api/v1/browser-test/yaml/execute', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/browser-test/yaml/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -288,7 +165,12 @@ export function BrowserTester() {
 
   const downloadYamlTemplate = async () => {
     try {
-      const response = await fetch('/api/v1/browser-test/yaml/template')
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/browser-test/yaml/template`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const result = await response.json()
       
       if (result.template_content) {
@@ -301,10 +183,13 @@ export function BrowserTester() {
         a.click()
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
+        console.log('Template downloaded successfully')
+      } else {
+        throw new Error('No template content received from server')
       }
     } catch (err: any) {
       console.error('Failed to download template:', err)
-      setError('Failed to download YAML template')
+      setError(`Failed to download YAML template: ${err.message}`)
     }
   }
 
@@ -316,370 +201,139 @@ export function BrowserTester() {
         </div>
         <div>
           <h2 className="text-xl font-semibold">Browser Testing Agent</h2>
-          <p className="text-gray-600">AI-powered automated browser testing</p>
+          <p className="text-gray-600">AI-powered automated browser testing with YAML scenarios</p>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="single" className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            Single Test
-          </TabsTrigger>
-          <TabsTrigger value="multiple" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Multiple Tests
-          </TabsTrigger>
-          <TabsTrigger value="yaml" className="flex items-center gap-2">
-            <Code className="h-4 w-4" />
-            YAML Scenarios
-          </TabsTrigger>
-        </TabsList>
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              YAML Test Scenarios
+            </h3>
+            <Button variant="outline" onClick={downloadYamlTemplate} className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Download Template
+            </Button>
+          </div>
 
-        <TabsContent value="single" className="space-y-4">
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Test Requirement *
-                </label>
-                <Input
-                  placeholder="Describe what you want to test (e.g., 'Test user login functionality')"
-                  value={singleTest.requirement}
-                  onChange={(e) => setSingleTest(prev => ({ ...prev, requirement: e.target.value }))}
-                  className="w-full"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">LLM Provider</label>
+              <select
+                value={yamlProvider}
+                onChange={(e) => setYamlProvider(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="ollama">Ollama</option>
+                <option value="mistral">Mistral</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-4 pt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={yamlHeadless}
+                  onChange={(e) => setYamlHeadless(e.target.checked)}
                 />
-              </div>
+                <span className="text-sm">Headless Mode</span>
+                {yamlHeadless ? 
+                  <EyeOff className="h-4 w-4 text-gray-400" /> : 
+                  <Eye className="h-4 w-4 text-blue-500" />
+                }
+              </label>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Target URL *
-                </label>
-                <Input
-                  placeholder="https://example.com"
-                  value={singleTest.url}
-                  onChange={(e) => setSingleTest(prev => ({ ...prev, url: e.target.value }))}
-                  className="w-full"
+            <div className="flex items-center gap-4 pt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={executeImmediately}
+                  onChange={(e) => setExecuteImmediately(e.target.checked)}
                 />
-              </div>
+                <span className="text-sm">Execute Immediately</span>
+              </label>
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Test Type
-                  </label>
-                  <select
-                    value={singleTest.test_type}
-                    onChange={(e) => setSingleTest(prev => ({ ...prev, test_type: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    {testTypes.map(type => (
-                      <option key={type.value} value={type.value}>
-                        {type.icon} {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-4 pt-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={singleTest.headless}
-                      onChange={(e) => setSingleTest(prev => ({ ...prev, headless: e.target.checked }))}
-                    />
-                    <span className="text-sm">Headless Mode</span>
-                    {singleTest.headless ? 
-                      <EyeOff className="h-4 w-4 text-gray-400" /> : 
-                      <Eye className="h-4 w-4 text-blue-500" />
-                    }
-                  </label>
-                  
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={singleTest.take_screenshots}
-                      onChange={(e) => setSingleTest(prev => ({ ...prev, take_screenshots: e.target.checked }))}
-                    />
-                    <span className="text-sm">Screenshots</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Additional Context (Optional)
-                </label>
-                <textarea
-                  placeholder="Any additional instructions or context for the test..."
-                  value={singleTest.context || ''}
-                  onChange={(e) => setSingleTest(prev => ({ ...prev, context: e.target.value }))}
-                  className="w-full px-3 py-2 border rounded-md h-20 resize-none"
+          <div className="border rounded-lg p-4">
+            <h4 className="font-medium mb-3">Upload YAML File</h4>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept=".yaml,.yml"
+                  onChange={handleFileUpload}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
+                {yamlFile && (
+                  <span className="text-sm text-green-600">
+                    ✓ {yamlFile.name}
+                  </span>
+                )}
               </div>
-
+              
               <Button
-                onClick={handleSingleTest}
-                disabled={loading || !singleTest.requirement || !singleTest.url}
+                onClick={handleYamlUploadAndExecute}
+                disabled={loading || !yamlFile}
                 className="w-full"
               >
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Running Browser Test...
+                    {executeImmediately ? 'Uploading and Executing...' : 'Uploading...'}
                   </>
                 ) : (
                   <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Run Browser Test
+                    <Upload className="h-4 w-4 mr-2" />
+                    {executeImmediately ? 'Upload and Execute' : 'Upload YAML'}
                   </>
                 )}
               </Button>
             </div>
-          </Card>
-        </TabsContent>
+          </div>
 
-        <TabsContent value="multiple" className="space-y-4">
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Test Cases</h3>
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={multipleTests.headless}
-                      onChange={(e) => setMultipleTests(prev => ({ ...prev, headless: e.target.checked }))}
-                    />
-                    Headless Mode
-                    {multipleTests.headless ? 
-                      <EyeOff className="h-4 w-4 text-gray-400" /> : 
-                      <Eye className="h-4 w-4 text-blue-500" />
-                    }
-                  </label>
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {multipleTests.test_cases.map((testCase, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="p-4 border rounded-lg space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Test Case {index + 1}</h4>
-                      {multipleTests.test_cases.length > 1 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeTestCase(index)}
-                        >
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <Input
-                        placeholder="Test requirement"
-                        value={testCase.requirement}
-                        onChange={(e) => updateTestCase(index, 'requirement', e.target.value)}
-                      />
-                      <Input
-                        placeholder="Target URL"
-                        value={testCase.url}
-                        onChange={(e) => updateTestCase(index, 'url', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <select
-                        value={testCase.test_type}
-                        onChange={(e) => updateTestCase(index, 'test_type', e.target.value)}
-                        className="px-3 py-2 border rounded-md"
-                      >
-                        {testTypes.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.icon} {type.label}
-                          </option>
-                        ))}
-                      </select>
-
-                      <Input
-                        placeholder="Context (optional)"
-                        value={testCase.context || ''}
-                        onChange={(e) => updateTestCase(index, 'context', e.target.value)}
-                      />
-
-                      <label className="flex items-center gap-2 px-3">
-                        <input
-                          type="checkbox"
-                          checked={testCase.take_screenshots}
-                          onChange={(e) => updateTestCase(index, 'take_screenshots', e.target.checked)}
-                        />
-                        <span className="text-sm">Screenshots</span>
-                      </label>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={addTestCase}>
-                  Add Test Case
-                </Button>
-                <Button
-                  onClick={handleMultipleTests}
-                  disabled={loading || multipleTests.test_cases.every(tc => !tc.requirement || !tc.url)}
-                  className="flex-1"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Running Tests...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 mr-2" />
-                      Run All Tests
-                    </>
-                  )}
-                </Button>
-              </div>
+          <div className="border rounded-lg p-4">
+            <h4 className="font-medium mb-3">Or Paste YAML Content</h4>
+            <div className="space-y-3">
+              <textarea
+                placeholder="Paste your YAML content here..."
+                value={yamlContent}
+                onChange={(e) => setYamlContent(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md h-40 font-mono text-sm resize-none"
+              />
+              
+              <Button
+                onClick={handleYamlExecute}
+                disabled={loading || !yamlContent.trim()}
+                className="w-full"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Executing YAML Scenarios...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Execute YAML Scenarios
+                  </>
+                )}
+              </Button>
             </div>
-          </Card>
-        </TabsContent>
+          </div>
 
-        <TabsContent value="yaml" className="space-y-4">
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">YAML Test Scenarios</h3>
-                <Button variant="outline" onClick={downloadYamlTemplate} className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Download Template
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">LLM Provider</label>
-                  <select
-                    value={yamlProvider}
-                    onChange={(e) => setYamlProvider(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                  >
-                    <option value="openai">OpenAI</option>
-                    <option value="gemini">Google Gemini</option>
-                    <option value="ollama">Ollama</option>
-                    <option value="mistral">Mistral</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-4 pt-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={yamlHeadless}
-                      onChange={(e) => setYamlHeadless(e.target.checked)}
-                    />
-                    <span className="text-sm">Headless Mode</span>
-                    {yamlHeadless ? 
-                      <EyeOff className="h-4 w-4 text-gray-400" /> : 
-                      <Eye className="h-4 w-4 text-blue-500" />
-                    }
-                  </label>
-                </div>
-
-                <div className="flex items-center gap-4 pt-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={executeImmediately}
-                      onChange={(e) => setExecuteImmediately(e.target.checked)}
-                    />
-                    <span className="text-sm">Execute Immediately</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <h4 className="font-medium mb-3">Upload YAML File</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="file"
-                      accept=".yaml,.yml"
-                      onChange={handleFileUpload}
-                      className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {yamlFile && (
-                      <span className="text-sm text-green-600">
-                        ✓ {yamlFile.name}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <Button
-                    onClick={handleYamlUploadAndExecute}
-                    disabled={loading || !yamlFile}
-                    className="w-full"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {executeImmediately ? 'Uploading and Executing...' : 'Uploading...'}
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        {executeImmediately ? 'Upload and Execute' : 'Upload YAML'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="border rounded-lg p-4">
-                <h4 className="font-medium mb-3">Or Paste YAML Content</h4>
-                <div className="space-y-3">
-                  <textarea
-                    placeholder="Paste your YAML content here..."
-                    value={yamlContent}
-                    onChange={(e) => setYamlContent(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md h-40 font-mono text-sm resize-none"
-                  />
-                  
-                  <Button
-                    onClick={handleYamlExecute}
-                    disabled={loading || !yamlContent.trim()}
-                    className="w-full"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Executing YAML Scenarios...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Execute YAML Scenarios
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-800 mb-2">YAML Format</h4>
-                <p className="text-sm text-blue-700 mb-2">
-                  Define test scenarios in YAML format with the following structure:
-                </p>
-                <div className="bg-white border rounded p-3 font-mono text-xs">
-                  <pre>{`name: "Test Suite Name"
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-800 mb-2">YAML Format</h4>
+            <p className="text-sm text-blue-700 mb-2">
+              Define test scenarios in YAML format with the following structure:
+            </p>
+            <div className="bg-white border rounded p-3 font-mono text-xs">
+              <pre>{`name: "Test Suite Name"
 scenarios:
   - name: "Test Name"
     requirement: "What to test"
@@ -687,12 +341,10 @@ scenarios:
     test_type: "functional"
     context: "Additional context"
     take_screenshots: true`}</pre>
-                </div>
-              </div>
             </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </div>
+        </div>
+      </Card>
 
       {/* Test Results */}
       {testResults.length > 0 && (
@@ -727,7 +379,12 @@ scenarios:
 
           <div className="space-y-3">
             {testResults.map((result, index) => (
-              <div key={index} className="p-4 border rounded-lg">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 border rounded-lg"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     {getStatusIcon(result)}
@@ -764,7 +421,7 @@ scenarios:
                     ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         </Card>

@@ -147,135 +147,6 @@
         }
       }
     },
-    "/api/v1/browser-test/single": {
-      "post": {
-        "tags": [
-          "Browser Testing",
-          "browser-testing"
-        ],
-        "summary": "Run Single Browser Test",
-        "description": "Run a single browser test using the browser-use agent",
-        "operationId": "run_single_browser_test_api_v1_browser_test_single_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BrowserTestRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BrowserTestResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/browser-test/multiple": {
-      "post": {
-        "tags": [
-          "Browser Testing",
-          "browser-testing"
-        ],
-        "summary": "Run Multiple Browser Tests",
-        "description": "Run multiple browser tests in sequence",
-        "operationId": "run_multiple_browser_tests_api_v1_browser_test_multiple_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MultipleBrowserTestRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MultipleBrowserTestResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/browser-test/report": {
-      "post": {
-        "tags": [
-          "Browser Testing",
-          "browser-testing"
-        ],
-        "summary": "Generate Browser Test Report",
-        "description": "Generate a test report from browser test results",
-        "operationId": "generate_browser_test_report_api_v1_browser_test_report_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BrowserTestReportRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BrowserTestReportResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/browser-test/health": {
       "get": {
         "tags": [
@@ -291,6 +162,115 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/yaml/upload": {
+      "post": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Upload Yaml Scenarios",
+        "description": "Upload YAML file containing test scenarios",
+        "operationId": "upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YamlScenarioUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/yaml/execute": {
+      "post": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Execute Yaml Scenarios",
+        "description": "Execute test scenarios from YAML content",
+        "operationId": "execute_yaml_scenarios_api_v1_browser_test_yaml_execute_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/YamlScenarioExecuteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YamlScenarioExecuteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/yaml/template": {
+      "get": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Get Yaml Template",
+        "description": "Get a sample YAML template for test scenarios",
+        "operationId": "get_yaml_template_api_v1_browser_test_yaml_template_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YamlTemplateSample"
+                }
               }
             }
           }
@@ -400,229 +380,34 @@
         ],
         "title": "Body_test_api_api_v1_testapi_post"
       },
-      "BrowserTestCase": {
+      "Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post": {
         "properties": {
-          "requirement": {
+          "file": {
             "type": "string",
-            "title": "Requirement",
-            "description": "Test requirement description"
+            "format": "binary",
+            "title": "File"
           },
-          "url": {
+          "provider": {
             "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
-            "title": "Url",
-            "description": "Target URL to test"
-          },
-          "test_type": {
-            "type": "string",
-            "title": "Test Type",
-            "description": "Type of test",
-            "default": "functional"
-          },
-          "context": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Context",
-            "description": "Additional context",
-            "default": ""
-          },
-          "take_screenshots": {
-            "type": "boolean",
-            "title": "Take Screenshots",
-            "description": "Whether to take screenshots",
-            "default": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "requirement",
-          "url"
-        ],
-        "title": "BrowserTestCase",
-        "description": "Individual browser test case"
-      },
-      "BrowserTestReportRequest": {
-        "properties": {
-          "results": {
-            "items": {
-              "$ref": "#/components/schemas/BrowserTestResult"
-            },
-            "type": "array",
-            "title": "Results",
-            "description": "List of browser test results"
-          }
-        },
-        "type": "object",
-        "required": [
-          "results"
-        ],
-        "title": "BrowserTestReportRequest",
-        "description": "Request model for generating browser test report"
-      },
-      "BrowserTestReportResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Whether the report generation was successful"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "Response message"
-          },
-          "report": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Report",
-            "description": "Generated test report"
-          },
-          "summary": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Summary",
-            "description": "Test execution summary"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error",
-            "description": "Error message if any"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success",
-          "message"
-        ],
-        "title": "BrowserTestReportResponse",
-        "description": "Response model for browser test report generation"
-      },
-      "BrowserTestRequest": {
-        "properties": {
-          "requirement": {
-            "type": "string",
-            "title": "Requirement",
-            "description": "Test requirement description"
-          },
-          "url": {
-            "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
-            "title": "Url",
-            "description": "Target URL to test"
-          },
-          "test_type": {
-            "type": "string",
-            "title": "Test Type",
-            "description": "Type of test (functional, ui, integration, etc.)",
-            "default": "functional"
-          },
-          "context": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Context",
-            "description": "Additional context for the test",
-            "default": ""
+            "title": "Provider",
+            "default": "openai"
           },
           "headless": {
             "type": "boolean",
             "title": "Headless",
-            "description": "Run browser in headless mode",
             "default": true
           },
-          "take_screenshots": {
+          "execute_immediately": {
             "type": "boolean",
-            "title": "Take Screenshots",
-            "description": "Whether to take screenshots during execution",
-            "default": true
+            "title": "Execute Immediately",
+            "default": false
           }
         },
         "type": "object",
         "required": [
-          "requirement",
-          "url"
+          "file"
         ],
-        "title": "BrowserTestRequest",
-        "description": "Request model for browser testing"
-      },
-      "BrowserTestResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Whether the API call was successful"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "Response message"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/BrowserTestResult"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Test result data"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error",
-            "description": "Error message if any"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success",
-          "message"
-        ],
-        "title": "BrowserTestResponse",
-        "description": "Response model for browser test API"
+        "title": "Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"
       },
       "BrowserTestResult": {
         "properties": {
@@ -831,103 +616,6 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "MultipleBrowserTestRequest": {
-        "properties": {
-          "test_cases": {
-            "items": {
-              "$ref": "#/components/schemas/BrowserTestCase"
-            },
-            "type": "array",
-            "title": "Test Cases",
-            "description": "List of browser test cases"
-          },
-          "headless": {
-            "type": "boolean",
-            "title": "Headless",
-            "description": "Run browser in headless mode",
-            "default": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "test_cases"
-        ],
-        "title": "MultipleBrowserTestRequest",
-        "description": "Request model for running multiple browser tests"
-      },
-      "MultipleBrowserTestResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Whether the API call was successful"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "Response message"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/BrowserTestResult"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data",
-            "description": "List of test results"
-          },
-          "report": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Report",
-            "description": "Generated test report"
-          },
-          "summary": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Summary",
-            "description": "Test execution summary"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error",
-            "description": "Error message if any"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success",
-          "message"
-        ],
-        "title": "MultipleBrowserTestResponse",
-        "description": "Response model for multiple browser tests API"
-      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -960,6 +648,250 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "YamlScenarioExecuteRequest": {
+        "properties": {
+          "yaml_content": {
+            "type": "string",
+            "title": "Yaml Content",
+            "description": "YAML content containing test scenarios"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider",
+            "description": "LLM provider to use",
+            "default": "openai"
+          },
+          "headless": {
+            "type": "boolean",
+            "title": "Headless",
+            "description": "Run browser in headless mode",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "yaml_content"
+        ],
+        "title": "YamlScenarioExecuteRequest",
+        "description": "Request model for executing YAML scenarios",
+        "example": {
+          "headless": true,
+          "provider": "openai",
+          "yaml_content": "name: 'Test Suite'\nscenarios:\n  - name: 'Homepage Test'\n    requirement: 'Test homepage loads'\n    url: 'https://example.com'"
+        }
+      },
+      "YamlScenarioExecuteResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the execution was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Response message"
+          },
+          "test_suite_name": {
+            "type": "string",
+            "title": "Test Suite Name",
+            "description": "Name of the executed test suite"
+          },
+          "scenarios_count": {
+            "type": "integer",
+            "title": "Scenarios Count",
+            "description": "Number of scenarios executed"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserTestResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "Test execution results"
+          },
+          "report": {
+            "type": "string",
+            "title": "Report",
+            "description": "Generated test report"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary",
+            "description": "Test execution summary"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "test_suite_name",
+          "scenarios_count",
+          "results",
+          "report",
+          "summary"
+        ],
+        "title": "YamlScenarioExecuteResponse",
+        "description": "Response model for YAML scenario execution"
+      },
+      "YamlScenarioUploadResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the upload was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Response message"
+          },
+          "test_suite_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Suite Name",
+            "description": "Name of the uploaded test suite"
+          },
+          "scenarios_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenarios Count",
+            "description": "Number of scenarios found"
+          },
+          "scenarios": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenarios",
+            "description": "Parsed scenarios"
+          },
+          "execution_results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BrowserTestResult"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Results",
+            "description": "Test results if executed immediately"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "description": "Test report if executed immediately"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "Test summary if executed immediately"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "YamlScenarioUploadResponse",
+        "description": "Response model for YAML scenario upload"
+      },
+      "YamlTemplateSample": {
+        "properties": {
+          "template_content": {
+            "type": "string",
+            "title": "Template Content",
+            "description": "Sample YAML template content"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Template description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_content",
+          "description"
+        ],
+        "title": "YamlTemplateSample",
+        "description": "Sample YAML template for test scenarios",
+        "example": {
+          "description": "Sample YAML template for browser test scenarios",
+          "template_content": "name: 'Sample Test Suite'\nscenarios: []"
+        }
       }
     }
   }
