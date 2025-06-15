@@ -45,6 +45,25 @@ Browser Testing Agent
 - **fastapi**: REST API framework
 - **react**: Frontend user interface
 
+## Quick Start
+
+### CLI Commands (Recommended)
+
+The Friday CLI provides streamlined access to browser testing functionality:
+
+```bash
+# Start the web UI for interactive test creation
+friday webui
+
+# Run browser tests from YAML scenarios
+friday browser-test scenarios.yaml --provider openai
+
+# Open web UI directly to browser testing
+friday open --feature browser
+```
+
+For complete CLI documentation, see [CLI Reference](CLI_REFERENCE.md).
+
 ## Installation & Setup
 
 ### Prerequisites

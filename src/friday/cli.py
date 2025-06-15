@@ -14,6 +14,9 @@ Features:
 Commands:
     generate: Generate test cases from Jira or GitHub issues
     crawl: Crawl webpage content and store embeddings
+    browser-test: Run browser tests from YAML scenarios
+    webui: Start the Friday Web UI for interactive testing
+    open: Open the Friday Web UI in your browser
     version: Display Friday version
     setup: Configure environment parameters
 
@@ -25,6 +28,15 @@ Example:
     # Crawl a website and store embeddings
     friday crawl https://example.com --provider openai --max-pages 20
 
+    # Run browser tests from YAML scenarios
+    friday browser-test scenarios.yaml --provider openai
+
+    # Start the interactive web UI
+    friday webui
+
+    # Open the web UI in browser
+    friday open
+
     # Set up environment configuration
     friday setup
     ```
@@ -32,6 +44,10 @@ Example:
 
 import asyncio
 import logging
+import subprocess
+import sys
+import time
+import webbrowser
 from pathlib import Path
 from typing import Optional
 
@@ -325,6 +341,218 @@ def browser_test(
     except Exception as e:
         logger.error(f"Error running browser tests: {str(e)}")
         print(f"[red]Error: {str(e)}[/red]")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def webui(
+    port: int = typer.Option(3000, "--port", "-p", help="Port to run the web UI on"),
+    api_port: int = typer.Option(8080, "--api-port", help="Port for the API server"),
+    open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser automatically"),
+    api_only: bool = typer.Option(False, "--api-only", help="Start only the API server"),
+    frontend_only: bool = typer.Option(False, "--frontend-only", help="Start only the frontend"),
+):
+    """
+    Start the Friday Web UI for interactive testing.
+
+    This command starts the web interface for Friday, providing a visual way to
+    run tests, manage scenarios, and view results. It can start both the API
+    server and frontend, or just one of them.
+
+    Args:
+        port: Port to run the web UI on (default: 3000)
+        api_port: Port for the API server (default: 8080)
+        open_browser: Whether to open the browser automatically
+        api_only: Start only the API server
+        frontend_only: Start only the frontend (assumes API is running)
+
+    Example:
+        ```bash
+        # Start both API and frontend
+        friday webui
+
+        # Start on custom ports
+        friday webui --port 4000 --api-port 9000
+
+        # Start only API server
+        friday webui --api-only
+
+        # Start only frontend (API must be running separately)
+        friday webui --frontend-only
+        ```
+
+    Raises:
+        typer.Exit: If servers fail to start or dependencies are missing
+    """
+    try:
+        # Check if we're in the right directory structure
+        current_dir = Path.cwd()
+        app_dir = current_dir / "app"
+        
+        if not app_dir.exists():
+            print("[red]Error: 'app' directory not found. Please run this command from the Friday project root directory.[/red]")
+            raise typer.Exit(code=1)
+
+        processes = []
+
+        # Start API server unless frontend-only mode
+        if not frontend_only:
+            print(f"[blue]Starting Friday API server on port {api_port}...[/blue]")
+            try:
+                api_process = subprocess.Popen([
+                    sys.executable, "-m", "uvicorn", 
+                    "friday.api.app:app", 
+                    "--reload", 
+                    "--port", str(api_port),
+                    "--host", "0.0.0.0"
+                ], cwd=current_dir)
+                processes.append(("API", api_process))
+                
+                # Wait a moment for API to start
+                time.sleep(2)
+                print(f"[green]✓ API server started on http://localhost:{api_port}[/green]")
+                
+            except Exception as e:
+                print(f"[red]Failed to start API server: {str(e)}[/red]")
+                if not api_only:
+                    print("[yellow]Continuing with frontend only...[/yellow]")
+                else:
+                    raise typer.Exit(code=1)
+
+        # Start frontend unless api-only mode
+        if not api_only:
+            print(f"[blue]Starting Friday Web UI on port {port}...[/blue]")
+            try:
+                # Check if node_modules exists
+                if not (app_dir / "node_modules").exists():
+                    print("[yellow]Installing frontend dependencies...[/yellow]")
+                    subprocess.run(["npm", "install"], cwd=app_dir, check=True)
+
+                frontend_process = subprocess.Popen([
+                    "npm", "run", "dev", "--", "--port", str(port)
+                ], cwd=app_dir)
+                processes.append(("Frontend", frontend_process))
+                
+                # Wait for frontend to start
+                time.sleep(3)
+                print(f"[green]✓ Web UI started on http://localhost:{port}[/green]")
+                
+                # Open browser if requested
+                if open_browser:
+                    print("[blue]Opening browser...[/blue]")
+                    webbrowser.open(f"http://localhost:{port}")
+
+            except Exception as e:
+                print(f"[red]Failed to start web UI: {str(e)}[/red]")
+                raise typer.Exit(code=1)
+
+        # Display running services
+        print("\n[green]🚀 Friday services are running:[/green]")
+        if not frontend_only:
+            print(f"   📡 API Server: http://localhost:{api_port}")
+            print(f"   📋 API Docs: http://localhost:{api_port}/docs")
+        if not api_only:
+            print(f"   🌐 Web UI: http://localhost:{port}")
+
+        print("\n[cyan]Press Ctrl+C to stop all services[/cyan]")
+
+        # Keep the main process running and handle shutdown
+        try:
+            while True:
+                # Check if any process has died
+                for name, process in processes:
+                    if process.poll() is not None:
+                        print(f"[red]✗ {name} process has stopped[/red]")
+                        break
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n[yellow]Shutting down Friday services...[/yellow]")
+            for name, process in processes:
+                print(f"[blue]Stopping {name}...[/blue]")
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                    print(f"[green]✓ {name} stopped[/green]")
+                except subprocess.TimeoutExpired:
+                    print(f"[yellow]Force killing {name}...[/yellow]")
+                    process.kill()
+            print("[green]✓ All services stopped[/green]")
+
+    except Exception as e:
+        logger.error(f"Error starting web UI: {str(e)}")
+        print(f"[red]Error: {str(e)}[/red]")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def open(
+    port: int = typer.Option(3000, "--port", "-p", help="Port where the web UI is running"),
+    feature: str = typer.Option("", "--feature", "-f", help="Open specific feature (browser, generator, crawler, api)")
+):
+    """
+    Open the Friday Web UI in your default browser.
+
+    This command opens the Friday web interface in your default browser.
+    If the web UI is not running, it will display helpful instructions.
+
+    Args:
+        port: Port where the web UI is running (default: 3000)
+        feature: Open a specific feature directly
+
+    Example:
+        ```bash
+        # Open the main web UI
+        friday open
+
+        # Open on a custom port
+        friday open --port 4000
+
+        # Open directly to browser testing
+        friday open --feature browser
+
+        # Open directly to test generator
+        friday open --feature generator
+        ```
+    """
+    try:
+        import requests
+        
+        # Check if the web UI is running
+        try:
+            response = requests.get(f"http://localhost:{port}", timeout=2)
+            if response.status_code == 200:
+                # Determine URL based on feature
+                if feature:
+                    url = f"http://localhost:{port}/?tab={feature}"
+                else:
+                    url = f"http://localhost:{port}"
+                
+                print(f"[blue]Opening Friday Web UI: {url}[/blue]")
+                webbrowser.open(url)
+                print("[green]✓ Browser opened[/green]")
+            else:
+                print(f"[yellow]Web UI is running but returned status {response.status_code}[/yellow]")
+                print(f"[blue]Opening anyway: http://localhost:{port}[/blue]")
+                webbrowser.open(f"http://localhost:{port}")
+        
+        except requests.exceptions.ConnectionError:
+            print(f"[red]✗ Friday Web UI is not running on port {port}[/red]")
+            print(f"[cyan]To start the web UI, run:[/cyan]")
+            print(f"[cyan]  friday webui[/cyan]")
+            print(f"[cyan]Or if you're running it on a different port:[/cyan]")
+            print(f"[cyan]  friday open --port <PORT_NUMBER>[/cyan]")
+            raise typer.Exit(code=1)
+            
+        except Exception as e:
+            print(f"[red]Error checking web UI status: {str(e)}[/red]")
+            print(f"[blue]Attempting to open browser anyway...[/blue]")
+            webbrowser.open(f"http://localhost:{port}")
+
+    except ImportError:
+        print("[yellow]requests library not available, opening browser directly...[/yellow]")
+        webbrowser.open(f"http://localhost:{port}")
+    except Exception as e:
+        print(f"[red]Error opening browser: {str(e)}[/red]")
         raise typer.Exit(code=1)
 
 

@@ -47,27 +47,31 @@ An AI-powered test agent that uses Generative AI and LangChain to automatically 
     friday setup
     ```
 
+For complete CLI command documentation, see **[CLI Reference](docs/CLI_REFERENCE.md)**.
+
 ## ⚡️ Usage
 
 ### CLI Application
 
 ```bash
-# From Jira
-friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
+# Quick start - Launch web UI
+friday webui                    # Start both API and frontend
+friday open --feature browser  # Open browser testing interface
 
-# From GitHub
+# Test generation
+friday generate --jira-key PROJ-123 --confluence-id 12345 -o test_cases.md
 friday generate --gh-issue 456 --gh-repo owner/repo --confluence-id 12345 -o test_cases.md
 
-# Crawl single domain
-friday crawl https://example.com --provider openai --persist-dir ./my_data/chroma --max-pages 5
+# Web crawling for context
+friday crawl https://example.com --provider openai --max-pages 10
 
-# Crawl multiple domains
-friday crawl https://example.com --provider openai --persist-dir ./my_data/chroma --max-pages 10 --same-domain false
+# Browser testing (YAML-based)
+friday browser-test scenarios.yaml --provider openai --no-headless
 
-friday --help          # Show all commands
+# Utility commands
+friday setup           # Interactive environment setup
 friday version         # Display version
-friday generate --help # Show generation options
-friday crawl --help    # Show crawling options
+friday --help          # Show all commands
 ```
 
 ### REST API

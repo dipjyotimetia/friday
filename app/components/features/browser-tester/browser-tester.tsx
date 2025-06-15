@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { OutputViewer } from '@/components/shared/output-viewer'
 import { LogViewer } from '@/components/shared/log-viewer'
-import { BROWSER_TEST_CONFIG, API_CONFIG } from '@/config/constants'
+import { API_CONFIG } from '@/config/constants'
 import { useWebSocket } from '@/hooks/use-websocket'
 import { motion } from 'framer-motion'
 import { 
