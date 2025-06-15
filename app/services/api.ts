@@ -255,6 +255,16 @@ export const apiService = {
     }
   },
 
+  async getBrowserTestHealth(): Promise<any> {
+    const response = await axiosWithRetry(
+      API_ENDPOINTS.BROWSER_TEST_HEALTH,
+      {
+        method: 'GET',
+      }
+    );
+    return response.data;
+  },
+
   // Health check endpoint
   async getHealth(): Promise<APIResponse<any>> {
     const response = await axiosWithRetry<any>('/health', {

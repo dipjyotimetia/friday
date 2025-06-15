@@ -121,8 +121,11 @@ export interface ProviderOption {
   label: string;
 }
 
+// Browser Testing Types (from OpenAPI schema)
+export type BrowserTestResult = components['schemas']['BrowserTestResult'];
+
 // Tab Types
-export type TabId = 'generator' | 'crawler' | 'api';
+export type TabId = 'generator' | 'crawler' | 'api' | 'browser';
 
 export interface Tab {
   id: TabId;

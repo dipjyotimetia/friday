@@ -1,0 +1,101 @@
+# Sample Browser Test Scenarios YAML File
+# This file demonstrates how to define comprehensive test scenarios for automated browser testing
+
+name: "HTTPBin API Testing Suite"
+description: "Test suite for validating HTTPBin API endpoints and responses"
+version: "1.0"
+provider: "openai"
+headless: true
+base_url: "https://httpbin.org"
+global_context: "Testing HTTPBin API service endpoints to validate functionality and response formats"
+
+scenarios:
+  - name: "Basic GET Request Test"
+    requirement: "Verify GET endpoint returns correct JSON response"
+    url: "/get"
+    test_type: "functional"
+    context: "Should return JSON with request details including headers and origin"
+    take_screenshots: true
+    steps:
+      - "Navigate to /get endpoint"
+      - "Verify page loads successfully"
+      - "Check JSON response structure"
+      - "Validate headers and origin fields"
+    expected_outcomes:
+      - "Page loads within 5 seconds"
+      - "JSON response is properly formatted"
+      - "Headers object contains expected fields"
+      - "Origin field shows client IP"
+    tags: ["api", "get", "basic"]
+
+  - name: "JSON Response Test"
+    requirement: "Test JSON endpoint with sample data"
+    url: "/json"
+    test_type: "functional"
+    context: "Should return predefined JSON object with slideshow data"
+    take_screenshots: true
+    steps:
+      - "Navigate to /json endpoint"
+      - "Verify JSON response loads"
+      - "Check slideshow data structure"
+      - "Validate nested objects"
+    expected_outcomes:
+      - "JSON response contains slideshow object"
+      - "Slideshow has author and date fields"
+      - "Slides array contains multiple items"
+      - "All required fields are present"
+    tags: ["api", "json", "data"]
+
+  - name: "HTML Response Test"
+    requirement: "Verify HTML endpoint returns formatted HTML"
+    url: "/html"
+    test_type: "ui"
+    context: "Should return properly formatted HTML page"
+    take_screenshots: true
+    steps:
+      - "Navigate to /html endpoint"
+      - "Verify HTML page structure"
+      - "Check for proper HTML elements"
+      - "Validate page rendering"
+    expected_outcomes:
+      - "HTML page renders correctly"
+      - "Page contains expected elements"
+      - "Text is readable and formatted"
+      - "No broken layout issues"
+    tags: ["html", "ui", "rendering"]
+
+  - name: "XML Response Test"
+    requirement: "Test XML endpoint response format"
+    url: "/xml"
+    test_type: "functional"
+    context: "Should return valid XML document"
+    take_screenshots: true
+    steps:
+      - "Navigate to /xml endpoint"
+      - "Verify XML content loads"
+      - "Check XML structure"
+      - "Validate XML formatting"
+    expected_outcomes:
+      - "Valid XML document is returned"
+      - "XML structure is well-formed"
+      - "Content is properly displayed"
+      - "No parsing errors occur"
+    tags: ["xml", "api", "format"]
+
+  - name: "Robots.txt Test"
+    requirement: "Verify robots.txt is accessible and formatted correctly"
+    url: "/robots.txt"
+    test_type: "functional"
+    context: "Should return standard robots.txt format"
+    take_screenshots: true
+    steps:
+      - "Navigate to /robots.txt endpoint"
+      - "Verify file is accessible"
+      - "Check robots.txt format"
+      - "Validate directives"
+    expected_outcomes:
+      - "robots.txt file is accessible"
+      - "Contains proper User-agent directives"
+      - "Format follows robots.txt standard"
+      - "Content is readable"
+    tags: ["robots", "seo", "crawling"]
