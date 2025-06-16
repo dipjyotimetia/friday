@@ -350,7 +350,7 @@ numpy==2.3.0
     #   scipy
     #   shapely
     #   transformers
-nvidia-cublas-cu12==12.6.4.1 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+nvidia-cublas-cu12==12.9.1.4 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via
     #   nvidia-cudnn-cu12
     #   nvidia-cusolver-cu12
