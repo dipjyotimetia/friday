@@ -359,7 +359,7 @@ nvidia-cuda-cupti-cu12==12.6.80 ; platform_machine == 'x86_64' and sys_platform 
     # via torch
 nvidia-cuda-nvrtc-cu12==12.6.77 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cuda-runtime-cu12==12.6.77 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+nvidia-cuda-runtime-cu12==12.9.79 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
 nvidia-cudnn-cu12==9.5.1.17 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
