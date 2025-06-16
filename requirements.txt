@@ -781,7 +781,7 @@ w3lib==2.3.1
     # via
     #   parsel
     #   scrapy
-watchfiles==1.0.5
+watchfiles==1.1.0
     # via uvicorn
 websocket==0.2.1
     # via friday-cli
