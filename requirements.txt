@@ -108,7 +108,7 @@ docstring-parser==0.16
     # via google-cloud-aiplatform
 durationpy==0.10
     # via kubernetes
-fastapi==0.115.9
+fastapi==0.115.12
     # via
     #   chromadb
     #   friday-cli
