@@ -375,7 +375,7 @@ nvidia-cusparse-cu12==12.5.4.2 ; platform_machine == 'x86_64' and sys_platform =
     # via
     #   nvidia-cusolver-cu12
     #   torch
-nvidia-cusparselt-cu12==0.6.3 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+nvidia-cusparselt-cu12==0.7.1 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
 nvidia-nccl-cu12==2.26.2 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
