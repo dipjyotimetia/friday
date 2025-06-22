@@ -101,3 +101,43 @@ export function useApiTester() {
     testApi,
   };
 }
+
+// Generic API hook for making custom requests
+export function useApi() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const makeRequest = useCallback(async (url: string, options?: RequestInit) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setLoading(false);
+      return data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      setLoading(false);
+      throw err;
+    }
+  }, []);
+
+  return {
+    makeRequest,
+    loading,
+    error,
+  };
+}

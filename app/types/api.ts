@@ -4,315 +4,863 @@
  */
 
 export interface paths {
-  '/api/v1/generate': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Tests */
+        post: operations["generate_tests_api_v1_generate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Generate Tests */
-    post: operations['generate_tests_api_v1_generate_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/crawl': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/crawl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Crawl Site */
+        post: operations["crawl_site_api_v1_crawl_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Crawl Site */
-    post: operations['crawl_site_api_v1_crawl_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/health': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health Check */
+        get: operations["health_check_api_v1_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Health Check */
-    get: operations['health_check_api_v1_health_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/testapi': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/testapi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Api
+         * @description Run API tests using either a spec file path or uploaded spec file
+         */
+        post: operations["test_api_api_v1_testapi_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Test Api
-     * @description Run API tests using either a spec file path or uploaded spec file
-     */
-    post: operations['test_api_api_v1_testapi_post'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/api/v1/browser-test/single": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Single Browser Test
+         * @description Run a single browser test with specified parameters
+         */
+        post: operations["run_single_browser_test_api_v1_browser_test_single_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/browser-test/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Browser Test Health
+         * @description Health check endpoint for browser testing service
+         */
+        get: operations["browser_test_health_api_v1_browser_test_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/browser-test/yaml/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Yaml Scenarios
+         * @description Upload YAML file containing test scenarios
+         */
+        post: operations["upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/browser-test/yaml/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute Yaml Scenarios
+         * @description Execute test scenarios from YAML content
+         */
+        post: operations["execute_yaml_scenarios_api_v1_browser_test_yaml_execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/browser-test/yaml/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Yaml Template
+         * @description Get a sample YAML template for test scenarios
+         */
+        get: operations["get_yaml_template_api_v1_browser_test_yaml_template_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** ApiTestResponse */
-    ApiTestResponse: {
-      /** Message */
-      message: string;
-      /** Total Tests */
-      total_tests: number;
-      /** Paths Tested */
-      paths_tested: number;
-      /** Passed Tests */
-      passed_tests: number;
-      /** Failed Tests */
-      failed_tests: number;
-      /** Error Tests */
-      error_tests: number;
-      /** Success Rate */
-      success_rate: number;
+    schemas: {
+        /** ApiTestResponse */
+        ApiTestResponse: {
+            /** Message */
+            message: string;
+            /** Total Tests */
+            total_tests: number;
+            /** Paths Tested */
+            paths_tested: number;
+            /** Passed Tests */
+            passed_tests: number;
+            /** Failed Tests */
+            failed_tests: number;
+            /** Error Tests */
+            error_tests: number;
+            /** Success Rate */
+            success_rate: number;
+        };
+        /** Body_test_api_api_v1_testapi_post */
+        Body_test_api_api_v1_testapi_post: {
+            /**
+             * Base Url
+             * @description Base URL for API testing
+             */
+            base_url: string;
+            /**
+             * Output
+             * @description Output file path
+             * @default api_test_report.md
+             */
+            output: string;
+            /**
+             * Spec File
+             * @description Path to OpenAPI spec file
+             */
+            spec_file?: string | null;
+            /**
+             * Spec Upload
+             * @description OpenAPI spec file upload
+             */
+            spec_upload?: string | null;
+            /**
+             * Provider
+             * @description LLM Provider
+             * @default openai
+             * @enum {string}
+             */
+            provider: "gemini" | "openai" | "ollama" | "mistral";
+        };
+        /** Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post */
+        Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+            /**
+             * Provider
+             * @default openai
+             */
+            provider: string;
+            /**
+             * Headless
+             * @default true
+             */
+            headless: boolean;
+            /**
+             * Execute Immediately
+             * @default false
+             */
+            execute_immediately: boolean;
+        };
+        /**
+         * BrowserTestResult
+         * @description Result model for browser test execution
+         */
+        BrowserTestResult: {
+            /**
+             * Status
+             * @description Test execution status
+             */
+            status: string;
+            /**
+             * Requirement
+             * @description Test requirement that was executed
+             */
+            requirement: string;
+            /**
+             * Url
+             * @description URL that was tested
+             */
+            url: string;
+            /**
+             * Test Type
+             * @description Type of test that was executed
+             */
+            test_type: string;
+            /**
+             * Task Description
+             * @description Generated task description
+             */
+            task_description?: string | null;
+            /**
+             * Execution Result
+             * @description Detailed execution result
+             */
+            execution_result?: string | null;
+            /**
+             * Screenshots
+             * @description List of screenshot paths/URLs
+             * @default []
+             */
+            screenshots: string[];
+            /**
+             * Timestamp
+             * @description Execution timestamp
+             */
+            timestamp?: number | null;
+            /**
+             * Success
+             * @description Whether the test was successful
+             */
+            success: boolean;
+            /**
+             * Errors
+             * @description List of errors if any
+             * @default []
+             */
+            errors: string[];
+        };
+        /** CrawlRequest */
+        CrawlRequest: {
+            /** Url */
+            url: string;
+            /**
+             * Provider
+             * @default openai
+             */
+            provider: string;
+            /**
+             * Max Pages
+             * @default 10
+             */
+            max_pages: number;
+            /**
+             * Same Domain
+             * @default true
+             */
+            same_domain: boolean;
+        };
+        /** GenerateRequest */
+        GenerateRequest: {
+            /** Jira Key */
+            jira_key?: string | null;
+            /** Gh Issue */
+            gh_issue?: string | null;
+            /** Gh Repo */
+            gh_repo?: string | null;
+            /** Confluence Id */
+            confluence_id?: string | null;
+            /**
+             * Template
+             * @default test_case
+             */
+            template: string;
+            /**
+             * Output
+             * @default test_cases.md
+             */
+            output: string;
+        };
+        /** GenerateResponse */
+        GenerateResponse: {
+            /** Message */
+            message: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * SingleBrowserTestRequest
+         * @description Request model for single browser test execution
+         * @example {
+         *       "context": "Use test credentials to verify login flow",
+         *       "headless": true,
+         *       "provider": "openai",
+         *       "requirement": "Test user login functionality",
+         *       "take_screenshots": true,
+         *       "test_type": "functional",
+         *       "url": "https://example.com/login"
+         *     }
+         */
+        SingleBrowserTestRequest: {
+            /**
+             * Url
+             * @description URL to test
+             */
+            url: string;
+            /**
+             * Requirement
+             * @description Test requirement description
+             */
+            requirement: string;
+            /**
+             * Test Type
+             * @description Type of test to perform
+             * @default functional
+             */
+            test_type: string;
+            /**
+             * Context
+             * @description Additional context for the test
+             */
+            context?: string | null;
+            /**
+             * Provider
+             * @description LLM provider to use
+             * @default openai
+             */
+            provider: string | null;
+            /**
+             * Headless
+             * @description Run browser in headless mode
+             * @default true
+             */
+            headless: boolean;
+            /**
+             * Take Screenshots
+             * @description Take screenshots during test
+             * @default true
+             */
+            take_screenshots: boolean;
+        };
+        /**
+         * SingleBrowserTestResponse
+         * @description Response model for single browser test execution
+         */
+        SingleBrowserTestResponse: {
+            /**
+             * Success
+             * @description Whether the test was successful
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Response message
+             */
+            message: string;
+            /** @description Test execution result */
+            result?: components["schemas"]["BrowserTestResult"] | null;
+            /**
+             * Error
+             * @description Error message if any
+             */
+            error?: string | null;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+        /**
+         * YamlScenarioExecuteRequest
+         * @description Request model for executing YAML scenarios
+         * @example {
+         *       "headless": true,
+         *       "provider": "openai",
+         *       "yaml_content": "name: 'Test Suite'\nscenarios:\n  - name: 'Homepage Test'\n    requirement: 'Test homepage loads'\n    url: 'https://example.com'"
+         *     }
+         */
+        YamlScenarioExecuteRequest: {
+            /**
+             * Yaml Content
+             * @description YAML content containing test scenarios
+             */
+            yaml_content: string;
+            /**
+             * Provider
+             * @description LLM provider to use
+             * @default openai
+             */
+            provider: string | null;
+            /**
+             * Headless
+             * @description Run browser in headless mode
+             * @default true
+             */
+            headless: boolean;
+        };
+        /**
+         * YamlScenarioExecuteResponse
+         * @description Response model for YAML scenario execution
+         */
+        YamlScenarioExecuteResponse: {
+            /**
+             * Success
+             * @description Whether the execution was successful
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Response message
+             */
+            message: string;
+            /**
+             * Test Suite Name
+             * @description Name of the executed test suite
+             */
+            test_suite_name: string;
+            /**
+             * Scenarios Count
+             * @description Number of scenarios executed
+             */
+            scenarios_count: number;
+            /**
+             * Results
+             * @description Test execution results
+             */
+            results: components["schemas"]["BrowserTestResult"][];
+            /**
+             * Report
+             * @description Generated test report
+             */
+            report: string;
+            /**
+             * Summary
+             * @description Test execution summary
+             */
+            summary: {
+                [key: string]: unknown;
+            };
+            /**
+             * Error
+             * @description Error message if any
+             */
+            error?: string | null;
+        };
+        /**
+         * YamlScenarioUploadResponse
+         * @description Response model for YAML scenario upload
+         */
+        YamlScenarioUploadResponse: {
+            /**
+             * Success
+             * @description Whether the upload was successful
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Response message
+             */
+            message: string;
+            /**
+             * Test Suite Name
+             * @description Name of the uploaded test suite
+             */
+            test_suite_name?: string | null;
+            /**
+             * Scenarios Count
+             * @description Number of scenarios found
+             */
+            scenarios_count?: number | null;
+            /**
+             * Scenarios
+             * @description Parsed scenarios
+             */
+            scenarios?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Execution Results
+             * @description Test results if executed immediately
+             */
+            execution_results?: components["schemas"]["BrowserTestResult"][] | null;
+            /**
+             * Report
+             * @description Test report if executed immediately
+             */
+            report?: string | null;
+            /**
+             * Summary
+             * @description Test summary if executed immediately
+             */
+            summary?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Error
+             * @description Error message if any
+             */
+            error?: string | null;
+        };
+        /**
+         * YamlTemplateSample
+         * @description Sample YAML template for test scenarios
+         * @example {
+         *       "description": "Sample YAML template for browser test scenarios",
+         *       "template_content": "name: 'Sample Test Suite'\nscenarios: []"
+         *     }
+         */
+        YamlTemplateSample: {
+            /**
+             * Template Content
+             * @description Sample YAML template content
+             */
+            template_content: string;
+            /**
+             * Description
+             * @description Template description
+             */
+            description: string;
+        };
     };
-    /** Body_test_api_api_v1_testapi_post */
-    Body_test_api_api_v1_testapi_post: {
-      /**
-       * Base Url
-       * @description Base URL for API testing
-       */
-      base_url: string;
-      /**
-       * Output
-       * @description Output file path
-       * @default api_test_report.md
-       */
-      output: string;
-      /**
-       * Spec File
-       * @description Path to OpenAPI spec file
-       */
-      spec_file?: string | null;
-      /**
-       * Spec Upload
-       * @description OpenAPI spec file upload
-       */
-      spec_upload?: string | null;
-      /**
-       * Provider
-       * @description LLM Provider
-       * @default openai
-       * @enum {string}
-       */
-      provider: 'gemini' | 'openai' | 'ollama' | 'mistral';
-    };
-    /** CrawlRequest */
-    CrawlRequest: {
-      /** Url */
-      url: string;
-      /**
-       * Provider
-       * @default openai
-       */
-      provider: string;
-      /**
-       * Max Pages
-       * @default 10
-       */
-      max_pages: number;
-      /**
-       * Same Domain
-       * @default true
-       */
-      same_domain: boolean;
-    };
-    /** GenerateRequest */
-    GenerateRequest: {
-      /** Jira Key */
-      jira_key?: string | null;
-      /** Gh Issue */
-      gh_issue?: string | null;
-      /** Gh Repo */
-      gh_repo?: string | null;
-      /** Confluence Id */
-      confluence_id?: string | null;
-      /**
-       * Template
-       * @default test_case
-       */
-      template: string;
-      /**
-       * Output
-       * @default test_cases.md
-       */
-      output: string;
-    };
-    /** GenerateResponse */
-    GenerateResponse: {
-      /** Message */
-      message: string;
-    };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components['schemas']['ValidationError'][];
-    };
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
-      type: string;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  generate_tests_api_v1_generate_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    generate_tests_api_v1_generate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenerateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['GenerateRequest'];
-      };
+    crawl_site_api_v1_crawl_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CrawlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    health_check_api_v1_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['GenerateResponse'];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  crawl_site_api_v1_crawl_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    test_api_api_v1_testapi_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_test_api_api_v1_testapi_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CrawlRequest'];
-      };
+    run_single_browser_test_api_v1_browser_test_single_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SingleBrowserTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SingleBrowserTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    browser_test_health_api_v1_browser_test_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
     };
-  };
-  health_check_api_v1_health_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YamlScenarioUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    execute_yaml_scenarios_api_v1_browser_test_yaml_execute_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': unknown;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["YamlScenarioExecuteRequest"];
+            };
         };
-      };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YamlScenarioExecuteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-  };
-  test_api_api_v1_testapi_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_yaml_template_api_v1_browser_test_yaml_template_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YamlTemplateSample"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'multipart/form-data': components['schemas']['Body_test_api_api_v1_testapi_post'];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiTestResponse'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
 }

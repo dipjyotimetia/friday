@@ -16,6 +16,18 @@ Welcome to the FRIDAY AI Test Agent project! This guide will help you get up and
 git clone https://github.com/dipjyotimetia/friday.git && cd friday && uv sync && cp .env.example .env
 ```
 
+### Quick CLI Test
+```bash
+# Test CLI is working
+uv run friday --help
+
+# Interactive setup
+uv run friday setup
+
+# Start development environment
+uv run friday webui
+```
+
 ## 🚀 Environment Setup
 
 ### 1. Development Environment Options

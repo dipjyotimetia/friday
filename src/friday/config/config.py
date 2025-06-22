@@ -1,7 +1,8 @@
 """Production-grade configuration management with validation and type safety."""
 
 from typing import Optional
-from pydantic import field_validator, Field, ConfigDict
+
+from pydantic import ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -20,14 +21,18 @@ class Settings(BaseSettings):
 
     # Confluence configuration (optional)
     confluence_url: Optional[str] = Field(default=None, alias="CONFLUENCE_URL")
-    confluence_username: Optional[str] = Field(default=None, alias="CONFLUENCE_USERNAME")
+    confluence_username: Optional[str] = Field(
+        default=None, alias="CONFLUENCE_USERNAME"
+    )
     confluence_api_token: Optional[str] = Field(
         default=None, alias="CONFLUENCE_API_TOKEN"
     )
 
     # GitHub configuration (optional)
     github_username: Optional[str] = Field(default=None, alias="GITHUB_USERNAME")
-    github_access_token: Optional[str] = Field(default=None, alias="GITHUB_ACCESS_TOKEN")
+    github_access_token: Optional[str] = Field(
+        default=None, alias="GITHUB_ACCESS_TOKEN"
+    )
 
     # LLM API keys (at least one required)
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
@@ -43,7 +48,9 @@ class Settings(BaseSettings):
     # API configuration
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
     api_port: int = Field(default=8080, alias="API_PORT")
-    allowed_origins: str = Field(default="http://localhost:3000", alias="ALLOWED_ORIGINS")
+    allowed_origins: str = Field(
+        default="http://localhost:3000", alias="ALLOWED_ORIGINS"
+    )
 
     # Database configuration
     database_url: str = Field(default="sqlite:///./friday.db", alias="DATABASE_URL")
@@ -102,11 +109,7 @@ class Settings(BaseSettings):
         """Check if GitHub integration is enabled."""
         return all([self.github_username, self.github_access_token])
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False,
-        extra="ignore"
-    )
+    model_config = ConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
 
 # Global settings instance
