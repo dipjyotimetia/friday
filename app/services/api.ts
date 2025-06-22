@@ -9,6 +9,13 @@ import type {
   ExtendedAPITestResponse,
   APIResponse,
   ValidationErrorResponse,
+  YamlScenarioExecuteRequest,
+  YamlScenarioExecuteResponse,
+  YamlScenarioUploadResponse,
+  YamlTemplateSample,
+  TestScreenshotsResponse,
+  TestMetrics,
+  ValidationResponse,
 } from '@/types';
 
 // Custom error class for API errors
@@ -262,7 +269,125 @@ export const apiService = {
         method: 'GET',
       }
     );
-    return response.data;
+    return response.data.data || response.data as any;
+  },
+
+  // Enhanced Browser Testing APIs
+  
+
+  async executeYamlScenarios(
+    data: YamlScenarioExecuteRequest
+  ): Promise<YamlScenarioExecuteResponse> {
+    const response = await axiosWithRetry<YamlScenarioExecuteResponse>(
+      '/api/v1/browser-test/yaml/execute',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: data,
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async uploadYamlScenarios(
+    file: File,
+    provider: string = 'openai',
+    headless: boolean = true,
+    executeImmediately: boolean = false
+  ): Promise<YamlScenarioUploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('provider', provider);
+    formData.append('headless', headless.toString());
+    formData.append('execute_immediately', executeImmediately.toString());
+
+    const response = await axiosWithRetry<YamlScenarioUploadResponse>(
+      '/api/v1/browser-test/yaml/upload',
+      {
+        method: 'POST',
+        data: formData,
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async getYamlTemplate(): Promise<YamlTemplateSample> {
+    const response = await axiosWithRetry<YamlTemplateSample>(
+      '/api/v1/browser-test/yaml/template',
+      {
+        method: 'GET',
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async validateYamlScenarios(
+    yamlContent: string,
+    provider: string = 'openai'
+  ): Promise<ValidationResponse> {
+    const response = await axiosWithRetry<ValidationResponse>(
+      '/api/v1/browser-test/yaml/validate',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: {
+          yaml_content: yamlContent,
+          provider: provider,
+        },
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async getBrowserTestMetrics(): Promise<TestMetrics> {
+    const response = await axiosWithRetry<TestMetrics>(
+      '/api/v1/browser-test/metrics',
+      {
+        method: 'GET',
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async getBrowserSessions(): Promise<any> {
+    const response = await axiosWithRetry(
+      '/api/v1/browser-test/sessions',
+      {
+        method: 'GET',
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async getTestScreenshots(testId: string): Promise<TestScreenshotsResponse> {
+    const response = await axiosWithRetry<TestScreenshotsResponse>(
+      `/api/v1/browser-test/screenshots/${testId}`,
+      {
+        method: 'GET',
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async getScreenshotFile(testId: string, filename: string): Promise<Blob> {
+    const response = await axiosWithRetry(
+      `/api/v1/browser-test/screenshots/${testId}/${filename}`,
+      {
+        method: 'GET',
+        responseType: 'blob',
+      }
+    );
+    return response.data.data || response.data as any;
+  },
+
+  async cleanupTestScreenshots(testId: string): Promise<any> {
+    const response = await axiosWithRetry(
+      `/api/v1/browser-test/screenshots/${testId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+    return response.data.data || response.data as any;
   },
 
   // Health check endpoint
@@ -270,7 +395,7 @@ export const apiService = {
     const response = await axiosWithRetry<any>('/health', {
       method: 'GET',
     });
-    return response.data;
+    return response.data.data || response.data as any;
   },
 
   // Get application version
@@ -278,6 +403,6 @@ export const apiService = {
     const response = await axiosWithRetry<{ version: string }>('/version', {
       method: 'GET',
     });
-    return response.data;
+    return response.data.data || response.data as any;
   },
 };

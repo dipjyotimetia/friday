@@ -1,50 +1,97 @@
-# Sample Browser Test Scenarios YAML File
-# This file demonstrates how to define comprehensive test scenarios for automated browser testing
+# Enhanced Browser Test Scenarios YAML File
+# This file demonstrates comprehensive test scenarios with advanced features
 
-name: "HTTPBin API Testing Suite"
-description: "Test suite for validating HTTPBin API endpoints and responses"
-version: "1.0"
+name: "HTTPBin Enhanced Testing Suite"
+description: "Advanced test suite for validating HTTPBin API endpoints with comprehensive features"
+version: "2.0"
 provider: "openai"
 headless: true
 base_url: "https://httpbin.org"
-global_context: "Testing HTTPBin API service endpoints to validate functionality and response formats"
+global_context: "Testing HTTPBin API service endpoints with advanced browser automation features"
+
+# Global configuration settings
+global_config:
+  max_parallel_tests: 2
+  default_timeout: 30
+  default_retry_count: 1
+  default_viewport:
+    width: 1920
+    height: 1080
+  setup_scripts:
+    - "Clear browser cache"
+    - "Initialize test session"
+  teardown_scripts:
+    - "Cleanup test data"
+    - "Generate performance report"
+  environment_variables:
+    TEST_ENV: "development"
+    API_BASE_URL: "https://httpbin.org"
+  reporting:
+    generate_html_report: true
+    include_screenshots: true
 
 scenarios:
   - name: "Basic GET Request Test"
-    requirement: "Verify GET endpoint returns correct JSON response"
+    requirement: "Verify GET endpoint returns correct JSON response with performance monitoring"
     url: "/get"
     test_type: "functional"
     context: "Should return JSON with request details including headers and origin"
     take_screenshots: true
+    timeout: 15
+    retry_count: 2
+    browsers: ["chromium"]
+    viewport:
+      width: 1920
+      height: 1080
+    environment_variables:
+      ENDPOINT_TYPE: "GET"
     steps:
       - "Navigate to /get endpoint"
       - "Verify page loads successfully"
       - "Check JSON response structure"
       - "Validate headers and origin fields"
+      - "Measure response time"
     expected_outcomes:
       - "Page loads within 5 seconds"
       - "JSON response is properly formatted"
       - "Headers object contains expected fields"
       - "Origin field shows client IP"
-    tags: ["api", "get", "basic"]
+      - "Response time under 2 seconds"
+    tags: ["api", "get", "basic", "performance"]
+    wait_conditions:
+      - "Network idle"
+      - "JSON content loaded"
+    cleanup_actions:
+      - "Clear request cache"
 
   - name: "JSON Response Test"
-    requirement: "Test JSON endpoint with sample data"
+    requirement: "Test JSON endpoint with comprehensive data validation"
     url: "/json"
     test_type: "functional"
-    context: "Should return predefined JSON object with slideshow data"
+    context: "Should return predefined JSON object with slideshow data and validate structure"
     take_screenshots: true
+    timeout: 20
+    retry_count: 1
+    parallel: true
+    browsers: ["chromium", "firefox"]
+    prerequisites: ["Basic GET Request Test"]
     steps:
       - "Navigate to /json endpoint"
       - "Verify JSON response loads"
       - "Check slideshow data structure"
       - "Validate nested objects"
+      - "Test data integrity"
     expected_outcomes:
       - "JSON response contains slideshow object"
       - "Slideshow has author and date fields"
       - "Slides array contains multiple items"
       - "All required fields are present"
-    tags: ["api", "json", "data"]
+      - "Data types are correct"
+    tags: ["api", "json", "data", "validation"]
+    wait_conditions:
+      - "Content loaded"
+    cleanup_actions:
+      - "Reset JSON parser"
 
   - name: "HTML Response Test"
     requirement: "Verify HTML endpoint returns formatted HTML"

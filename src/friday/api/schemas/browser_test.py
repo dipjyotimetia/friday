@@ -10,6 +10,7 @@ class BrowserTestResult(BaseModel):
     requirement: str = Field(..., description="Test requirement that was executed")
     url: str = Field(..., description="URL that was tested")
     test_type: str = Field(..., description="Type of test that was executed")
+    test_id: Optional[str] = Field(None, description="Unique test identifier")
     task_description: Optional[str] = Field(
         None, description="Generated task description"
     )
@@ -22,6 +23,13 @@ class BrowserTestResult(BaseModel):
     timestamp: Optional[float] = Field(None, description="Execution timestamp")
     success: bool = Field(..., description="Whether the test was successful")
     errors: List[str] = Field(default=[], description="List of errors if any")
+    detailed_errors: List[Dict[str, Any]] = Field(
+        default=[], description="Detailed error information with categorization"
+    )
+    browser_type: Optional[str] = Field(
+        default="chromium", description="Browser type used for testing"
+    )
+    session_id: Optional[str] = Field(None, description="Browser session identifier")
 
     class Config:
         schema_extra = {
@@ -30,15 +38,19 @@ class BrowserTestResult(BaseModel):
                 "requirement": "Test user login functionality",
                 "url": "https://example.com/login",
                 "test_type": "functional",
+                "test_id": "20241219_143022_a1b2c3d4",
                 "task_description": "Navigate to login page and test authentication",
                 "execution_result": "Successfully logged in user and navigated to dashboard",
                 "screenshots": [
-                    "/screenshots/login_test_1.png",
-                    "/screenshots/login_test_2.png",
+                    "20241219_143022_a1b2c3d4/initial_page_20241219_143022_123.png",
+                    "20241219_143022_a1b2c3d4/final_result_20241219_143025_456.png",
                 ],
                 "timestamp": 1640995200.0,
                 "success": True,
                 "errors": [],
+                "detailed_errors": [],
+                "browser_type": "chromium",
+                "session_id": "session_123",
             }
         }
 
@@ -116,6 +128,72 @@ class YamlScenarioExecuteResponse(BaseModel):
     report: str = Field(..., description="Generated test report")
     summary: Dict[str, Any] = Field(..., description="Test execution summary")
     error: Optional[str] = Field(None, description="Error message if any")
+
+
+class BrowserSessionStats(BaseModel):
+    """Browser session statistics"""
+
+    total_sessions: int = Field(..., description="Total number of sessions")
+    active_sessions: int = Field(..., description="Number of active sessions")
+    max_sessions: int = Field(..., description="Maximum allowed sessions")
+    total_tests_executed: int = Field(
+        ..., description="Total tests executed across all sessions"
+    )
+    browser_types: Dict[str, int] = Field(..., description="Breakdown by browser type")
+    session_timeout: int = Field(..., description="Session timeout in seconds")
+
+
+class StorageStats(BaseModel):
+    """Storage statistics for screenshots and test data"""
+
+    total_size_bytes: int = Field(..., description="Total storage size in bytes")
+    total_size_mb: float = Field(..., description="Total storage size in MB")
+    total_files: int = Field(..., description="Total number of files")
+    test_count: int = Field(..., description="Number of test directories")
+    base_path: str = Field(..., description="Base storage path")
+
+
+class TestMetricsResponse(BaseModel):
+    """Response model for test metrics"""
+
+    success: bool = Field(..., description="Whether the request was successful")
+    message: str = Field(..., description="Response message")
+    session_stats: BrowserSessionStats = Field(..., description="Session statistics")
+    storage_stats: StorageStats = Field(..., description="Storage statistics")
+    timestamp: float = Field(..., description="Response timestamp")
+
+
+class ScreenshotInfo(BaseModel):
+    """Screenshot information model"""
+
+    filename: str = Field(..., description="Screenshot filename")
+    path: str = Field(..., description="Relative path to screenshot")
+    size: int = Field(..., description="File size in bytes")
+    created_at: str = Field(..., description="Creation timestamp")
+    url: str = Field(..., description="API URL to access screenshot")
+
+
+class TestScreenshotsResponse(BaseModel):
+    """Response model for test screenshots"""
+
+    success: bool = Field(..., description="Whether the request was successful")
+    message: str = Field(..., description="Response message")
+    test_id: str = Field(..., description="Test identifier")
+    screenshots: List[ScreenshotInfo] = Field(..., description="List of screenshots")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Test metadata")
+
+
+class ValidationResponse(BaseModel):
+    """Response model for YAML validation"""
+
+    success: bool = Field(..., description="Whether validation was successful")
+    message: str = Field(..., description="Validation message")
+    test_suite_name: Optional[str] = Field(None, description="Name of test suite")
+    scenarios_count: Optional[int] = Field(None, description="Number of scenarios")
+    scenarios: Optional[List[Dict[str, str]]] = Field(
+        None, description="Scenario summaries"
+    )
+    errors: Optional[List[str]] = Field(None, description="Validation errors")
 
 
 class YamlTemplateSample(BaseModel):

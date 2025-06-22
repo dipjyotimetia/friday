@@ -14,6 +14,21 @@ from friday.services.logger import get_logger
 logger = get_logger(__name__)
 
 
+class ViewportConfig(BaseModel):
+    """Viewport configuration for browser testing"""
+
+    width: int = Field(default=1920, description="Viewport width")
+    height: int = Field(default=1080, description="Viewport height")
+
+
+class DataSource(BaseModel):
+    """Data source configuration for test data"""
+
+    type: str = Field(..., description="Data source type (csv, json, api)")
+    source: str = Field(..., description="Data source location (file path or URL)")
+    format: Optional[str] = Field(None, description="Data format specification")
+
+
 class YamlTestScenario(BaseModel):
     """Individual test scenario from YAML file"""
 
@@ -31,6 +46,34 @@ class YamlTestScenario(BaseModel):
     )
     tags: Optional[List[str]] = Field(
         default=[], description="Test tags for categorization"
+    )
+    retry_count: Optional[int] = Field(
+        default=0, description="Number of retry attempts"
+    )
+    timeout: Optional[int] = Field(default=30, description="Test timeout in seconds")
+    prerequisites: Optional[List[str]] = Field(
+        default=[], description="Test prerequisites (other scenario names)"
+    )
+    parallel: Optional[bool] = Field(
+        default=False, description="Whether test can run in parallel"
+    )
+    browsers: Optional[List[str]] = Field(
+        default=["chromium"], description="Browser types to test with"
+    )
+    viewport: Optional[ViewportConfig] = Field(
+        default=None, description="Custom viewport configuration"
+    )
+    environment_variables: Optional[Dict[str, str]] = Field(
+        default={}, description="Environment variables for the test"
+    )
+    data_sources: Optional[List[DataSource]] = Field(
+        default=[], description="External data sources for test data"
+    )
+    wait_conditions: Optional[List[str]] = Field(
+        default=[], description="Custom wait conditions"
+    )
+    cleanup_actions: Optional[List[str]] = Field(
+        default=[], description="Actions to perform after test completion"
     )
 
     class Config:
@@ -59,6 +102,35 @@ class YamlTestScenario(BaseModel):
         }
 
 
+class GlobalConfig(BaseModel):
+    """Global configuration for test suite"""
+
+    max_parallel_tests: Optional[int] = Field(
+        default=1, description="Maximum number of parallel tests"
+    )
+    default_timeout: Optional[int] = Field(
+        default=30, description="Default timeout for all tests"
+    )
+    default_retry_count: Optional[int] = Field(
+        default=0, description="Default retry count for all tests"
+    )
+    default_viewport: Optional[ViewportConfig] = Field(
+        default=None, description="Default viewport for all tests"
+    )
+    setup_scripts: Optional[List[str]] = Field(
+        default=[], description="Scripts to run before test suite"
+    )
+    teardown_scripts: Optional[List[str]] = Field(
+        default=[], description="Scripts to run after test suite"
+    )
+    environment_variables: Optional[Dict[str, str]] = Field(
+        default={}, description="Global environment variables"
+    )
+    reporting: Optional[Dict[str, Any]] = Field(
+        default={}, description="Reporting configuration"
+    )
+
+
 class YamlTestSuite(BaseModel):
     """Test suite containing multiple scenarios from YAML file"""
 
@@ -72,6 +144,9 @@ class YamlTestSuite(BaseModel):
     )
     global_context: Optional[str] = Field(
         default="", description="Global context for all tests"
+    )
+    global_config: Optional[GlobalConfig] = Field(
+        default=None, description="Global configuration settings"
     )
     scenarios: List[YamlTestScenario] = Field(..., description="List of test scenarios")
 
@@ -228,6 +303,18 @@ class YamlScenariosParser:
                 "take_screenshots": scenario.take_screenshots,
                 "scenario_name": scenario.name,
                 "tags": scenario.tags,
+                "retry_count": scenario.retry_count or 0,
+                "timeout": scenario.timeout or 30,
+                "prerequisites": scenario.prerequisites or [],
+                "parallel": scenario.parallel or False,
+                "browsers": scenario.browsers or ["chromium"],
+                "viewport": scenario.viewport.dict() if scenario.viewport else None,
+                "environment_variables": scenario.environment_variables or {},
+                "data_sources": [ds.dict() for ds in scenario.data_sources]
+                if scenario.data_sources
+                else [],
+                "wait_conditions": scenario.wait_conditions or [],
+                "cleanup_actions": scenario.cleanup_actions or [],
             }
 
             test_cases.append(test_case)
@@ -259,95 +346,178 @@ class YamlScenariosParser:
 
     def generate_sample_yaml(self) -> str:
         """
-        Generate a sample YAML file content for reference
+        Generate a comprehensive sample YAML file content for reference
 
         Returns:
             Sample YAML content as string
         """
         sample_yaml = """
-# Browser Test Scenarios YAML File
-# This file defines test scenarios for automated browser testing
+# Enhanced Browser Test Scenarios YAML File
+# This file defines comprehensive test scenarios for automated browser testing
 
-name: "Sample E-commerce Test Suite"
-description: "Comprehensive test suite for e-commerce functionality"
-version: "1.0"
+name: "Advanced E-commerce Test Suite"
+description: "Comprehensive test suite for e-commerce functionality with advanced features"
+version: "2.0"
 provider: "openai"  # Options: openai, gemini, ollama, mistral
 headless: true
 base_url: "https://example.com"
-global_context: "Testing e-commerce platform with standard user flows"
+global_context: "Testing e-commerce platform with comprehensive user flows and edge cases"
+
+# Global configuration settings
+global_config:
+  max_parallel_tests: 3
+  default_timeout: 45
+  default_retry_count: 2
+  default_viewport:
+    width: 1920
+    height: 1080
+  setup_scripts:
+    - "Clear browser cache"
+    - "Reset test database"
+  teardown_scripts:
+    - "Cleanup test data"
+    - "Generate test report"
+  environment_variables:
+    TEST_ENV: "staging"
+    DEBUG_MODE: "true"
+  reporting:
+    generate_html_report: true
+    include_screenshots: true
+    notify_on_failure: true
 
 scenarios:
-  - name: "Homepage Load Test"
-    requirement: "Verify homepage loads correctly and displays key elements"
+  - name: "Homepage Load Performance Test"
+    requirement: "Verify homepage loads quickly and displays all key elements"
     url: "/"
-    test_type: "functional"
-    context: "Homepage should display navigation, hero section, and featured products"
+    test_type: "performance"
+    context: "Homepage should load within 3 seconds and display navigation, hero section, and featured products"
     take_screenshots: true
+    timeout: 10
+    retry_count: 1
+    browsers: ["chromium", "firefox"]
+    viewport:
+      width: 1920
+      height: 1080
     steps:
       - "Navigate to homepage"
-      - "Verify page title"
-      - "Check navigation menu"
-      - "Verify hero section"
-      - "Check featured products section"
+      - "Measure page load time"
+      - "Verify page title contains 'E-commerce'"
+      - "Check navigation menu visibility"
+      - "Verify hero section loads"
+      - "Count featured products (should be >= 4)"
     expected_outcomes:
       - "Page loads within 3 seconds"
-      - "Navigation menu is visible"
-      - "Hero section displays correctly"
-      - "Featured products are shown"
-    tags: ["homepage", "performance", "ui"]
+      - "Navigation menu is visible and functional"
+      - "Hero section displays promotional content"
+      - "At least 4 featured products are shown"
+      - "No JavaScript errors in console"
+    tags: ["homepage", "performance", "critical"]
+    wait_conditions:
+      - "DOM content loaded"
+      - "All images loaded"
+    cleanup_actions:
+      - "Clear page cache"
 
-  - name: "User Registration Test"
-    requirement: "Test user registration with valid data"
+  - name: "User Registration with Validation"
+    requirement: "Test user registration with comprehensive input validation"
     url: "/register"
     test_type: "functional"
-    context: "User should be able to register with valid email and password"
+    context: "Test registration form with valid/invalid data, error handling, and success flow"
     take_screenshots: true
+    timeout: 30
+    retry_count: 2
+    prerequisites: ["Homepage Load Performance Test"]
+    data_sources:
+      - type: "csv"
+        source: "test_data/user_registration.csv"
+        format: "email,password,expected_result"
+    environment_variables:
+      REGISTRATION_ENDPOINT: "/api/register"
     steps:
       - "Navigate to registration page"
-      - "Fill in registration form"
-      - "Submit form"
-      - "Verify success message"
+      - "Test form validation with invalid data"
+      - "Fill form with valid user data"
+      - "Submit registration form"
+      - "Verify success message and redirect"
     expected_outcomes:
-      - "Registration form is displayed"
-      - "Form accepts valid input"
-      - "Success message is shown"
-      - "User is redirected appropriately"
-    tags: ["registration", "authentication", "critical"]
+      - "Form validation works for invalid inputs"
+      - "Valid registration succeeds"
+      - "Success message is displayed"
+      - "User is redirected to dashboard"
+      - "Confirmation email is sent"
+    tags: ["registration", "authentication", "validation", "critical"]
+    cleanup_actions:
+      - "Delete test user account"
 
-  - name: "Product Search Test"
-    requirement: "Test product search functionality"
+  - name: "Cross-browser Product Search"
+    requirement: "Test product search functionality across multiple browsers"
     url: "/search"
     test_type: "functional"
-    context: "Search should return relevant products for valid queries"
+    context: "Search should return relevant products and handle edge cases across different browsers"
     take_screenshots: true
+    timeout: 25
+    parallel: true
+    browsers: ["chromium", "firefox", "webkit"]
     steps:
       - "Navigate to search page"
-      - "Enter search query"
-      - "Click search button"
-      - "Verify search results"
+      - "Test empty search query"
+      - "Search for 'laptop' and verify results"
+      - "Test search filters"
+      - "Test pagination if available"
     expected_outcomes:
-      - "Search form is accessible"
-      - "Search returns relevant results"
-      - "Results are properly formatted"
-      - "Pagination works if applicable"
-    tags: ["search", "functionality"]
+      - "Empty search shows appropriate message"
+      - "Search returns relevant laptop products"
+      - "Filters work correctly"
+      - "Pagination functions properly"
+    tags: ["search", "cross-browser", "functionality"]
 
-  - name: "Mobile Responsive Test"
-    requirement: "Verify site is mobile responsive"
+  - name: "Mobile Responsive Design Test"
+    requirement: "Verify complete mobile responsiveness across different screen sizes"
     url: "/"
     test_type: "ui"
-    context: "Site should adapt to mobile screen sizes"
+    context: "Test responsive design on various mobile device sizes and orientations"
     take_screenshots: true
+    timeout: 20
+    browsers: ["chromium"]
+    viewport:
+      width: 375
+      height: 667
     steps:
-      - "Navigate to homepage"
-      - "Resize viewport to mobile size"
-      - "Check navigation menu"
-      - "Verify content layout"
+      - "Navigate to homepage in mobile viewport"
+      - "Test hamburger menu functionality"
+      - "Verify touch targets are adequate (>44px)"
+      - "Test form inputs on mobile"
+      - "Check image scaling and loading"
+      - "Test landscape orientation"
     expected_outcomes:
-      - "Mobile navigation works"
-      - "Content is properly sized"
-      - "Touch targets are adequate"
-      - "No horizontal scrolling"
-    tags: ["responsive", "mobile", "ui"]
+      - "Mobile navigation menu works smoothly"
+      - "All touch targets are adequately sized"
+      - "No horizontal scrolling occurs"
+      - "Images scale properly"
+      - "Text remains readable at all sizes"
+    tags: ["responsive", "mobile", "ui", "accessibility"]
+
+  - name: "Accessibility Compliance Test"
+    requirement: "Verify WCAG 2.1 AA compliance for key pages"
+    url: "/"
+    test_type: "accessibility"
+    context: "Test keyboard navigation, screen reader compatibility, and color contrast"
+    take_screenshots: true
+    timeout: 35
+    steps:
+      - "Navigate using only keyboard"
+      - "Check color contrast ratios"
+      - "Verify alt text for images"
+      - "Test form labels and ARIA attributes"
+      - "Check heading hierarchy"
+    expected_outcomes:
+      - "All interactive elements are keyboard accessible"
+      - "Color contrast meets WCAG AA standards"
+      - "Images have appropriate alt text"
+      - "Forms are properly labeled"
+      - "Heading structure is logical"
+    tags: ["accessibility", "wcag", "compliance", "keyboard"]
+    cleanup_actions:
+      - "Reset accessibility settings"
 """
         return sample_yaml.strip()

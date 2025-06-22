@@ -36,6 +36,7 @@ export function BrowserTester() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
+  
   // YAML-related state
   const [yamlContent, setYamlContent] = useState<string>('')
   const [yamlFile, setYamlFile] = useState<File | null>(null)
@@ -44,6 +45,7 @@ export function BrowserTester() {
   const [executeImmediately, setExecuteImmediately] = useState(false)
 
   const { logs, isConnected } = useWebSocket()
+
 
   const getStatusIcon = (result: BrowserTestResult) => {
     if (result.success) {
@@ -204,6 +206,7 @@ export function BrowserTester() {
           <p className="text-gray-600">AI-powered automated browser testing with YAML scenarios</p>
         </div>
       </div>
+
 
       <Card className="p-6">
         <div className="space-y-4">

@@ -1,11 +1,15 @@
 import asyncio
-from typing import Any, Dict, List
+import uuid
+from typing import Any, Dict, List, Optional
 
 from browser_use import Agent
 from langchain_core.prompts import PromptTemplate
 
 from friday.llm.llm import ModelProvider, get_llm_client
 from friday.services.logger import get_logger
+from friday.services.screenshot_manager import screenshot_manager
+from friday.services.browser_session_manager import browser_session_manager
+from friday.services.browser_errors import browser_error_handler, BrowserTestError
 
 logger = get_logger(__name__)
 
@@ -16,6 +20,9 @@ class BrowserTestingAgent:
     def __init__(self, provider: ModelProvider = "openai"):
         self.llm = get_llm_client(provider)
         self.provider = provider
+        self.screenshot_manager = screenshot_manager
+        self.session_manager = browser_session_manager
+        self.error_handler = browser_error_handler
 
         # Template for generating browser automation tasks
         self.template = """
@@ -43,123 +50,290 @@ class BrowserTestingAgent:
             template=self.template,
         )
 
-    async def run_browser_test(
-        self,
-        requirement: str,
-        url: str,
-        test_type: str = "functional",
-        context: str = "",
-        headless: bool = True,
-        take_screenshots: bool = True,
-    ) -> Dict[str, Any]:
-        """
-        Run a browser test using the browser-use agent
-
-        Args:
-            requirement: Test requirement description
-            url: Target URL to test
-            test_type: Type of test (functional, ui, integration, etc.)
-            context: Additional context for the test
-            headless: Run browser in headless mode
-            take_screenshots: Whether to take screenshots during execution
-
-        Returns:
-            Dict containing test results, screenshots, and execution details
-        """
-        logger.info(f"Starting browser test for: {requirement}")
-
-        try:
-            # Generate the task description using LLM
-            task_description = self.prompt.format(
-                requirement=requirement, url=url, test_type=test_type, context=context
-            )
-
-            # Enhanced task with specific instructions
-            enhanced_task = f"""
-            {task_description}
-            
-            Please navigate to {url} and perform the following:
-            1. Take a screenshot of the initial page
-            2. Execute the test steps as described
-            3. Take screenshots at key points during execution
-            4. Verify expected outcomes
-            5. Document any issues or unexpected behavior
-            6. Take a final screenshot of the end state
-            
-            Important: Be thorough in your testing and document everything you observe.
-            """
-
-            # Create and run the browser agent
-            agent = Agent(task=enhanced_task, llm=self.llm)
-
-            # Run the agent and capture results
-            result = await agent.run()
-
-            # Parse and structure the results
-            test_result = {
-                "status": "completed",
-                "requirement": requirement,
-                "url": url,
-                "test_type": test_type,
-                "task_description": enhanced_task,
-                "execution_result": str(result),
-                "screenshots": [],  # Would be populated by browser-use
-                "timestamp": asyncio.get_event_loop().time(),
-                "success": True,
-                "errors": [],
-            }
-
-            logger.info(f"Browser test completed successfully for: {requirement}")
-            return test_result
-
-        except Exception as e:
-            logger.error(f"Browser test failed: {str(e)}")
-            return {
-                "status": "failed",
-                "requirement": requirement,
-                "url": url,
-                "test_type": test_type,
-                "error": str(e),
-                "timestamp": asyncio.get_event_loop().time(),
-                "success": False,
-                "errors": [str(e)],
-            }
-
     async def run_multiple_tests(
-        self, test_cases: List[Dict[str, Any]], headless: bool = True
+        self,
+        test_cases: List[Dict[str, Any]],
+        headless: bool = True,
+        max_parallel: int = 1,
+        respect_prerequisites: bool = True,
     ) -> List[Dict[str, Any]]:
         """
-        Run multiple browser tests in sequence
+        Run multiple browser tests with enhanced features
 
         Args:
             test_cases: List of test case dictionaries with requirement, url, etc.
             headless: Run browser in headless mode
+            max_parallel: Maximum number of parallel tests
+            respect_prerequisites: Whether to respect test prerequisites
 
         Returns:
             List of test results
         """
-        logger.info(f"Starting batch browser testing with {len(test_cases)} test cases")
+        logger.info(
+            f"Starting enhanced batch testing with {len(test_cases)} test cases"
+        )
+
+        # Initialize session manager if needed
+        if (
+            not hasattr(self.session_manager, "playwright")
+            or self.session_manager.playwright is None
+        ):
+            await self.session_manager.initialize()
 
         results = []
-        for i, test_case in enumerate(test_cases):
-            logger.info(f"Running test case {i + 1}/{len(test_cases)}")
+        completed_tests = set()
 
-            result = await self.run_browser_test(
-                requirement=test_case.get("requirement", ""),
-                url=test_case.get("url", ""),
-                test_type=test_case.get("test_type", "functional"),
-                context=test_case.get("context", ""),
-                headless=headless,
-                take_screenshots=test_case.get("take_screenshots", True),
+        if respect_prerequisites and max_parallel == 1:
+            # Sequential execution with prerequisite handling
+            results = await self._run_tests_sequential_with_prerequisites(
+                test_cases, headless
+            )
+        elif max_parallel > 1:
+            # Parallel execution
+            results = await self._run_tests_parallel(test_cases, headless, max_parallel)
+        else:
+            # Simple sequential execution
+            results = await self._run_tests_sequential(test_cases, headless)
+
+        logger.info(f"Completed batch testing with {len(results)} results")
+        return results
+
+    async def _run_tests_sequential(
+        self, test_cases: List[Dict[str, Any]], headless: bool
+    ) -> List[Dict[str, Any]]:
+        """Run tests sequentially without prerequisite handling"""
+        results = []
+        for i, test_case in enumerate(test_cases):
+            logger.info(
+                f"Running test case {i + 1}/{len(test_cases)}: {test_case.get('scenario_name', 'Unknown')}"
             )
 
+            result = await self.run_single_test(test_case=test_case, headless=headless)
             results.append(result)
 
-            # Add delay between tests to avoid overwhelming the target site
+            # Add delay between tests
             await asyncio.sleep(2)
 
-        logger.info(f"Completed batch browser testing with {len(results)} results")
         return results
+
+    async def _run_tests_sequential_with_prerequisites(
+        self, test_cases: List[Dict[str, Any]], headless: bool
+    ) -> List[Dict[str, Any]]:
+        """Run tests sequentially while respecting prerequisites"""
+        results = []
+        completed_tests = set()
+        remaining_tests = test_cases.copy()
+
+        while remaining_tests:
+            runnable_tests = []
+
+            for test_case in remaining_tests:
+                prerequisites = test_case.get("prerequisites", [])
+                if all(prereq in completed_tests for prereq in prerequisites):
+                    runnable_tests.append(test_case)
+
+            if not runnable_tests:
+                # No tests can run due to unmet prerequisites
+                logger.warning(
+                    "Circular dependencies or missing prerequisites detected"
+                )
+                # Run remaining tests anyway
+                runnable_tests = remaining_tests
+
+            for test_case in runnable_tests:
+                logger.info(
+                    f"Running test: {test_case.get('scenario_name', 'Unknown')}"
+                )
+
+                result = await self.run_single_test(
+                    test_case=test_case, headless=headless
+                )
+                results.append(result)
+                completed_tests.add(test_case.get("scenario_name", ""))
+                remaining_tests.remove(test_case)
+
+                # Add delay between tests
+                await asyncio.sleep(1)
+
+        return results
+
+    async def _run_tests_parallel(
+        self, test_cases: List[Dict[str, Any]], headless: bool, max_parallel: int
+    ) -> List[Dict[str, Any]]:
+        """Run tests in parallel batches"""
+        results = []
+
+        # Filter tests that can run in parallel
+        parallel_tests = [tc for tc in test_cases if tc.get("parallel", False)]
+        sequential_tests = [tc for tc in test_cases if not tc.get("parallel", False)]
+
+        # Run parallel tests in batches
+        if parallel_tests:
+            for i in range(0, len(parallel_tests), max_parallel):
+                batch = parallel_tests[i : i + max_parallel]
+                logger.info(f"Running parallel batch of {len(batch)} tests")
+
+                tasks = [
+                    self.run_single_test(test_case=test_case, headless=headless)
+                    for test_case in batch
+                ]
+
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+                for result in batch_results:
+                    if isinstance(result, Exception):
+                        # Handle exceptions from parallel execution
+                        error_result = {
+                            "status": "failed",
+                            "success": False,
+                            "error": str(result),
+                            "timestamp": asyncio.get_event_loop().time(),
+                        }
+                        results.append(error_result)
+                    else:
+                        results.append(result)
+
+        # Run sequential tests normally
+        if sequential_tests:
+            sequential_results = await self._run_tests_sequential(
+                sequential_tests, headless
+            )
+            results.extend(sequential_results)
+
+        return results
+
+    async def run_single_test(
+        self, test_case: Dict[str, Any], headless: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Run a single browser test case
+        
+        Args:
+            test_case: Dictionary containing test case details
+            headless: Whether to run browser in headless mode
+            
+        Returns:
+            Dictionary with test result details
+        """
+        test_id = str(uuid.uuid4())
+        scenario_name = test_case.get("scenario_name", "Unknown Test")
+        
+        logger.info(f"Starting single test: {scenario_name} (ID: {test_id})")
+        
+        try:
+            # Extract test case details
+            requirement = test_case.get("requirement", "")
+            url = test_case.get("url", "")
+            test_type = test_case.get("test_type", "functional")
+            context = test_case.get("context", "")
+            
+            # Generate browser automation task using LLM prompt
+            prompt_input = {
+                "requirement": requirement,
+                "url": url,
+                "test_type": test_type,
+                "context": context,
+            }
+            
+            # Generate task description
+            chain = self.prompt | self.llm
+            automation_task = await chain.ainvoke(prompt_input)
+            
+            # Clean up task text
+            if hasattr(automation_task, 'content'):
+                task_description = automation_task.content
+            else:
+                task_description = str(automation_task)
+            
+            logger.info(f"Generated automation task for {scenario_name}: {task_description[:100]}...")
+            
+            # Initialize browser session if needed
+            if not hasattr(self.session_manager, 'playwright') or self.session_manager.playwright is None:
+                await self.session_manager.initialize()
+            
+            # Create browser context
+            browser_context = await self.session_manager.create_browser_context(
+                test_id=test_id,
+                headless=headless
+            )
+            
+            # Create browser-use agent
+            agent = Agent(
+                task=task_description,
+                llm=self.llm,
+                browser_context=browser_context,
+                use_vision=True,
+                save_conversation_path=f"logs/browser_test_{test_id}.json",
+                max_failures=3,
+                retry_delay=10
+            )
+            
+            # Execute the browser automation task
+            result = await agent.run(max_steps=50)
+            
+            # Take final screenshot
+            screenshot_path = await self.screenshot_manager.capture_screenshot(
+                context=browser_context,
+                test_id=test_id,
+                step_name="final_result"
+            )
+            
+            # Close browser context
+            await browser_context.close()
+            
+            # Extract result information
+            success = len(result) > 0 and not any(step.is_error for step in result)
+            result_summary = f"Completed {len(result)} steps"
+            if result:
+                last_step = result[-1]
+                if hasattr(last_step, 'output') and last_step.output:
+                    result_summary += f". Final result: {str(last_step.output)[:200]}"
+            
+            # Prepare success result
+            test_result = {
+                "test_id": test_id,
+                "scenario_name": scenario_name,
+                "requirement": requirement,
+                "url": url,
+                "test_type": test_type,
+                "status": "completed",
+                "success": success,
+                "execution_result": result_summary,
+                "task_description": task_description,
+                "screenshot_path": str(screenshot_path) if screenshot_path else None,
+                "timestamp": asyncio.get_event_loop().time(),
+                "steps_executed": len(result) if result else 0,
+            }
+            
+            logger.info(f"Successfully completed test: {scenario_name}")
+            return test_result
+            
+        except Exception as e:
+            error_message = str(e)
+            logger.error(f"Test failed for {scenario_name}: {error_message}", exc_info=True)
+            
+            # Handle error with error handler
+            handled_error = await self.error_handler.handle_test_error(
+                test_id=test_id,
+                error=e,
+                test_case=test_case
+            )
+            
+            # Prepare failure result
+            test_result = {
+                "test_id": test_id,
+                "scenario_name": scenario_name,
+                "requirement": test_case.get("requirement", ""),
+                "url": test_case.get("url", ""),
+                "test_type": test_case.get("test_type", "functional"),
+                "status": "failed",
+                "success": False,
+                "error": error_message,
+                "error_details": handled_error,
+                "timestamp": asyncio.get_event_loop().time(),
+            }
+            
+            return test_result
 
     def generate_test_report(self, results: List[Dict[str, Any]]) -> str:
         """

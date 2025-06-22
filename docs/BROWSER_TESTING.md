@@ -89,69 +89,84 @@ MISTRAL_API_KEY=your_mistral_key      # For Mistral AI models
 
 #### Basic Usage
 ```bash
-# Simple functional test
-uv run friday browser-test https://example.com \
-  --requirement "Test the main navigation menu works correctly"
+# Create a simple test scenario YAML file
+cat > navigation_test.yaml << EOF
+name: "Navigation Test Suite"
+scenarios:
+  - name: "Main Navigation Test"
+    requirement: "Test the main navigation menu works correctly"
+    url: "https://example.com"
+    test_type: "functional"
+EOF
+
+# Run the test
+uv run friday browser-test navigation_test.yaml
 
 # Login flow test with context
-uv run friday browser-test https://app.example.com/login \
-  --requirement "Test user login functionality" \
-  --test-type functional \
-  --context "Use demo credentials: username 'demo', password 'demo123'"
+cat > login_test.yaml << EOF
+name: "Login Test Suite"
+scenarios:
+  - name: "User Login Test"
+    requirement: "Test user login functionality"
+    url: "https://app.example.com/login"
+    test_type: "functional"
+    context: "Use demo credentials: username 'demo', password 'demo123'"
+EOF
+
+uv run friday browser-test login_test.yaml --provider openai
 
 # UI test with visible browser
-uv run friday browser-test https://example.com \
-  --requirement "Verify responsive design on different screen sizes" \
-  --test-type ui \
-  --no-headless \
-  --output ui_test_report.md
+cat > ui_test.yaml << EOF
+name: "UI Test Suite"
+scenarios:
+  - name: "Responsive Design Test"
+    requirement: "Verify responsive design on different screen sizes"
+    url: "https://example.com"
+    test_type: "ui"
+EOF
+
+uv run friday browser-test ui_test.yaml --no-headless --output ui_test_report.md
 ```
 
 #### Advanced Options
 ```bash
-uv run friday browser-test <URL> \
-  --requirement "Test description" \
-  --test-type [functional|ui|integration|accessibility|performance] \
-  --context "Additional context or instructions" \
+uv run friday browser-test scenarios.yaml \
   --provider [openai|gemini|ollama|mistral] \
   --headless/--no-headless \
   --output report.md
+
+# Example comprehensive YAML structure
+cat > scenarios.yaml << EOF
+name: "Comprehensive Test Suite"
+scenarios:
+  - name: "Test Name"
+    requirement: "Test description"
+    url: "https://example.com"
+    test_type: "functional"
+    context: "Additional context or instructions"
+EOF
 ```
 
 ### REST API
 
-#### Single Browser Test
+#### YAML Scenario Upload and Execute
 ```bash
-curl -X POST "http://localhost:8080/api/v1/browser-test/single" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "requirement": "Test user registration form",
-    "url": "https://example.com/register",
-    "test_type": "functional",
-    "context": "Fill out form with valid data and verify success message",
-    "headless": true,
-    "take_screenshots": true
-  }'
+# Upload and execute YAML scenarios
+curl -X POST "http://localhost:8080/api/v1/browser-test/yaml/upload" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@test_scenarios.yaml" \
+  -F "provider=openai" \
+  -F "headless=true" \
+  -F "execute_immediately=true"
 ```
 
-#### Multiple Browser Tests
+#### Execute YAML Content Directly
 ```bash
-curl -X POST "http://localhost:8080/api/v1/browser-test/multiple" \
+curl -X POST "http://localhost:8080/api/v1/browser-test/yaml/execute" \
   -H "Content-Type: application/json" \
   -d '{
-    "test_cases": [
-      {
-        "requirement": "Test homepage loads correctly",
-        "url": "https://example.com",
-        "test_type": "functional"
-      },
-      {
-        "requirement": "Test contact form submission",
-        "url": "https://example.com/contact",
-        "test_type": "functional",
-        "context": "Fill out form with test data"
-      }
-    ],
+    "yaml_content": "name: \"Test Suite\"\nscenarios:\n  - name: \"Homepage Test\"\n    requirement: \"Test homepage loads correctly\"\n    url: \"https://example.com\"\n    test_type: \"functional\"\n  - name: \"Contact Form Test\"\n    requirement: \"Test contact form submission\"\n    url: \"https://example.com/contact\"\n    test_type: \"functional\"\n    context: \"Fill out form with test data\"",
+    "provider": "openai",
     "headless": true
   }'
 ```
@@ -160,73 +175,53 @@ curl -X POST "http://localhost:8080/api/v1/browser-test/multiple" \
 
 Access the browser testing interface at `http://localhost:3000` and navigate to the "Browser Tests" tab.
 
-#### Single Test Mode
-1. Enter test requirement in natural language
-2. Specify target URL
-3. Select test type
-4. Add optional context
-5. Configure execution settings
-6. Run test and monitor progress
-
-#### Multiple Test Mode
-1. Add multiple test cases
-2. Configure global settings (headless mode)
-3. Execute all tests in sequence
-4. View aggregated results and reports
+#### YAML Scenario Testing
+1. Upload a YAML file with test scenarios or write YAML content directly
+2. Select LLM provider (OpenAI, Gemini, Ollama, Mistral)
+3. Configure execution settings (headless mode, immediate execution)
+4. Execute all tests and monitor real-time progress
+5. View comprehensive results, reports, and screenshots
 
 ## API Reference
 
 ### Endpoints
 
-#### POST /api/v1/browser-test/single
-Execute a single browser test.
+#### POST /api/v1/browser-test/yaml/upload
+Upload and optionally execute YAML test scenarios.
 
-**Request Body:**
-```json
-{
-  "requirement": "string",
-  "url": "string",
-  "test_type": "functional|ui|integration|accessibility|performance",
-  "context": "string",
-  "headless": true,
-  "take_screenshots": true
-}
-```
+**Request:** Multipart form data
+- `file`: YAML file containing test scenarios
+- `provider`: LLM provider (openai, gemini, ollama, mistral)
+- `headless`: Boolean for headless mode
+- `execute_immediately`: Boolean to execute after upload
 
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Browser test completed successfully",
-  "data": {
-    "status": "completed",
-    "requirement": "Test requirement",
-    "url": "https://example.com",
-    "test_type": "functional",
-    "execution_result": "Detailed test execution results...",
-    "screenshots": ["screenshot1.png", "screenshot2.png"],
-    "timestamp": 1640995200.0,
-    "success": true,
-    "errors": []
+  "message": "Successfully uploaded YAML file with 3 scenarios",
+  "test_suite_name": "Test Suite",
+  "scenarios_count": 3,
+  "scenarios": [...],
+  "execution_results": [...],
+  "report": "# Test Report\n...",
+  "summary": {
+    "total_tests": 3,
+    "passed_tests": 2,
+    "failed_tests": 1,
+    "success_rate": 66.7
   }
 }
 ```
 
-#### POST /api/v1/browser-test/multiple
-Execute multiple browser tests in sequence.
+#### POST /api/v1/browser-test/yaml/execute
+Execute test scenarios from YAML content.
 
 **Request Body:**
 ```json
 {
-  "test_cases": [
-    {
-      "requirement": "string",
-      "url": "string",
-      "test_type": "functional",
-      "context": "string",
-      "take_screenshots": true
-    }
-  ],
+  "yaml_content": "name: \"Test Suite\"\nscenarios:\n  - name: \"Test\"\n    requirement: \"Test description\"\n    url: \"https://example.com\"\n    test_type: \"functional\"",
+  "provider": "openai",
   "headless": true
 }
 ```
@@ -235,14 +230,16 @@ Execute multiple browser tests in sequence.
 ```json
 {
   "success": true,
-  "message": "Multiple browser tests completed",
-  "data": [...],
+  "message": "Successfully executed 3 scenarios. 2/3 tests passed",
+  "test_suite_name": "Test Suite",
+  "scenarios_count": 3,
+  "results": [...],
   "report": "# Test Report\n...",
   "summary": {
-    "total_tests": 5,
-    "passed_tests": 4,
+    "total_tests": 3,
+    "passed_tests": 2,
     "failed_tests": 1,
-    "success_rate": 80.0
+    "success_rate": 66.7
   }
 }
 ```
@@ -311,7 +308,18 @@ uv run playwright install chromium --with-deps --force
 Enable verbose logging for troubleshooting:
 ```bash
 export LOG_LEVEL=DEBUG
-uv run friday browser-test <url> --requirement "test"
+
+# Create a simple debug YAML scenario
+cat > debug_test.yaml << EOF
+name: "Debug Test"
+scenarios:
+  - name: "Simple Debug Test"
+    requirement: "test"
+    url: "<url>"
+    test_type: "functional"
+EOF
+
+uv run friday browser-test debug_test.yaml
 ```
 
 ## Integration Examples
@@ -340,34 +348,46 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          uv run friday browser-test ${{ env.TEST_URL }} \
-            --requirement "Verify homepage loads and navigation works" \
-            --output browser-test-results.md
+          echo 'name: "CI Test Suite"
+          scenarios:
+            - name: "Homepage Test"
+              requirement: "Verify homepage loads and navigation works"
+              url: "${{ env.TEST_URL }}"
+              test_type: "functional"' > ci_test.yaml
+          uv run friday browser-test ci_test.yaml --output browser-test-results.md
 ```
 
 ### Custom Test Scripts
 ```python
 import asyncio
 from friday.services.browser_agent import BrowserTestingAgent
+from friday.services.yaml_scenarios import YamlScenariosParser
 
 async def run_custom_tests():
     agent = BrowserTestingAgent(provider="openai")
+    parser = YamlScenariosParser()
     
-    test_cases = [
-        {
-            "requirement": "Test user registration flow",
-            "url": "https://example.com/register",
-            "test_type": "functional",
-            "context": "Use test email and verify confirmation"
-        },
-        {
-            "requirement": "Test product search functionality", 
-            "url": "https://example.com/shop",
-            "test_type": "functional",
-            "context": "Search for 'laptop' and verify results"
-        }
-    ]
+    # Define YAML content
+    yaml_content = """
+name: "Custom Test Suite"
+scenarios:
+  - name: "User Registration Test"
+    requirement: "Test user registration flow"
+    url: "https://example.com/register"
+    test_type: "functional"
+    context: "Use test email and verify confirmation"
+  - name: "Product Search Test"
+    requirement: "Test product search functionality"
+    url: "https://example.com/shop"
+    test_type: "functional"
+    context: "Search for 'laptop' and verify results"
+"""
     
+    # Parse YAML and convert to test cases
+    test_suite = parser.parse_yaml_content(yaml_content)
+    test_cases = parser.convert_to_browser_test_cases(test_suite)
+    
+    # Execute tests
     results = await agent.run_multiple_tests(test_cases)
     report = agent.generate_test_report(results)
     

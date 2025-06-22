@@ -75,6 +75,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/browser-test/single": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Single Browser Test
+         * @description Run a single browser test with specified parameters
+         */
+        post: operations["run_single_browser_test_api_v1_browser_test_single_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/browser-test/health": {
         parameters: {
             query?: never;
@@ -338,6 +358,83 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * SingleBrowserTestRequest
+         * @description Request model for single browser test execution
+         * @example {
+         *       "context": "Use test credentials to verify login flow",
+         *       "headless": true,
+         *       "provider": "openai",
+         *       "requirement": "Test user login functionality",
+         *       "take_screenshots": true,
+         *       "test_type": "functional",
+         *       "url": "https://example.com/login"
+         *     }
+         */
+        SingleBrowserTestRequest: {
+            /**
+             * Url
+             * @description URL to test
+             */
+            url: string;
+            /**
+             * Requirement
+             * @description Test requirement description
+             */
+            requirement: string;
+            /**
+             * Test Type
+             * @description Type of test to perform
+             * @default functional
+             */
+            test_type: string;
+            /**
+             * Context
+             * @description Additional context for the test
+             */
+            context?: string | null;
+            /**
+             * Provider
+             * @description LLM provider to use
+             * @default openai
+             */
+            provider: string | null;
+            /**
+             * Headless
+             * @description Run browser in headless mode
+             * @default true
+             */
+            headless: boolean;
+            /**
+             * Take Screenshots
+             * @description Take screenshots during test
+             * @default true
+             */
+            take_screenshots: boolean;
+        };
+        /**
+         * SingleBrowserTestResponse
+         * @description Response model for single browser test execution
+         */
+        SingleBrowserTestResponse: {
+            /**
+             * Success
+             * @description Whether the test was successful
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Response message
+             */
+            message: string;
+            /** @description Test execution result */
+            result?: components["schemas"]["BrowserTestResult"] | null;
+            /**
+             * Error
+             * @description Error message if any
+             */
+            error?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -614,6 +711,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_single_browser_test_api_v1_browser_test_single_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SingleBrowserTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SingleBrowserTestResponse"];
                 };
             };
             /** @description Validation Error */

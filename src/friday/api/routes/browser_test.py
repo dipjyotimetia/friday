@@ -1,5 +1,6 @@
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse
+import asyncio
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Path
+from fastapi.responses import JSONResponse, FileResponse
 
 from friday.api.schemas.browser_test import (
     BrowserTestResult,
@@ -11,6 +12,9 @@ from friday.api.schemas.browser_test import (
 from friday.services.browser_agent import BrowserTestingAgent
 from friday.services.logger import get_logger
 from friday.services.yaml_scenarios import YamlScenariosParser
+from friday.services.screenshot_manager import screenshot_manager
+from friday.services.browser_session_manager import browser_session_manager
+from friday.services.browser_errors import browser_error_handler
 
 logger = get_logger(__name__)
 
@@ -227,4 +231,219 @@ async def get_yaml_template():
         logger.error(f"Error generating YAML template: {error_message}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to generate YAML template: {error_message}"
+        )
+
+
+@router.post("/yaml/validate")
+async def validate_yaml_scenarios(request: YamlScenarioExecuteRequest):
+    """
+    Validate YAML content without executing tests
+    """
+    try:
+        logger.info("Validating YAML scenarios")
+
+        # Parse YAML content
+        parser = YamlScenariosParser()
+        test_suite = parser.parse_yaml_content(request.yaml_content)
+
+        # Convert to browser test cases
+        test_cases = parser.convert_to_browser_test_cases(test_suite)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"YAML validation successful. Found {len(test_cases)} valid scenarios.",
+                "test_suite_name": test_suite.name,
+                "scenarios_count": len(test_cases),
+                "scenarios": [
+                    {
+                        "name": case.get("scenario_name", "Unnamed"),
+                        "requirement": case.get("requirement", ""),
+                        "url": case.get("url", ""),
+                        "test_type": case.get("test_type", "functional"),
+                    }
+                    for case in test_cases
+                ],
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"YAML validation failed: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=400,
+            content={
+                "success": False,
+                "message": f"YAML validation failed: {error_message}",
+                "errors": [error_message],
+            },
+        )
+
+
+@router.get("/sessions")
+async def get_browser_sessions():
+    """
+    Get information about active browser sessions
+    """
+    try:
+        if not hasattr(browser_session_manager, "sessions"):
+            await browser_session_manager.initialize()
+
+        stats = browser_session_manager.get_session_stats()
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Browser session information retrieved",
+                "stats": stats,
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get browser sessions: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to get browser sessions: {error_message}",
+            },
+        )
+
+
+@router.get("/screenshots/{test_id}")
+async def get_test_screenshots(test_id: str = Path(...)):
+    """
+    Get all screenshots for a specific test
+    """
+    try:
+        screenshots = screenshot_manager.get_test_screenshots(test_id)
+        metadata = screenshot_manager.get_test_metadata(test_id)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"Found {len(screenshots)} screenshots for test {test_id}",
+                "test_id": test_id,
+                "screenshots": screenshots,
+                "metadata": metadata,
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get screenshots: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to get screenshots: {error_message}",
+            },
+        )
+
+
+@router.get("/screenshots/{test_id}/{filename}")
+async def get_screenshot_file(test_id: str = Path(...), filename: str = Path(...)):
+    """
+    Get a specific screenshot file
+    """
+    try:
+        screenshot_path = screenshot_manager.get_screenshot_path(test_id, filename)
+
+        if screenshot_path and screenshot_path.exists():
+            return FileResponse(
+                path=str(screenshot_path), media_type="image/png", filename=filename
+            )
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Screenshot {filename} not found for test {test_id}",
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get screenshot file: {error_message}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get screenshot file: {error_message}"
+        )
+
+
+@router.get("/metrics")
+async def get_test_metrics():
+    """
+    Get browser testing metrics and statistics
+    """
+    try:
+        # Get session statistics
+        session_stats = (
+            browser_session_manager.get_session_stats()
+            if hasattr(browser_session_manager, "sessions")
+            else {}
+        )
+
+        # Get storage statistics
+        storage_stats = screenshot_manager.get_storage_stats()
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Browser testing metrics retrieved",
+                "session_stats": session_stats,
+                "storage_stats": storage_stats,
+                "timestamp": asyncio.get_event_loop().time(),
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get metrics: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to get metrics: {error_message}",
+            },
+        )
+
+
+@router.delete("/screenshots/{test_id}")
+async def cleanup_test_screenshots(test_id: str = Path(...)):
+    """
+    Clean up screenshots for a specific test
+    """
+    try:
+        success = screenshot_manager.cleanup_test_screenshots(test_id)
+
+        if success:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": f"Screenshots cleaned up for test {test_id}",
+                },
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "success": False,
+                    "message": f"No screenshots found for test {test_id}",
+                },
+            )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to cleanup screenshots: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to cleanup screenshots: {error_message}",
+            },
         )
