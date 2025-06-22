@@ -20,10 +20,6 @@ global_config:
   setup_scripts:
     - "Clear browser cache"
     - "Initialize test session"
-    - "Add first name random"
-    - "Add last name random"
-    - "Add business name random"
-    - "Add email random"
   teardown_scripts:
     - "Cleanup test data"
     - "Generate performance report"
@@ -47,9 +43,4 @@ scenarios:
     url: "https://phptravels.com/demo/"
     test_type: "functional"
     context: "Search for hotels in a specific location and verify results"
-    
-  - name: "User Registration Test"
-    requirement: "Test user registration form with random data"
-    url: "https://phptravels.com/demo/"
-    test_type: "functional"
-    context: "Fill out registration form and verify account creation"
+
