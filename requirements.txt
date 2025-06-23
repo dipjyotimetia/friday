@@ -651,7 +651,7 @@ safetensors==0.5.3
     # via transformers
 scikit-learn==1.7.0
     # via sentence-transformers
-scipy==1.15.3
+scipy==1.16.0
     # via
     #   scikit-learn
     #   sentence-transformers
