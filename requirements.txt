@@ -41,7 +41,7 @@ build==1.2.2.post1
     # via chromadb
 cachecontrol==0.14.3
     # via pip-audit
-cachetools==5.5.2
+cachetools==6.1.0
     # via google-auth
 certifi==2025.4.26
     # via
