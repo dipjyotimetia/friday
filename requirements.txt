@@ -634,7 +634,7 @@ requests-oauthlib==2.0.0
     #   kubernetes
 requests-toolbelt==1.0.0
     # via langsmith
-retrying==1.3.4
+retrying==1.4.0
     # via friday-cli
 rich==14.0.0
     # via
