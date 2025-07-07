@@ -286,7 +286,7 @@ langchain-chroma==0.2.4
     # via friday-cli
 langchain-community==0.3.25
     # via friday-cli
-langchain-core==0.3.65
+langchain-core==0.3.68
     # via
     #   friday-cli
     #   langchain
