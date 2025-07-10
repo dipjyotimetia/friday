@@ -1,0 +1,1 @@
+export { BrowserTester } from "./browser-tester"

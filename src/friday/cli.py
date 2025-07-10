@@ -30,7 +30,10 @@ Example:
     ```
 """
 
+import asyncio
 import logging
+import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -40,6 +43,7 @@ from rich import print
 from friday.connectors.confluence_client import ConfluenceConnector
 from friday.connectors.github_client import GitHubConnector
 from friday.connectors.jira_client import JiraConnector
+from friday.services.browser_agent import execute_yaml_file
 from friday.services.crawler import WebCrawler
 from friday.services.embeddings import EmbeddingsService
 from friday.services.test_generator import TestCaseGenerator
@@ -300,6 +304,202 @@ def setup():
 
     print("\n[green]Environment configuration saved to .env file[/green]")
     print("[green]✓ Environment setup complete[/green]")
+
+
+@app.command("browser-test")
+def browser_test(
+    yaml_file: Path = typer.Argument(..., help="YAML file containing test scenarios"),
+    provider: str = typer.Option(
+        "openai", help="LLM provider (openai, gemini, ollama, mistral)"
+    ),
+    headless: bool = typer.Option(True, "--headless/--no-headless", help="Run in headless mode"),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output file for test report"
+    ),
+):
+    """
+    Execute browser tests from YAML file using AI-powered automation.
+    
+    This command loads test scenarios from a YAML file and executes them using
+    natural language instructions with the browser-use library.
+    
+    Args:
+        yaml_file: Path to YAML file containing test scenarios
+        provider: LLM provider for AI-powered browser automation
+        headless: Whether to run browser in headless mode
+        output: Optional output file for test report
+    
+    Example:
+        ```bash
+        # Run tests with default settings
+        friday browser-test scenarios.yaml
+        
+        # Run with custom provider and visible browser
+        friday browser-test scenarios.yaml --provider gemini --no-headless
+        
+        # Save report to file
+        friday browser-test scenarios.yaml --output report.json
+        ```
+    """
+    try:
+        if not yaml_file.exists():
+            typer.echo(f"Error: YAML file not found: {yaml_file}", err=True)
+            raise typer.Exit(code=1)
+        
+        print(f"[blue]Starting browser tests from {yaml_file}[/blue]")
+        print(f"[blue]Provider: {provider}, Headless: {headless}[/blue]")
+        
+        # Run the async function
+        report = asyncio.run(execute_yaml_file(
+            yaml_file_path=str(yaml_file),
+            provider=provider,
+            headless=headless,
+            output_file=str(output) if output else None,
+        ))
+        
+        # Print summary
+        print(f"[green]✓ Browser tests completed[/green]")
+        print(f"[green]Total tests: {report.total_tests}[/green]")
+        print(f"[green]Passed: {report.passed_tests}[/green]")
+        print(f"[green]Failed: {report.failed_tests}[/green]")
+        print(f"[green]Success rate: {report.success_rate:.1f}%[/green]")
+        
+        if output:
+            print(f"[green]Report saved to: {output}[/green]")
+        
+    except Exception as e:
+        logger.error(f"Browser test execution failed: {str(e)}")
+        typer.echo(f"Error: {str(e)}", err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command("webui")
+def webui(
+    api_only: bool = typer.Option(False, "--api-only", help="Start only API server"),
+    frontend_only: bool = typer.Option(False, "--frontend-only", help="Start only frontend"),
+    port: int = typer.Option(8080, "--port", help="API server port"),
+    frontend_port: int = typer.Option(3000, "--frontend-port", help="Frontend port"),
+):
+    """
+    Start the Friday Web UI (API server and/or frontend).
+    
+    This command starts the FastAPI server and/or Next.js frontend for
+    the Friday web interface.
+    
+    Args:
+        api_only: Start only the API server
+        frontend_only: Start only the frontend
+        port: API server port
+        frontend_port: Frontend port
+    
+    Example:
+        ```bash
+        # Start both API and frontend
+        friday webui
+        
+        # Start only API server
+        friday webui --api-only
+        
+        # Start only frontend
+        friday webui --frontend-only
+        
+        # Custom ports
+        friday webui --port 8081 --frontend-port 3001
+        ```
+    """
+    try:
+        if api_only:
+            print(f"[blue]Starting Friday API server on port {port}[/blue]")
+            subprocess.run([
+                sys.executable, "-m", "uvicorn", 
+                "friday.api.app:app",
+                "--host", "0.0.0.0",
+                "--port", str(port),
+                "--reload"
+            ])
+        elif frontend_only:
+            print(f"[blue]Starting Friday frontend on port {frontend_port}[/blue]")
+            subprocess.run([
+                "npm", "run", "dev", "--", "--port", str(frontend_port)
+            ], cwd="app")
+        else:
+            print(f"[blue]Starting Friday API server on port {port}[/blue]")
+            print(f"[blue]Starting Friday frontend on port {frontend_port}[/blue]")
+            print("[yellow]Starting both services... Press Ctrl+C to stop[/yellow]")
+            
+            # Start API server in background
+            api_process = subprocess.Popen([
+                sys.executable, "-m", "uvicorn", 
+                "friday.api.app:app",
+                "--host", "0.0.0.0",
+                "--port", str(port),
+                "--reload"
+            ])
+            
+            # Start frontend
+            try:
+                subprocess.run([
+                    "npm", "run", "dev", "--", "--port", str(frontend_port)
+                ], cwd="app")
+            except KeyboardInterrupt:
+                print("\n[yellow]Stopping services...[/yellow]")
+            finally:
+                api_process.terminate()
+                api_process.wait()
+                
+    except Exception as e:
+        logger.error(f"Failed to start web UI: {str(e)}")
+        typer.echo(f"Error: {str(e)}", err=True)
+        raise typer.Exit(code=1)
+
+
+@app.command("open")
+def open_browser(
+    feature: Optional[str] = typer.Option(None, "--feature", help="Open specific feature (browser, api, crawl)"),
+    port: int = typer.Option(3000, "--port", help="Frontend port"),
+):
+    """
+    Open Friday Web UI in default browser.
+    
+    This command opens the Friday web interface in your default browser.
+    
+    Args:
+        feature: Specific feature to open (browser, api, crawl)
+        port: Frontend port
+    
+    Example:
+        ```bash
+        # Open main UI
+        friday open
+        
+        # Open browser testing feature
+        friday open --feature browser
+        
+        # Open API testing feature
+        friday open --feature api
+        ```
+    """
+    try:
+        import webbrowser
+        
+        base_url = f"http://localhost:{port}"
+        
+        if feature == "browser":
+            url = f"{base_url}?tab=browser"
+        elif feature == "api":
+            url = f"{base_url}?tab=api"
+        elif feature == "crawl":
+            url = f"{base_url}?tab=crawl"
+        else:
+            url = base_url
+        
+        print(f"[blue]Opening Friday Web UI: {url}[/blue]")
+        webbrowser.open(url)
+        
+    except Exception as e:
+        logger.error(f"Failed to open browser: {str(e)}")
+        typer.echo(f"Error: {str(e)}", err=True)
+        raise typer.Exit(code=1)
 
 
 def main():

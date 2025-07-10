@@ -2,6 +2,7 @@
 export * from './features/test-generator';
 export * from './features/web-crawler';
 export * from './features/api-tester';
+export * from './features/browser-tester';
 
 // Shared Components
 export * from './shared';

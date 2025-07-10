@@ -121,8 +121,79 @@ export interface ProviderOption {
   label: string;
 }
 
+// Browser Testing Types
+export interface BrowserTestScenario {
+  name: string;
+  requirement: string;
+  url: string;
+  test_type: 'functional' | 'ui' | 'integration' | 'accessibility' | 'performance';
+  context?: string;
+  expected_outcome?: string;
+  timeout?: number;
+}
+
+export interface BrowserTestSuite {
+  name: string;
+  description?: string;
+  scenarios: BrowserTestScenario[];
+  global_timeout?: number;
+}
+
+export interface BrowserTestResult {
+  scenario_name: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  execution_time: number;
+  success: boolean;
+  error_message?: string;
+  screenshot_path?: string;
+  logs: string[];
+  actions_taken: string[];
+  started_at: string;
+  completed_at?: string;
+}
+
+export interface BrowserTestReport {
+  suite_name: string;
+  total_tests: number;
+  passed_tests: number;
+  failed_tests: number;
+  skipped_tests: number;
+  execution_time: number;
+  success_rate: number;
+  results: BrowserTestResult[];
+  started_at: string;
+  completed_at: string;
+  browser_info: Record<string, any>;
+}
+
+export interface BrowserTestExecutionRequest {
+  file_id?: string;
+  test_suite?: BrowserTestSuite;
+  provider: string;
+  headless: boolean;
+  output_format: string;
+}
+
+export interface BrowserTestExecutionResponse {
+  message: string;
+  execution_id: string;
+  status: string;
+  report?: BrowserTestReport;
+}
+
+export interface YamlUploadRequest {
+  filename: string;
+  content: string;
+}
+
+export interface YamlUploadResponse {
+  message: string;
+  file_id: string;
+  parsed_suite: BrowserTestSuite;
+}
+
 // Tab Types
-export type TabId = 'generator' | 'crawler' | 'api';
+export type TabId = 'generator' | 'crawler' | 'api' | 'browser';
 
 export interface Tab {
   id: TabId;

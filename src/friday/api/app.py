@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from friday.api.models import APIResponse, ErrorDetail, ValidationErrorResponse
-from friday.api.routes import api_test, crawl, generate, health, ws
+from friday.api.routes import api_test, browser_test, crawl, generate, health, ws
 from friday.config.config import settings
 from friday.exceptions import FridayError
 
@@ -70,7 +70,7 @@ async def friday_error_handler(request: Request, exc: FridayError):
             error_code=exc.error_code,
             details=exc.context,
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(mode=json),
+        ).model_dump(),
     )
 
 
@@ -96,7 +96,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
         status_code=422,
         content=ValidationErrorResponse(
             errors=errors, request_id=getattr(request.state, "request_id", None)
-        ).model_dump(mode="json"),
+        ).model_dump(),
     )
 
 
@@ -111,7 +111,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             message=exc.detail,
             error_code=f"HTTP_{exc.status_code}",
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(mode="json"),
+        ).model_dump(),
     )
 
 
@@ -126,7 +126,7 @@ async def general_exception_handler(request: Request, exc: Exception):
             message="An unexpected error occurred",
             error_code="INTERNAL_ERROR",
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(mode="json"),
+        ).model_dump(),
     )
 
 
@@ -143,6 +143,7 @@ app.include_router(generate.router, prefix="/api/v1", tags=["Test Generation"])
 app.include_router(crawl.router, prefix="/api/v1", tags=["Web Crawling"])
 app.include_router(health.router, prefix="/api/v1", tags=["Health Check"])
 app.include_router(api_test.router, prefix="/api/v1", tags=["API Testing"])
+app.include_router(browser_test.router, tags=["Browser Testing"])
 app.include_router(ws.router, prefix="/api/v1", tags=["WebSocket"])
 
 
