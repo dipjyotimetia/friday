@@ -18,11 +18,10 @@ from typing import Callable, Literal
 from langchain_community.cache import SQLiteCache
 from langchain_core.globals import set_llm_cache
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-from langchain_mistralai import ChatMistralAI, MistralAIEmbeddings
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from friday.config.config import GOOGLE_API_KEY, MISTRAL_API_KEY, OPENAI_API_KEY
+from friday.config.config import GOOGLE_API_KEY, OPENAI_API_KEY
 
 # Setup cache directory for LLM responses
 cache_dir = Path.cwd() / "data" / "cache"
@@ -51,27 +50,15 @@ _llm_providers: dict[ModelProvider, LLMClient] = {
     "openai": lambda: ChatOpenAI(
         model="gpt-4o",
         temperature=0,
-        max_tokens=1024,
         timeout=None,
         max_retries=2,
         cache=True,
-        api_key=OPENAI_API_KEY,
+        api_key=OPENAI_API_KEY,  # type: ignore
     ),
     "ollama": lambda: ChatOllama(
         model="llama3.3",
         temperature=0,
-        max_tokens=1024,
-        timeout=None,
         cache=True,
-        api_key=None,
-    ),
-    "mistral": lambda: ChatMistralAI(
-        model="Codestral",
-        temperature=0,
-        max_tokens=1024,
-        timeout=None,
-        cache=True,
-        api_key=MISTRAL_API_KEY,
     ),
 }
 
@@ -105,15 +92,14 @@ def get_llm_client(provider: ModelProvider) -> object:
 
 _embedding_providers: dict[ModelProvider, EmbeddingClient] = {
     "gemini": lambda: GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004", api_key=GOOGLE_API_KEY
+        model="models/text-embedding-004",
+        api_key=GOOGLE_API_KEY,  # type: ignore
     ),
     "openai": lambda: OpenAIEmbeddings(
-        model="text-embedding-3-small", api_key=OPENAI_API_KEY
+        model="text-embedding-3-small",
+        api_key=OPENAI_API_KEY,  # type: ignore
     ),
     "ollama": lambda: OllamaEmbeddings(model="llama3"),
-    "mistral": lambda: MistralAIEmbeddings(
-        model="mistral-embed", api_key=MISTRAL_API_KEY
-    ),
 }
 
 

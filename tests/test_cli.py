@@ -62,7 +62,7 @@ class TestCLI:
             ])
 
         assert result.exit_code == 0
-        mock_jira_instance.get_issue.assert_called_once_with("TEST-123")
+        mock_jira_instance.get_issue_details.assert_called_once_with("TEST-123")
         mock_save.assert_called_once()
 
     @patch("friday.cli.GitHubConnector")
@@ -97,7 +97,7 @@ class TestCLI:
             ])
 
         assert result.exit_code == 0
-        mock_github_instance.get_issue.assert_called_once_with("owner/repo", 123)
+        mock_github_instance.get_issue_details.assert_called_once_with("owner/repo", 123)
         mock_save.assert_called_once()
 
     def test_generate_missing_required_params(self, runner):
@@ -110,7 +110,7 @@ class TestCLI:
         assert result.exit_code != 0
         # Should show error about missing required parameters
 
-    @patch("friday.cli.CrawlerService")
+    @patch("friday.cli.WebCrawler")
     def test_crawl_command(self, mock_crawler, runner):
         """Test crawl command."""
         # Mock crawler service
@@ -142,7 +142,7 @@ class TestCLI:
         # Should handle invalid URL gracefully
         assert result.exit_code != 0
 
-    @patch("friday.cli.setup_friday")
+    @patch("friday.cli.setup")
     def test_setup_command(self, mock_setup, runner):
         """Test setup command."""
         mock_setup.return_value = None
@@ -212,7 +212,7 @@ class TestCLIErrorHandling:
         
         assert result.exit_code != 0
 
-    @patch("friday.cli.CrawlerService")
+    @patch("friday.cli.WebCrawler")
     def test_crawler_error(self, mock_crawler, runner):
         """Test crawler error handling."""
         mock_crawler_instance = MagicMock()
@@ -238,7 +238,7 @@ class TestCLIConfiguration:
 
     def test_provider_options(self, runner):
         """Test that valid provider options are accepted."""
-        with patch("friday.cli.CrawlerService") as mock_crawler:
+        with patch("friday.cli.WebCrawler") as mock_crawler:
             mock_crawler_instance = MagicMock()
             mock_crawler_instance.crawl.return_value = {}
             mock_crawler.return_value = mock_crawler_instance
@@ -255,7 +255,7 @@ class TestCLIConfiguration:
 
     def test_max_pages_validation(self, runner):
         """Test max pages parameter validation."""
-        with patch("friday.cli.CrawlerService"):
+        with patch("friday.cli.WebCrawler"):
             # Test with negative number
             result = runner.invoke(app, [
                 "crawl",

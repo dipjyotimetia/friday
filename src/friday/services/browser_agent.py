@@ -16,7 +16,6 @@ import yaml
 from browser_use import Agent, BrowserSession
 from browser_use.browser.profile import BrowserProfile
 from browser_use.llm import ChatGoogle, ChatOllama, ChatOpenAI
-from langchain_mistralai import ChatMistralAI
 
 from friday.api.schemas.browser_test import (
     BrowserTestReport,
@@ -60,7 +59,7 @@ class BrowserTestingAgent:
         self.headless = headless
         self.screenshot_dir = Path(screenshot_dir)
         self.timeout = timeout
-        self.settings = Settings()
+        self.settings = Settings()  # type: ignore
         self.execution_id = str(uuid.uuid4())
 
         # Create screenshot directory
@@ -86,21 +85,14 @@ class BrowserTestingAgent:
             )
         elif self.provider == "gemini":
             return ChatGoogle(
-                model="gemini-2.5-flash",
+                model="gemini-1.5-flash",
                 temperature=0.1,
                 api_key=self.settings.google_api_key,
             )
         elif self.provider == "ollama":
             return ChatOllama(
                 model="llama3.1:8b",
-                temperature=0.1,
-                base_url="http://localhost:11434",
-            )
-        elif self.provider == "mistral":
-            return ChatMistralAI(
-                model="mistral-large-latest",
-                temperature=0.1,
-                api_key=self.settings.mistral_api_key,
+                host="http://localhost:11434",
             )
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
@@ -127,10 +119,12 @@ class BrowserTestingAgent:
 
             # Create test suite
             suite = BrowserTestSuite(
+                version=data.get("version", "1.0"),
                 name=data.get("name", "Test Suite"),
                 description=data.get("description"),
                 scenarios=scenarios,
                 global_timeout=data.get("global_timeout", 300),
+                global_take_screenshots=data.get("global_take_screenshots", True),
             )
 
             logger.info(f"Loaded {len(scenarios)} scenarios")
@@ -177,6 +171,7 @@ class BrowserTestingAgent:
                         error_message=str(e),
                         started_at=datetime.now(),
                         completed_at=datetime.now(),
+                        screenshot_path=None,
                     )
                     self.test_results.append(result)
 
@@ -199,7 +194,6 @@ class BrowserTestingAgent:
         # Configure browser profile
         browser_profile = BrowserProfile(
             headless=self.headless,
-            keep_open=False,
         )
 
         # Create browser session
@@ -239,7 +233,7 @@ class BrowserTestingAgent:
             logs.append(f"Navigating to {scenario.url}")
 
             # Navigate to URL
-            await self.current_browser_session.navigate_to(scenario.url)
+            await self.current_browser_session.navigate_to(scenario.url)  # type: ignore
             actions_taken.append(f"Navigated to {scenario.url}")
 
             # Take initial screenshot if enabled
@@ -271,10 +265,6 @@ class BrowserTestingAgent:
             # Execute test using browser-use agent
             logger.info(f"Executing test: {scenario.name}")
             result = await scenario_agent.run(max_steps=20)
-
-            # Extract actions from result
-            if hasattr(result, "actions"):
-                actions_taken.extend([str(action) for action in result.actions])
 
             # Take final screenshot if enabled
             if should_take_screenshots:
@@ -349,44 +339,42 @@ class BrowserTestingAgent:
         Returns:
             Natural language instruction
         """
-        instruction = f"Test: {scenario.requirement}"
+        instruction = f"""
+        Perform the following test:
+        - **Requirement**: {scenario.requirement}
+        """
 
         if scenario.context:
-            instruction += f"\n\nContext: {scenario.context}"
+            instruction += f"- **Context**: {scenario.context}\n"
 
-        # Add detailed steps if provided
         if scenario.steps:
-            instruction += "\n\nDetailed steps to follow:"
+            instruction += "- **Detailed Steps**:\n"
             for i, step in enumerate(scenario.steps, 1):
-                instruction += f"\n{i}. {step}"
+                instruction += f"  {i}. {step}\n"
 
-        # Add expected outcomes
         if scenario.expected_outcomes:
-            instruction += "\n\nExpected outcomes:"
+            instruction += "- **Expected Outcomes**:\n"
             for i, outcome in enumerate(scenario.expected_outcomes, 1):
-                instruction += f"\n{i}. {outcome}"
+                instruction += f"  {i}. {outcome}\n"
         elif scenario.expected_outcome:
-            instruction += f"\n\nExpected outcome: {scenario.expected_outcome}"
+            instruction += f"- **Expected Outcome**: {scenario.expected_outcome}\n"
 
-        # Add screenshot instruction
         if scenario.take_screenshots:
-            instruction += "\n\nImportant: Take screenshots during key steps and at completion for documentation."
+            instruction += (
+                "- **Note**: Capture screenshots at key steps and upon completion.\n"
+            )
 
         # Add test type specific instructions
         if scenario.test_type == TestType.FUNCTIONAL:
-            instruction += "\n\nFocus on testing core functionality and user workflows."
+            instruction += "- **Test Type**: Functional - Focus on core functionality and user workflows.\n"
         elif scenario.test_type == TestType.UI:
-            instruction += (
-                "\n\nFocus on testing user interface elements and visual components."
-            )
+            instruction += "- **Test Type**: UI - Focus on user interface elements and visual components.\n"
         elif scenario.test_type == TestType.INTEGRATION:
-            instruction += (
-                "\n\nFocus on testing component interactions and integrations."
-            )
+            instruction += "- **Test Type**: Integration - Focus on component interactions and integrations.\n"
         elif scenario.test_type == TestType.ACCESSIBILITY:
-            instruction += "\n\nFocus on testing accessibility features and compliance."
+            instruction += "- **Test Type**: Accessibility - Focus on accessibility features and compliance.\n"
         elif scenario.test_type == TestType.PERFORMANCE:
-            instruction += "\n\nFocus on testing performance and responsiveness."
+            instruction += "- **Test Type**: Performance - Focus on performance and responsiveness.\n"
 
         return instruction
 
@@ -441,9 +429,8 @@ class BrowserTestingAgent:
 
             # Create directory if needed
             filepath.parent.mkdir(parents=True, exist_ok=True)
-
-            # Take screenshot
-            screenshot_b64 = await self.current_browser_session.take_screenshot()
+            logger.info(f"Capturing screenshot: {filepath}")
+            screenshot_b64 = await self.current_browser_session.take_screenshot()  # type: ignore
 
             # Save base64 screenshot as PNG
             import base64
@@ -456,7 +443,7 @@ class BrowserTestingAgent:
 
         except Exception as e:
             logger.error(f"Failed to capture screenshot: {e}")
-            return None
+            return None  # type: ignore
 
     async def _generate_report(
         self, suite: BrowserTestSuite, start_time: datetime
