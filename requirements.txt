@@ -466,7 +466,7 @@ parsel==1.10.0
     # via
     #   itemloaders
     #   scrapy
-pillow==11.2.1
+pillow==11.3.0
     # via sentence-transformers
 pip==25.1.1
     # via pip-api
@@ -766,7 +766,7 @@ typing-inspection==0.4.1
     # via
     #   pydantic
     #   pydantic-settings
-urllib3==2.4.0
+urllib3==2.5.0
     # via
     #   kubernetes
     #   pygithub
