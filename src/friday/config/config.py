@@ -1,8 +1,9 @@
 """Production-grade configuration management with validation and type safety."""
 
 from typing import Optional
-from pydantic import field_validator, Field, ConfigDict
-from pydantic_settings import BaseSettings
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -20,19 +21,22 @@ class Settings(BaseSettings):
 
     # Confluence configuration (optional)
     confluence_url: Optional[str] = Field(default=None, alias="CONFLUENCE_URL")
-    confluence_username: Optional[str] = Field(default=None, alias="CONFLUENCE_USERNAME")
+    confluence_username: Optional[str] = Field(
+        default=None, alias="CONFLUENCE_USERNAME"
+    )
     confluence_api_token: Optional[str] = Field(
         default=None, alias="CONFLUENCE_API_TOKEN"
     )
 
     # GitHub configuration (optional)
     github_username: Optional[str] = Field(default=None, alias="GITHUB_USERNAME")
-    github_access_token: Optional[str] = Field(default=None, alias="GITHUB_ACCESS_TOKEN")
+    github_access_token: Optional[str] = Field(
+        default=None, alias="GITHUB_ACCESS_TOKEN"
+    )
 
     # LLM API keys (at least one required)
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     google_api_key: Optional[str] = Field(default=None, alias="GOOGLE_API_KEY")
-    mistral_api_key: Optional[str] = Field(default=None, alias="MISTRAL_API_KEY")
 
     # Google Cloud configuration
     google_cloud_project: Optional[str] = Field(
@@ -43,7 +47,9 @@ class Settings(BaseSettings):
     # API configuration
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")
     api_port: int = Field(default=8080, alias="API_PORT")
-    allowed_origins: str = Field(default="http://localhost:3000", alias="ALLOWED_ORIGINS")
+    allowed_origins: str = Field(
+        default="http://localhost:3000", alias="ALLOWED_ORIGINS"
+    )
 
     # Database configuration
     database_url: str = Field(default="sqlite:///./friday.db", alias="DATABASE_URL")
@@ -81,7 +87,7 @@ class Settings(BaseSettings):
 
     def validate_llm_providers(self):
         """Ensure at least one LLM provider is configured."""
-        providers = [self.openai_api_key, self.google_api_key, self.mistral_api_key]
+        providers = [self.openai_api_key, self.google_api_key, self.openai_api_key]
         if not any(providers):
             raise ValueError("At least one LLM provider API key must be configured")
 
@@ -102,15 +108,13 @@ class Settings(BaseSettings):
         """Check if GitHub integration is enabled."""
         return all([self.github_username, self.github_access_token])
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False,
-        extra="ignore"
+    model_config = SettingsConfigDict(
+        env_file=".env", case_sensitive=False, extra="ignore"
     )
 
 
 # Global settings instance
-settings = Settings()
+settings = Settings()  # type: ignore
 
 # Validate LLM providers on startup
 settings.validate_llm_providers()
@@ -129,4 +133,3 @@ GITHUB_USERNAME = settings.github_username
 GITHUB_ACCESS_TOKEN = settings.github_access_token
 GOOGLE_API_KEY = settings.google_api_key
 OPENAI_API_KEY = settings.openai_api_key
-MISTRAL_API_KEY = settings.mistral_api_key

@@ -16,6 +16,14 @@ export const API_ENDPOINTS = {
   GENERATE: '/api/v1/generate',
   CRAWL: '/api/v1/crawl',
   TEST_API: '/api/v1/testapi',
+  BROWSER_TEST: {
+    UPLOAD_YAML: '/api/v1/browser-test/yaml/upload',
+    EXECUTE_YAML: '/api/v1/browser-test/yaml/execute',
+    EXECUTION_STATUS: '/api/v1/browser-test/execution',
+    GENERATE_REPORT: '/api/v1/browser-test/report',
+    HEALTH: '/api/v1/browser-test/health',
+    WS_BASE: '/api/v1/browser-test/ws',
+  },
 } as const;
 
 // AI Providers

@@ -1,0 +1,23 @@
+version: "1.0"
+name: "Enhanced Test Suite"
+description: "Testing enhanced YAML structure with all new features"
+global_timeout: 300
+global_take_screenshots: true
+scenarios:
+  - name: "UI Responsiveness Test"
+    requirement: "Test responsive design elements"
+    url: "https://getbootstrap.com"
+    test_type: "ui"
+    take_screenshots: true
+    steps:
+      - "Load the Bootstrap homepage"
+      - "Verify navigation menu is visible"
+      - "Check main content area loads"
+      - "Verify responsive grid examples"
+    expected_outcomes:
+      - "Page should load completely"
+      - "Navigation should be accessible"
+      - "Content should be properly formatted"
+      - "Grid examples should display correctly"
+    context: "Testing Bootstrap documentation site for responsive design"
+    timeout: 45

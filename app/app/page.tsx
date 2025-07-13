@@ -15,10 +15,11 @@ import {
   TestGenerator,
   WebCrawler,
   ApiTester,
+  BrowserTester,
   OutputViewer,
   LogViewer,
 } from '@/components';
-import { Bot, Globe, TestTube, Zap } from 'lucide-react';
+import { Bot, Globe, TestTube, Zap, Monitor } from 'lucide-react';
 
 export default function HomePage() {
   const [outputText, setOutputText] = useState('');
@@ -90,7 +91,7 @@ export default function HomePage() {
             className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed"
           >
             Your AI-powered testing companion for generating test cases,
-            crawling websites, and testing APIs with intelligent automation.
+            crawling websites, testing APIs, and automating browser testing with intelligent automation.
           </motion.p>
 
           {/* Animated particles background */}
@@ -132,7 +133,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              <TabsList className="grid w-full grid-cols-3 mb-8 max-w-2xl mx-auto">
+              <TabsList className="grid w-full grid-cols-4 mb-8 max-w-4xl mx-auto">
                 <TabsTrigger
                   value="generator"
                   className="flex items-center gap-3 relative overflow-hidden"
@@ -184,6 +185,23 @@ export default function HomePage() {
                     transition={{ duration: 0.3 }}
                   />
                 </TabsTrigger>
+                <TabsTrigger
+                  value="browser"
+                  className="flex items-center gap-3 relative overflow-hidden"
+                >
+                  <motion.div
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Monitor className="h-5 w-5" />
+                  </motion.div>
+                  <span className="font-medium">Browser Tester</span>
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 opacity-0"
+                    whileHover={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </TabsTrigger>
               </TabsList>
             </motion.div>
 
@@ -224,6 +242,16 @@ export default function HomePage() {
                   setOutputText={setOutputText}
                   setIsGenerating={setIsGenerating}
                 />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="browser" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <BrowserTester />
               </motion.div>
             </TabsContent>
           </Tabs>
