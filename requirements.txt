@@ -170,7 +170,7 @@ google-crc32c==1.7.1
     # via
     #   google-cloud-storage
     #   google-resumable-media
-google-genai==1.20.0
+google-genai==1.25.0
     # via
     #   friday-cli
     #   google-cloud-aiplatform
