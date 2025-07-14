@@ -487,7 +487,7 @@ propcache==0.3.2
     # via
     #   aiohttp
     #   yarl
-protego==0.4.0
+protego==0.5.0
     # via scrapy
 proto-plus==1.26.1
     # via
