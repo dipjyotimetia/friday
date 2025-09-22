@@ -657,7 +657,7 @@ scipy==1.15.3
     #   sentence-transformers
 scrapy==2.13.2
     # via friday-cli
-sentence-transformers==4.1.0
+sentence-transformers==5.1.1
     # via friday-cli
 service-identity==24.2.0
     # via scrapy
