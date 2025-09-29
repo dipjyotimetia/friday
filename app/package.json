@@ -50,7 +50,7 @@
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "framer-motion": "^11.15.0",
+    "framer-motion": "^12.23.22",
     "lucide-react": "^0.513.0",
     "next": "^15.1.6",
     "react": "^19.0.0",
