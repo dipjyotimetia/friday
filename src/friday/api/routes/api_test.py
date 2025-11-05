@@ -128,6 +128,7 @@ async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_reque
             spec_path.unlink()
 
         return {
+            "success": True,
             "message": f"Test report generated at {api_test_request.output}",
             "total_tests": total_tests,
             "paths_tested": paths_tested,
@@ -139,5 +140,8 @@ async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_reque
             ),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error in API test endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

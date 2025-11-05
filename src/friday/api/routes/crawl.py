@@ -50,11 +50,14 @@ async def crawl_site(request: CrawlRequest):
         stats = embeddings_service.get_collection_stats()
 
         return {
+            "success": True,
             "pages_processed": len(pages_data),
             "total_documents": stats["total_documents"],
             "embedding_dimension": stats["embedding_dimension"],
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in crawl endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

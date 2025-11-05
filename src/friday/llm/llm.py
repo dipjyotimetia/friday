@@ -18,10 +18,11 @@ from typing import Callable, Literal
 from langchain_community.cache import SQLiteCache
 from langchain_core.globals import set_llm_cache
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_mistralai import ChatMistralAI
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from friday.config.config import GOOGLE_API_KEY, OPENAI_API_KEY
+from friday.config.config import GOOGLE_API_KEY, MISTRAL_API_KEY, OPENAI_API_KEY
 
 # Setup cache directory for LLM responses
 cache_dir = Path.cwd() / "data" / "cache"
@@ -60,6 +61,13 @@ _llm_providers: dict[ModelProvider, LLMClient] = {
         temperature=0,
         cache=True,
     ),
+    "mistral": lambda: ChatMistralAI(
+        model="mistral-large-latest",
+        temperature=0,
+        timeout=None,
+        max_retries=2,
+        api_key=MISTRAL_API_KEY,  # type: ignore
+    ),
 }
 
 
@@ -86,7 +94,7 @@ def get_llm_client(provider: ModelProvider) -> object:
         return llm_client_factory()
     except KeyError:
         raise ValueError(
-            "Unsupported provider. Use 'gemini', 'openai', 'ollama' or 'mistral'."
+            "Unknown provider. Use 'gemini', 'openai', 'ollama' or 'mistral'."
         )
 
 

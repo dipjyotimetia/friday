@@ -13,6 +13,7 @@ class ApiTestRequest(BaseModel):
 
 
 class ApiTestResponse(BaseModel):
+    success: bool = True
     message: str
     total_tests: int
     paths_tested: int

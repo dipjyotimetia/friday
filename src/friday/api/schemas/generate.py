@@ -13,4 +13,5 @@ class GenerateRequest(BaseModel):
 
 
 class GenerateResponse(BaseModel):
+    success: bool = True
     message: str

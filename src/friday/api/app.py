@@ -70,7 +70,7 @@ async def friday_error_handler(request: Request, exc: FridayError):
             error_code=exc.error_code,
             details=exc.context,
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 
@@ -96,7 +96,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
         status_code=422,
         content=ValidationErrorResponse(
             errors=errors, request_id=getattr(request.state, "request_id", None)
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 
@@ -111,7 +111,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             message=exc.detail,
             error_code=f"HTTP_{exc.status_code}",
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 
@@ -126,7 +126,7 @@ async def general_exception_handler(request: Request, exc: Exception):
             message="An unexpected error occurred",
             error_code="INTERNAL_ERROR",
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 
@@ -138,6 +138,16 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "message": "Welcome to Friday - AI-powered Testing Agent",
+        "version": __version__,
+        "docs": "/docs",
+    }
+
 
 app.include_router(generate.router, prefix="/api/v1", tags=["Test Generation"])
 app.include_router(crawl.router, prefix="/api/v1", tags=["Web Crawling"])

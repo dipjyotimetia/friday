@@ -27,7 +27,7 @@ class TestJiraConnector:
                 username="test@example.com",
                 password="test-token"
             )
-            assert connector.jira == mock_jira_instance
+            assert connector.client == mock_jira_instance
 
     @patch("friday.connectors.jira_client.Jira")
     def test_get_issue_success(self, mock_jira_class):
@@ -58,9 +58,9 @@ class TestJiraConnector:
             "JIRA_API_TOKEN": "test-token"
         }):
             connector = JiraConnector()
-            result = connector.get_issue("TEST-123")
-            
-            mock_jira_instance.issue.assert_called_once_with("TEST-123")
+            result = connector.get_issue_details("TEST-123")
+
+            mock_jira_instance.issue.assert_called_once_with("TEST-123", expand="changelog,renderedFields")
             assert result == mock_issue
 
     @patch("friday.connectors.jira_client.Jira")
@@ -76,39 +76,35 @@ class TestJiraConnector:
             "JIRA_API_TOKEN": "test-token"
         }):
             connector = JiraConnector()
-            
+
             with pytest.raises(Exception, match="Issue not found"):
-                connector.get_issue("NONEXISTENT-123")
+                connector.get_issue_details("NONEXISTENT-123")
 
     @patch("friday.connectors.jira_client.Jira")
     def test_extract_acceptance_criteria(self, mock_jira_class):
         """Test acceptance criteria extraction."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
-        # Mock issue with acceptance criteria in description
+
+        # Mock issue with acceptance criteria in custom field
         mock_issue = {
             "fields": {
-                "description": """
-                User Story: As a user, I want to login to the system
-                
-                Acceptance Criteria:
-                1. User can enter username and password
-                2. System validates credentials
-                3. User is redirected to dashboard on success
-                4. Error message shown on failure
-                """
+                "customfield_10016": """User can enter username and password
+System validates credentials
+User is redirected to dashboard on success
+Error message shown on failure"""
             }
         }
-        
+        mock_jira_instance.issue.return_value = mock_issue
+
         with patch.dict("os.environ", {
             "JIRA_URL": "https://test.atlassian.net",
             "JIRA_USERNAME": "test@example.com",
             "JIRA_API_TOKEN": "test-token"
         }):
             connector = JiraConnector()
-            criteria = connector.extract_acceptance_criteria(mock_issue)
-            
+            criteria = connector.extract_acceptance_criteria("TEST-123")
+
             assert "User can enter username and password" in criteria
             assert "System validates credentials" in criteria
             assert "Error message shown on failure" in criteria
@@ -118,48 +114,51 @@ class TestJiraConnector:
         """Test acceptance criteria extraction when none exist."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
+
         # Mock issue without acceptance criteria
         mock_issue = {
             "fields": {
-                "description": "Simple description without acceptance criteria"
+                "customfield_10016": None
             }
         }
-        
+        mock_jira_instance.issue.return_value = mock_issue
+
         with patch.dict("os.environ", {
             "JIRA_URL": "https://test.atlassian.net",
             "JIRA_USERNAME": "test@example.com",
             "JIRA_API_TOKEN": "test-token"
         }):
             connector = JiraConnector()
-            criteria = connector.extract_acceptance_criteria(mock_issue)
-            
-            # Should return the description or empty string
-            assert isinstance(criteria, str)
+            criteria = connector.extract_acceptance_criteria("TEST-123")
+
+            # Should return empty list
+            assert isinstance(criteria, list)
+            assert criteria == []
 
     @patch("friday.connectors.jira_client.Jira")
     def test_extract_acceptance_criteria_empty_description(self, mock_jira_class):
         """Test acceptance criteria extraction with empty description."""
         mock_jira_instance = MagicMock()
         mock_jira_class.return_value = mock_jira_instance
-        
-        # Mock issue with empty description
+
+        # Mock issue with empty acceptance criteria field
         mock_issue = {
             "fields": {
-                "description": None
+                "customfield_10016": ""
             }
         }
-        
+        mock_jira_instance.issue.return_value = mock_issue
+
         with patch.dict("os.environ", {
             "JIRA_URL": "https://test.atlassian.net",
             "JIRA_USERNAME": "test@example.com",
             "JIRA_API_TOKEN": "test-token"
         }):
             connector = JiraConnector()
-            criteria = connector.extract_acceptance_criteria(mock_issue)
-            
-            # Should handle None description gracefully
-            assert criteria == ""
+            criteria = connector.extract_acceptance_criteria("TEST-123")
+
+            # Should handle empty string gracefully
+            assert criteria == []
 
 
 class TestJiraConnectorConfiguration:
