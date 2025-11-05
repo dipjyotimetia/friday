@@ -239,7 +239,7 @@ groq==0.33.0
     # via browser-use
 grpc-google-iam-v1==0.14.2
     # via google-cloud-resource-manager
-grpcio==1.73.1
+grpcio==1.76.0
     # via
     #   chromadb
     #   google-ai-generativelanguage
