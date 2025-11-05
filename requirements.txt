@@ -481,7 +481,7 @@ ollama==0.6.0
     # via
     #   browser-use
     #   langchain-ollama
-onnxruntime==1.22.0
+onnxruntime==1.23.2
     # via chromadb
 openai==1.109.1
     # via
