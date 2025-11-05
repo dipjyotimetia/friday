@@ -111,15 +111,23 @@ class TestCLI:
         # Should show error about missing required parameters
 
     @patch("friday.cli.WebCrawler")
-    def test_crawl_command(self, mock_crawler, runner):
+    @patch("friday.cli.EmbeddingsService")
+    def test_crawl_command(self, mock_embeddings, mock_crawler, runner):
         """Test crawl command."""
-        # Mock crawler service
+        # Mock crawler
         mock_crawler_instance = MagicMock()
-        mock_crawler_instance.crawl.return_value = {
-            "pages_crawled": 5,
-            "embeddings_created": 10
-        }
+        mock_crawler_instance.crawl.return_value = [
+            {"url": "https://example.com", "text": "Test", "title": "Test"}
+        ]
         mock_crawler.return_value = mock_crawler_instance
+
+        # Mock embeddings service
+        mock_embeddings_instance = MagicMock()
+        mock_embeddings_instance.get_collection_stats.return_value = {
+            "total_documents": 1,
+            "embedding_dimension": 1536
+        }
+        mock_embeddings.return_value = mock_embeddings_instance
 
         result = runner.invoke(app, [
             "crawl",

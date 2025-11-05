@@ -140,5 +140,8 @@ async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_reque
             ),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error in API test endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

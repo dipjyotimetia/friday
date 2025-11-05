@@ -70,7 +70,7 @@ async def friday_error_handler(request: Request, exc: FridayError):
             error_code=exc.error_code,
             details=exc.context,
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 
@@ -96,7 +96,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
         status_code=422,
         content=ValidationErrorResponse(
             errors=errors, request_id=getattr(request.state, "request_id", None)
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 
@@ -111,7 +111,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             message=exc.detail,
             error_code=f"HTTP_{exc.status_code}",
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 
@@ -126,7 +126,7 @@ async def general_exception_handler(request: Request, exc: Exception):
             message="An unexpected error occurred",
             error_code="INTERNAL_ERROR",
             request_id=getattr(request.state, "request_id", None),
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 

@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 
 @router.post("/generate", response_model=GenerateResponse)
 async def generate_tests(request: GenerateRequest):
-    try:
-        if not request.jira_key and not request.gh_issue:
-            raise HTTPException(
-                status_code=400, detail="Either jira_key or gh_issue must be provided"
-            )
+    if not request.jira_key and not request.gh_issue:
+        raise HTTPException(
+            status_code=400, detail="Either jira_key or gh_issue must be provided"
+        )
 
+    try:
         jira = JiraConnector()
         confluence = ConfluenceConnector()
         github = GitHubConnector()
@@ -49,5 +49,8 @@ async def generate_tests(request: GenerateRequest):
             "success": True,
             "message": f"Successfully generated test cases to {request.output}",
         }
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error generating tests: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
