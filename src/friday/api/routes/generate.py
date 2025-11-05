@@ -45,6 +45,9 @@ async def generate_tests(request: GenerateRequest):
         )
 
         save_test_cases_as_markdown(test_cases, request.output)
-        return {"message": f"Successfully generated test cases to {request.output}"}
+        return {
+            "success": True,
+            "message": f"Successfully generated test cases to {request.output}",
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

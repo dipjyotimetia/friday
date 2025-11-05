@@ -67,7 +67,7 @@ class TestAPIIntegration:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
-        assert "Generated test cases" in data["message"]
+        assert "generated test cases" in data["message"].lower()
 
     def test_generate_endpoint_missing_params(self, client):
         """Test generate endpoint with missing parameters."""

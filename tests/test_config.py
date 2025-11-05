@@ -27,21 +27,20 @@ class TestSettings:
         assert settings.google_cloud_region == "us-central1"
         assert settings.database_url == "sqlite:///./friday.db"
 
-    def test_required_jira_fields(self):
-        """Test that JIRA fields are required."""
-        # Clear required environment variables
+    def test_optional_jira_fields(self):
+        """Test that JIRA fields are optional."""
+        # Clear JIRA environment variables
         for key in ["JIRA_URL", "JIRA_USERNAME", "JIRA_API_TOKEN"]:
             if key in os.environ:
                 del os.environ[key]
-        
-        with pytest.raises(ValidationError) as exc_info:
-            Settings()
-        
-        # Check that all required JIRA fields are mentioned in the error
-        error_str = str(exc_info.value)
-        assert "jira_url" in error_str.lower()
-        assert "jira_username" in error_str.lower()
-        assert "jira_api_token" in error_str.lower()
+
+        # Should not raise an error since JIRA fields are optional
+        settings = Settings()
+
+        assert settings.jira_url is None
+        assert settings.jira_username is None
+        assert settings.jira_api_token is None
+        assert settings.jira_enabled is False
 
     def test_environment_variable_override(self):
         """Test that environment variables override defaults."""

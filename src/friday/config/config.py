@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     # LLM API keys (at least one required)
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     google_api_key: Optional[str] = Field(default=None, alias="GOOGLE_API_KEY")
+    mistral_api_key: Optional[str] = Field(default=None, alias="MISTRAL_API_KEY")
 
     # Google Cloud configuration
     google_cloud_project: Optional[str] = Field(
@@ -144,3 +145,4 @@ GITHUB_USERNAME = settings.github_username
 GITHUB_ACCESS_TOKEN = settings.github_access_token
 GOOGLE_API_KEY = settings.google_api_key
 OPENAI_API_KEY = settings.openai_api_key
+MISTRAL_API_KEY = settings.mistral_api_key

@@ -139,6 +139,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "message": "Welcome to Friday - AI-powered Testing Agent",
+        "version": __version__,
+        "docs": "/docs",
+    }
+
+
 app.include_router(generate.router, prefix="/api/v1", tags=["Test Generation"])
 app.include_router(crawl.router, prefix="/api/v1", tags=["Web Crawling"])
 app.include_router(health.router, prefix="/api/v1", tags=["Health Check"])

@@ -128,6 +128,7 @@ async def test_api(api_test_request: ApiTestRequest = Depends(get_api_test_reque
             spec_path.unlink()
 
         return {
+            "success": True,
             "message": f"Test report generated at {api_test_request.output}",
             "total_tests": total_tests,
             "paths_tested": paths_tested,
