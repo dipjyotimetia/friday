@@ -1,502 +1,335 @@
-# Browser Testing Guide
-
-This guide covers the browser testing capabilities of FRIDAY, including setup, usage, troubleshooting, and best practices.
+# Browser Testing Agent Documentation
 
 ## Overview
 
-FRIDAY's browser testing feature provides AI-powered browser automation using natural language test descriptions. It combines the power of large language models with Playwright browser automation to execute complex user workflows.
+FRIDAY's Browser Testing Agent provides AI-powered automated browser testing capabilities using natural language instructions. Built on top of the `browser-use` library and Playwright, it enables comprehensive UI testing without traditional test scripting.
 
-### Key Features
+## Features
 
-- **Natural Language Testing**: Write test requirements in plain English
-- **AI-Powered Automation**: Uses LLMs to intelligently interact with web pages
-- **Multi-Modal Testing**: Supports functional, UI/UX, integration, accessibility, and performance testing
-- **Visual Documentation**: Automatic screenshot capture for test evidence
-- **Real-time Monitoring**: Live progress tracking via WebSocket connections
-- **Multiple Execution Modes**: Sequential and parallel test execution
-- **Comprehensive Reporting**: JSON, Markdown, and HTML report formats
+### Core Capabilities
+- **Natural Language Testing**: Describe test scenarios in plain English
+- **Multi-Browser Support**: Chromium-based browsers with headless and visible modes
+- **Visual Testing**: Automatic screenshot capture during test execution
+- **Batch Testing**: Execute multiple test cases in sequence
+- **Real-time Monitoring**: Live logs and progress tracking via WebSocket
+- **Comprehensive Reporting**: Detailed test reports with success/failure analysis
+
+### Test Types Supported
+- **Functional Testing**: Core application functionality verification
+- **UI/UX Testing**: User interface and experience validation
+- **Integration Testing**: Component interaction testing
+- **Accessibility Testing**: WCAG compliance and accessibility checks
+- **Performance Testing**: Basic performance and responsiveness tests
 
 ## Architecture
 
 ### Components
 
-1. **Browser Agent** (`src/friday/services/browser_agent.py`)
-   - Core AI testing logic using browser-use library
-   - LLM integration for natural language processing
-   - Screenshot capture and test execution
+```
+Browser Testing Agent
+├── backend/
+│   ├── services/browser_agent.py      # Core browser testing logic
+│   ├── api/routes/browser_test.py     # REST API endpoints
+│   └── api/schemas/browser_test.py    # Pydantic models
+├── frontend/
+│   ├── components/features/browser-tester/   # React UI components
+│   └── types/index.ts                 # TypeScript type definitions
+└── cli/
+    └── cli.py                         # Command-line interface
+```
 
-2. **API Layer** (`src/friday/api/routes/browser_test.py`)
-   - REST endpoints for YAML upload and test execution
-   - WebSocket support for real-time updates
-   - Background task management
-
-3. **Frontend Interface** (`app/components/features/browser-tester/`)
-   - Web UI for test management
-   - File upload and execution control
-   - Real-time monitoring and results display
-
-4. **CLI Interface** (`src/friday/cli.py`)
-   - Command-line test execution
-   - Batch processing capabilities
+### Dependencies
+- **browser-use**: AI agent framework for browser automation
+- **playwright**: Browser automation engine
+- **langchain**: LLM integration and prompt management
+- **fastapi**: REST API framework
+- **react**: Frontend user interface
 
 ## Quick Start
 
-### 1. Environment Setup
+### CLI Commands (Recommended)
+
+The Friday CLI provides streamlined access to browser testing functionality:
 
 ```bash
-# Install dependencies
+# Start the web UI for interactive test creation
+friday webui
+
+# Run browser tests from YAML scenarios
+friday browser-test scenarios.yaml --provider openai
+
+# Open web UI directly to browser testing
+friday open --feature browser
+```
+
+For complete CLI documentation, see [CLI Reference](CLI_REFERENCE.md).
+
+## Installation & Setup
+
+### Prerequisites
+```bash
+# Install Python dependencies
 uv sync
 
 # Install Playwright browsers
 uv run playwright install chromium --with-deps
-
-# Set up environment variables
-cp .env.example .env
-# Configure OPENAI_API_KEY or other LLM provider keys
 ```
 
-### 2. Verify Installation
-
+### Environment Variables
+Required environment variables for LLM providers:
 ```bash
-# Check browser testing health
-curl http://localhost:8080/api/v1/browser-test/health
-
-# Expected response:
-{
-  "status": "healthy",
-  "browser_available": true,
-  "playwright_version": "1.53.0",
-  "browser_use_version": "0.4.4",
-  "supported_providers": ["openai", "gemini", "ollama", "mistral"]
-}
+OPENAI_API_KEY=your_openai_key        # For OpenAI GPT models
+GOOGLE_API_KEY=your_google_key        # For Google Gemini models
+MISTRAL_API_KEY=your_mistral_key      # For Mistral AI models
 ```
 
-### 3. Create a Test Suite
+## Usage
 
-Create a YAML file with your test scenarios:
+### Command Line Interface
 
-```yaml
-name: "Example Test Suite"
-description: "Demonstration of browser testing capabilities"
+#### Basic Usage
+```bash
+# Create a simple test scenario YAML file
+cat > navigation_test.yaml << EOF
+name: "Navigation Test Suite"
 scenarios:
-  - name: "Basic Page Load Test"
-    requirement: "Verify that the homepage loads successfully"
+  - name: "Main Navigation Test"
+    requirement: "Test the main navigation menu works correctly"
     url: "https://example.com"
     test_type: "functional"
-    context: "Check that the page loads and displays expected content"
-    expected_outcome: "Page loads within 5 seconds with proper title"
-    timeout: 30
-    take_screenshots: true
+EOF
 
-  - name: "Search Functionality Test"
-    requirement: "Test search functionality on DuckDuckGo"
-    url: "https://duckduckgo.com"
-    test_type: "functional"
-    context: "Search for 'AI testing' and verify results appear"
-    expected_outcome: "Search results are displayed with relevant links"
-    timeout: 45
-    take_screenshots: true
-```
+# Run the test
+uv run friday browser-test navigation_test.yaml
 
-### 4. Execute Tests
-
-#### Via CLI
-```bash
-uv run friday browser-test test_suite.yaml --provider openai --headless
-```
-
-#### Via Web Interface
-1. Start the services:
-   ```bash
-   uv run friday webui
-   ```
-2. Open http://localhost:3000
-3. Navigate to "Browser Tester" tab
-4. Upload your YAML file
-5. Configure execution settings
-6. Monitor real-time progress
-
-#### Via API
-```bash
-# Upload YAML
-curl -X POST http://localhost:8080/api/v1/browser-test/yaml/upload \
-  -H "Content-Type: application/json" \
-  -d '{"filename": "test.yaml", "content": "..."}'
-
-# Execute tests
-curl -X POST http://localhost:8080/api/v1/browser-test/yaml/execute \
-  -H "Content-Type: application/json" \
-  -d '{"file_id": "your-file-id", "provider": "openai", "headless": true}'
-```
-
-## YAML Configuration Reference
-
-### Test Suite Structure
-
-```yaml
-name: "Test Suite Name"                    # Required: Suite identifier
-description: "Suite description"           # Optional: Suite description
-version: "1.0"                            # Optional: Schema version
-global_timeout: 300                       # Optional: Global timeout in seconds
-global_take_screenshots: true            # Optional: Global screenshot setting
-
-scenarios:                                # Required: List of test scenarios
-  - name: "Test Name"                     # Required: Scenario identifier
-    requirement: "What to test"           # Required: Natural language requirement
-    url: "https://example.com"            # Required: Target URL
-    test_type: "functional"               # Required: Type of test
-    context: "Additional context"         # Optional: Extra context for AI
-    expected_outcome: "Expected result"   # Optional: Success criteria
-    timeout: 30                          # Optional: Scenario timeout
-    take_screenshots: true               # Optional: Screenshot setting
-    steps:                               # Optional: Specific test steps
-      - "Navigate to login page"
-      - "Enter valid credentials"
-      - "Click login button"
-    expected_outcomes:                   # Optional: Multiple success criteria
-      - "User is logged in successfully"
-      - "Dashboard is displayed"
-```
-
-### Test Types
-
-- **functional**: Core application workflows and user interactions
-- **ui**: Visual elements, layout, and responsive design
-- **integration**: Component interactions and API integrations
-- **accessibility**: WCAG compliance and screen reader support
-- **performance**: Page load times and responsiveness
-
-### Advanced Configuration
-
-```yaml
-# Enhanced scenario with all options
+# Login flow test with context
+cat > login_test.yaml << EOF
+name: "Login Test Suite"
 scenarios:
-  - name: "Complex Login Test"
-    requirement: "Test user authentication workflow"
+  - name: "User Login Test"
+    requirement: "Test user login functionality"
     url: "https://app.example.com/login"
     test_type: "functional"
-    context: |
-      Use test credentials:
-      Username: test@example.com
-      Password: TestPass123
-      Verify redirect to dashboard after login
-    expected_outcome: "Successfully logged in and redirected to dashboard"
-    timeout: 60
-    take_screenshots: true
-    steps:
-      - "Click on email input field"
-      - "Type test@example.com"
-      - "Click on password field"
-      - "Type TestPass123"
-      - "Click login button"
-      - "Wait for dashboard to load"
-    expected_outcomes:
-      - "Login form accepts credentials"
-      - "No error messages are displayed"
-      - "Dashboard loads with user information"
-      - "Navigation menu is visible"
+    context: "Use demo credentials: username 'demo', password 'demo123'"
+EOF
+
+uv run friday browser-test login_test.yaml --provider openai
+
+# UI test with visible browser
+cat > ui_test.yaml << EOF
+name: "UI Test Suite"
+scenarios:
+  - name: "Responsive Design Test"
+    requirement: "Verify responsive design on different screen sizes"
+    url: "https://example.com"
+    test_type: "ui"
+EOF
+
+uv run friday browser-test ui_test.yaml --no-headless --output ui_test_report.md
 ```
 
-## Web Interface Guide
+#### Advanced Options
+```bash
+uv run friday browser-test scenarios.yaml \
+  --provider [openai|gemini|ollama|mistral] \
+  --headless/--no-headless \
+  --output report.md
 
-### Upload Tab
-- **Single File Upload**: Drag and drop or select YAML files
-- **Multiple File Upload**: Upload multiple test suites simultaneously
-- **File Validation**: Real-time YAML syntax checking
-- **Preview**: View parsed test suite structure
+# Example comprehensive YAML structure
+cat > scenarios.yaml << EOF
+name: "Comprehensive Test Suite"
+scenarios:
+  - name: "Test Name"
+    requirement: "Test description"
+    url: "https://example.com"
+    test_type: "functional"
+    context: "Additional context or instructions"
+EOF
+```
 
-### Preview Tab
-- **Suite Overview**: Test suite metadata and configuration
-- **Scenario List**: Individual test scenario details
-- **Validation Status**: Checks for required fields and syntax
+### REST API
 
-### Execution Tab
-- **Provider Selection**: Choose LLM provider (OpenAI, Gemini, etc.)
-- **Execution Mode**: Sequential or parallel execution
-- **Headless Toggle**: Visible or headless browser mode
-- **Real-time Logs**: Live execution progress via WebSocket
-- **Status Monitoring**: Track individual scenario progress
+#### YAML Scenario Upload and Execute
+```bash
+# Upload and execute YAML scenarios
+curl -X POST "http://localhost:8080/api/v1/browser-test/yaml/upload" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@test_scenarios.yaml" \
+  -F "provider=openai" \
+  -F "headless=true" \
+  -F "execute_immediately=true"
+```
 
-### Results Tab
-- **Execution Summary**: Overall test statistics
-- **Individual Results**: Detailed scenario outcomes
-- **Screenshots**: Captured evidence from test execution
-- **Report Generation**: Export results in multiple formats
+#### Execute YAML Content Directly
+```bash
+curl -X POST "http://localhost:8080/api/v1/browser-test/yaml/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "yaml_content": "name: \"Test Suite\"\nscenarios:\n  - name: \"Homepage Test\"\n    requirement: \"Test homepage loads correctly\"\n    url: \"https://example.com\"\n    test_type: \"functional\"\n  - name: \"Contact Form Test\"\n    requirement: \"Test contact form submission\"\n    url: \"https://example.com/contact\"\n    test_type: \"functional\"\n    context: \"Fill out form with test data\"",
+    "provider": "openai",
+    "headless": true
+  }'
+```
+
+### Web Interface
+
+Access the browser testing interface at `http://localhost:3000` and navigate to the "Browser Tests" tab.
+
+#### YAML Scenario Testing
+1. Upload a YAML file with test scenarios or write YAML content directly
+2. Select LLM provider (OpenAI, Gemini, Ollama, Mistral)
+3. Configure execution settings (headless mode, immediate execution)
+4. Execute all tests and monitor real-time progress
+5. View comprehensive results, reports, and screenshots
 
 ## API Reference
 
 ### Endpoints
 
-#### Upload YAML File
-```
-POST /api/v1/browser-test/yaml/upload
-Content-Type: application/json
+#### POST /api/v1/browser-test/yaml/upload
+Upload and optionally execute YAML test scenarios.
 
+**Request:** Multipart form data
+- `file`: YAML file containing test scenarios
+- `provider`: LLM provider (openai, gemini, ollama, mistral)
+- `headless`: Boolean for headless mode
+- `execute_immediately`: Boolean to execute after upload
+
+**Response:**
+```json
 {
-  "filename": "test_suite.yaml",
-  "content": "yaml content as string"
+  "success": true,
+  "message": "Successfully uploaded YAML file with 3 scenarios",
+  "test_suite_name": "Test Suite",
+  "scenarios_count": 3,
+  "scenarios": [...],
+  "execution_results": [...],
+  "report": "# Test Report\n...",
+  "summary": {
+    "total_tests": 3,
+    "passed_tests": 2,
+    "failed_tests": 1,
+    "success_rate": 66.7
+  }
 }
-
-Response:
-{
-  "message": "Successfully uploaded test_suite.yaml",
-  "file_id": "uuid",
-  "parsed_suite": { ... }
-}
 ```
 
-#### Execute Tests
-```
-POST /api/v1/browser-test/yaml/execute
-Content-Type: application/json
+#### POST /api/v1/browser-test/yaml/execute
+Execute test scenarios from YAML content.
 
+**Request Body:**
+```json
 {
-  "file_id": "uuid",
+  "yaml_content": "name: \"Test Suite\"\nscenarios:\n  - name: \"Test\"\n    requirement: \"Test description\"\n    url: \"https://example.com\"\n    test_type: \"functional\"",
   "provider": "openai",
-  "headless": true,
-  "output_format": "json"
+  "headless": true
 }
+```
 
-Response:
+**Response:**
+```json
 {
-  "message": "Browser test execution started",
-  "execution_id": "uuid",
-  "status": "running"
+  "success": true,
+  "message": "Successfully executed 3 scenarios. 2/3 tests passed",
+  "test_suite_name": "Test Suite",
+  "scenarios_count": 3,
+  "results": [...],
+  "report": "# Test Report\n...",
+  "summary": {
+    "total_tests": 3,
+    "passed_tests": 2,
+    "failed_tests": 1,
+    "success_rate": 66.7
+  }
 }
 ```
 
-#### Check Execution Status
+#### GET /api/v1/browser-test/health
+Health check for browser testing service.
+
+## Best Practices
+
+### Writing Effective Test Requirements
+
+#### Good Examples
 ```
-GET /api/v1/browser-test/execution/{execution_id}
-
-Response:
-{
-  "status": "completed",
-  "started_at": "2025-07-05T23:53:44.055637",
-  "completed_at": "2025-07-05T23:54:32.123456",
-  "report": { ... }
-}
-```
-
-#### Generate Report
-```
-POST /api/v1/browser-test/report/{execution_id}
-Content-Type: application/json
-
-{
-  "format": "markdown"
-}
-
-Response:
-{
-  "report": "markdown content",
-  "format": "markdown"
-}
+✅ "Test user login with valid credentials and verify redirection to dashboard"
+✅ "Verify the shopping cart updates correctly when adding/removing items"
+✅ "Test form validation by submitting invalid data and checking error messages"
+✅ "Verify responsive navigation menu works on mobile screen sizes"
 ```
 
-#### Health Check
+#### Avoid These
 ```
-GET /api/v1/browser-test/health
-
-Response:
-{
-  "status": "healthy",
-  "browser_available": true,
-  "playwright_version": "1.53.0",
-  "browser_use_version": "0.4.4",
-  "supported_providers": ["openai", "gemini", "ollama", "mistral"]
-}
+❌ "Test the website"  # Too vague
+❌ "Click button"      # Too specific, not goal-oriented
+❌ "Check everything"  # Unclear scope
 ```
 
-### WebSocket Endpoints
+### Test Context Guidelines
+- Provide specific test data when needed
+- Include expected outcomes
+- Mention any prerequisites or setup requirements
+- Specify user roles or permissions if relevant
 
-#### General Logs
-```
-WS /api/v1/ws/logs
-```
-Streams general application logs for debugging and monitoring.
-
-#### Execution-Specific Logs
-```
-WS /api/v1/browser-test/ws/{execution_id}
-```
-Streams real-time updates for specific test execution:
-- Test progress updates
-- Screenshot notifications
-- Error messages
-- Completion status
+### Performance Considerations
+- Use headless mode for faster execution in CI/CD
+- Add delays between batch tests to avoid overwhelming target sites
+- Consider rate limiting for external websites
+- Monitor resource usage during test execution
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### "Upload failed: Not Found" Error
-**Cause**: Frontend API calls not using proper base URL  
-**Solution**: Fixed in v2025.07.05 - frontend now uses `${API_CONFIG.BASE_URL}${endpoint}`
-
-#### Browser Health Check Fails
-**Cause**: Playwright browsers not installed or corrupted  
-**Solution**:
+#### Browser Installation Problems
 ```bash
+# Reinstall Playwright browsers
 uv run playwright install chromium --with-deps --force
 ```
 
-#### WebSocket Connection Issues
-**Cause**: Incorrect endpoint configuration or CORS settings  
-**Solutions**:
-- Verify backend server is running on port 8080
-- Check CORS configuration includes frontend origins
-- Ensure `.env` has proper `ALLOWED_ORIGINS` setting
+#### LLM Provider Errors
+- Verify API keys are correctly set in environment variables
+- Check API rate limits and quotas
+- Ensure network connectivity to LLM providers
 
-#### Test Execution Hangs
-**Causes**: Network issues, target site blocking, or browser crashes  
-**Solutions**:
-```bash
-# Enable debug logging
-export LOG_LEVEL=DEBUG
+#### Test Execution Failures
+- Check target website accessibility
+- Verify test requirements are clear and specific
+- Review browser console logs for JavaScript errors
+- Increase timeout values for slow-loading pages
 
-# Use headless mode for stability
-uv run friday browser-test test.yaml --headless
-
-# Check target site accessibility
-curl -I https://target-site.com
-```
-
-#### Memory Issues with Large Test Suites
-**Solutions**:
-- Use headless mode: `--headless`
-- Run tests sequentially instead of parallel
-- Reduce timeout values
-- Split large suites into smaller ones
+#### Memory Issues
+- Use headless mode for resource-intensive test suites
+- Limit concurrent test execution
+- Monitor system resources during batch testing
 
 ### Debug Mode
-
-Enable detailed logging for troubleshooting:
+Enable verbose logging for troubleshooting:
 ```bash
 export LOG_LEVEL=DEBUG
-uv run friday browser-test test.yaml --provider openai --headless
-```
 
-### Network Diagnostics
-
-Test network connectivity:
-```bash
-# Check API server
-curl http://localhost:8080/api/v1/browser-test/health
-
-# Check WebSocket connectivity
-websocat ws://localhost:8080/api/v1/ws/logs
-
-# Test target site accessibility
-curl -I https://example.com
-```
-
-## Best Practices
-
-### Writing Effective Tests
-
-#### 1. Clear Requirements
-```yaml
-# Good
-requirement: "Test user login with valid credentials and verify dashboard redirect"
-
-# Avoid
-requirement: "Test login"
-```
-
-#### 2. Provide Context
-```yaml
-context: |
-  Use test account: user@test.com / password123
-  Expected behavior: Login should redirect to /dashboard
-  Check for welcome message and navigation menu
-```
-
-#### 3. Specific Expected Outcomes
-```yaml
-expected_outcomes:
-  - "Login form accepts credentials without errors"
-  - "Page redirects to dashboard URL"
-  - "Welcome message displays user name"
-  - "Navigation menu is visible and functional"
-```
-
-### Performance Optimization
-
-#### 1. Use Headless Mode
-```bash
-# For CI/CD and batch testing
-uv run friday browser-test suite.yaml --headless
-```
-
-#### 2. Optimize Timeouts
-```yaml
-# Scenario-specific timeouts
+# Create a simple debug YAML scenario
+cat > debug_test.yaml << EOF
+name: "Debug Test"
 scenarios:
-  - name: "Quick Test"
-    timeout: 15  # Short timeout for simple tests
-  - name: "Complex Workflow"
-    timeout: 120  # Longer timeout for complex interactions
+  - name: "Simple Debug Test"
+    requirement: "test"
+    url: "<url>"
+    test_type: "functional"
+EOF
+
+uv run friday browser-test debug_test.yaml
 ```
 
-#### 3. Batch Processing
-```bash
-# Process multiple suites efficiently
-for suite in *.yaml; do
-  uv run friday browser-test "$suite" --headless
-done
-```
+## Integration Examples
 
-### Security Considerations
-
-#### 1. Use Test Environments
-- Never test against production systems
-- Use dedicated test environments with mock data
-- Implement proper access controls
-
-#### 2. Secure Credentials
-```yaml
-# Avoid hardcoded credentials
-context: "Use environment test credentials"
-
-# Better: Reference external configuration
-context: "Login with TEST_USER_EMAIL and TEST_USER_PASSWORD from env"
-```
-
-#### 3. Screenshot Review
-- Review screenshots for sensitive information
-- Implement automatic PII detection
-- Store screenshots securely
-
-### Reliability Guidelines
-
-#### 1. Implement Retry Logic
-```yaml
-# Design tests to be idempotent
-requirement: "Test login functionality (should work on retry)"
-```
-
-#### 2. Handle Dynamic Content
-```yaml
-context: |
-  Page may have loading spinners or dynamic content
-  Wait for elements to be fully loaded before interaction
-```
-
-#### 3. Cross-Browser Testing
-```bash
-# Test with different browser configurations
-uv run friday browser-test suite.yaml --headless  # Chromium default
-```
-
-## Integration Patterns
-
-### CI/CD Integration
-
+### CI/CD Pipeline
 ```yaml
 # .github/workflows/browser-tests.yml
 name: Browser Tests
 on: [push, pull_request]
+
 jobs:
   browser-tests:
     runs-on: ubuntu-latest
@@ -505,147 +338,111 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install uv
           uv sync
           uv run playwright install chromium --with-deps
       - name: Run browser tests
-        run: |
-          uv run friday browser-test tests/browser/*.yaml --headless
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo 'name: "CI Test Suite"
+          scenarios:
+            - name: "Homepage Test"
+              requirement: "Verify homepage loads and navigation works"
+              url: "${{ env.TEST_URL }}"
+              test_type: "functional"' > ci_test.yaml
+          uv run friday browser-test ci_test.yaml --output browser-test-results.md
 ```
 
-### Docker Integration
+### Custom Test Scripts
+```python
+import asyncio
+from friday.services.browser_agent import BrowserTestingAgent
+from friday.services.yaml_scenarios import YamlScenariosParser
 
-```dockerfile
-# Dockerfile for browser testing
-FROM python:3.11-slim
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install uv and dependencies
-RUN pip install uv
-COPY pyproject.toml uv.lock ./
-RUN uv sync
-
-# Install Playwright browsers
-RUN uv run playwright install chromium --with-deps
-
-# Copy application
-COPY . .
-
-# Run tests
-CMD ["uv", "run", "friday", "browser-test", "tests/", "--headless"]
-```
-
-## Advanced Usage
-
-### Custom Test Steps
-
-```yaml
+async def run_custom_tests():
+    agent = BrowserTestingAgent(provider="openai")
+    parser = YamlScenariosParser()
+    
+    # Define YAML content
+    yaml_content = """
+name: "Custom Test Suite"
 scenarios:
-  - name: "Advanced E-commerce Test"
-    requirement: "Test complete purchase workflow"
-    url: "https://shop.example.com"
+  - name: "User Registration Test"
+    requirement: "Test user registration flow"
+    url: "https://example.com/register"
     test_type: "functional"
-    steps:
-      - "Navigate to product catalog"
-      - "Filter products by category 'Electronics'"
-      - "Select first product from results"
-      - "Add product to cart"
-      - "Proceed to checkout"
-      - "Fill shipping information"
-      - "Select payment method"
-      - "Complete purchase"
-    expected_outcomes:
-      - "Product is added to cart successfully"
-      - "Checkout process completes without errors"
-      - "Order confirmation is displayed"
-```
-
-### Multi-Page Workflows
-
-```yaml
-scenarios:
-  - name: "Multi-Page User Journey"
-    requirement: "Test user registration and profile setup"
-    url: "https://app.example.com"
+    context: "Use test email and verify confirmation"
+  - name: "Product Search Test"
+    requirement: "Test product search functionality"
+    url: "https://example.com/shop"
     test_type: "functional"
-    context: |
-      Complete user journey:
-      1. Register new account
-      2. Verify email (simulate)
-      3. Complete profile setup
-      4. Navigate to dashboard
-    steps:
-      - "Click 'Sign Up' button"
-      - "Fill registration form with valid data"
-      - "Submit registration"
-      - "Navigate to profile setup"
-      - "Upload profile picture"
-      - "Fill profile information"
-      - "Save profile"
-      - "Navigate to dashboard"
+    context: "Search for 'laptop' and verify results"
+"""
+    
+    # Parse YAML and convert to test cases
+    test_suite = parser.parse_yaml_content(yaml_content)
+    test_cases = parser.convert_to_browser_test_cases(test_suite)
+    
+    # Execute tests
+    results = await agent.run_multiple_tests(test_cases)
+    report = agent.generate_test_report(results)
+    
+    print(report)
+
+if __name__ == "__main__":
+    asyncio.run(run_custom_tests())
 ```
 
-### Accessibility Testing
+## Limitations
 
-```yaml
-scenarios:
-  - name: "Accessibility Compliance Test"
-    requirement: "Verify WCAG 2.1 AA compliance"
-    url: "https://example.com"
-    test_type: "accessibility"
-    context: |
-      Check for:
-      - Proper heading structure
-      - Alt text for images
-      - Keyboard navigation
-      - Color contrast ratios
-      - Screen reader compatibility
-    expected_outcomes:
-      - "All images have descriptive alt text"
-      - "Page structure uses proper heading hierarchy"
-      - "All interactive elements are keyboard accessible"
-      - "Color contrast meets WCAG AA standards"
-```
+### Current Limitations
+- **Browser Support**: Currently limited to Chromium-based browsers
+- **Complex Interactions**: May struggle with complex drag-and-drop or advanced UI patterns
+- **Dynamic Content**: Challenges with heavily dynamic or real-time updating content
+- **Authentication**: Limited support for complex authentication flows (OAuth, 2FA)
+- **File Operations**: Restricted file upload/download capabilities
 
-## Recent Updates (2025-07-05)
+### Future Enhancements
+- Multi-browser support (Firefox, Safari)
+- Enhanced mobile testing capabilities
+- Integration with visual regression testing tools
+- Advanced authentication handling
+- Performance metrics collection
+- Test recording and playback features
 
-### Fixed Issues
-- ✅ **API Integration**: Fixed "Upload failed: Not Found" error
-- ✅ **WebSocket Connections**: Enhanced real-time monitoring
-- ✅ **Frontend Updates**: Proper base URL configuration
-- ✅ **Error Handling**: Improved error messages and debugging
+## Security Considerations
 
-### New Features
-- ✅ **Execution-Specific WebSockets**: Real-time updates per test execution
-- ✅ **Enhanced UI**: Improved browser testing interface
-- ✅ **API Verification**: All endpoints tested and confirmed working
-- ✅ **Documentation**: Comprehensive troubleshooting guide
+### Data Privacy
+- Browser tests may capture sensitive information in screenshots
+- Avoid testing with real user credentials
+- Use test environments and mock data when possible
+- Review generated screenshots before sharing
 
-### Breaking Changes
-None in this update - all changes are backward compatible.
+### Network Security
+- Tests make real HTTP requests to target websites
+- Consider using VPN or isolated networks for sensitive testing
+- Be mindful of rate limiting and respectful testing practices
 
-## Support and Resources
+### API Key Management
+- Store LLM provider API keys securely
+- Use environment variables, not hardcoded values
+- Implement key rotation policies
+- Monitor API usage and costs
 
-### Documentation
-- [System Architecture](SYSTEM_ARCHITECTURE.md)
-- [API Documentation](apis.md)
-- [Developer Onboarding](DEVELOPER_ONBOARDING.md)
+## Support
 
-### Community
-- GitHub Issues: Report bugs and feature requests
-- Discussions: Ask questions and share experiences
+### Getting Help
+- Check the troubleshooting section for common issues
+- Review browser console logs for JavaScript errors
+- Enable debug logging for detailed execution traces
+- Create issues on the project repository with detailed reproduction steps
 
-### Contributing
-- Follow the development setup in [DEVELOPER_ONBOARDING.md](DEVELOPER_ONBOARDING.md)
-- Submit pull requests with comprehensive tests
-- Update documentation for new features
+### Community Resources
+- Project documentation: [docs/](../docs/)
+- Example test cases: [examples/](../examples/)
+- API reference: [OpenAPI spec](../openapi.json)
+- Development guide: [DEVELOPER_ONBOARDING.md](DEVELOPER_ONBOARDING.md)

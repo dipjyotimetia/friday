@@ -1,901 +1,461 @@
-"use client"
+'use client'
 
-import React, { useState, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { FileUploader } from "@/components/shared/file-uploader"
-import { useWebSocket } from "@/hooks/use-websocket"
-import { API_ENDPOINTS, API_CONFIG } from "@/config/constants"
-import { BrowserTestReport, BrowserTestSuite, BrowserTestExecutionRequest } from "@/types"
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { OutputViewer } from '@/components/shared/output-viewer'
+import { LogViewer } from '@/components/shared/log-viewer'
+import { API_CONFIG } from '@/config/constants'
+import { useWebSocket } from '@/hooks/use-websocket'
+import { motion } from 'framer-motion'
+import { 
+  Monitor, 
+  Eye, 
+  EyeOff, 
+  FileText, 
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  Upload,
+  Download,
+  Code,
+  Play
+} from 'lucide-react'
 
-interface BrowserTesterProps {
-  className?: string
-}
+import type {
+  BrowserTestResult
+} from '@/types'
 
-interface UploadedTestSuite {
-  fileId: string
-  filename: string
-  content: string
-  parsedSuite: BrowserTestSuite
-}
+export function BrowserTester() {
+  const [testResults, setTestResults] = useState<BrowserTestResult[]>([])
+  const [testReport, setTestReport] = useState<string>('')
+  const [testSummary, setTestSummary] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  
+  // YAML-related state
+  const [yamlContent, setYamlContent] = useState<string>('')
+  const [yamlFile, setYamlFile] = useState<File | null>(null)
+  const [yamlProvider, setYamlProvider] = useState('openai')
+  const [yamlHeadless, setYamlHeadless] = useState(true)
+  const [executeImmediately, setExecuteImmediately] = useState(false)
 
-interface TestExecution {
-  executionId: string
-  suiteId: string
-  suiteName: string
-  status: 'pending' | 'running' | 'completed' | 'failed'
-  result?: BrowserTestReport
-}
+  const { logs, isConnected } = useWebSocket()
 
-export function BrowserTester({ className }: BrowserTesterProps) {
-  const [activeTab, setActiveTab] = useState("upload")
-  const [uploadedSuites, setUploadedSuites] = useState<UploadedTestSuite[]>([])
-  const [selectedSuites, setSelectedSuites] = useState<string[]>([])
-  const [testExecutions, setTestExecutions] = useState<TestExecution[]>([])
-  const [isExecuting, setIsExecuting] = useState(false)
-  const [provider, setProvider] = useState("openai")
-  const [headless, setHeadless] = useState(true)
-  const [executionMode, setExecutionMode] = useState<'sequential' | 'parallel'>('sequential')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [uploadLoading, setUploadLoading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const [executeLoading, setExecuteLoading] = useState(false)
+  const getStatusIcon = (result: BrowserTestResult) => {
+    if (result.success) {
+      return <CheckCircle className="h-5 w-5 text-green-500" />
+    } else {
+      return <XCircle className="h-5 w-5 text-red-500" />
+    }
+  }
 
-  const [executionWebSocketUrl, setExecutionWebSocketUrl] = useState<string | null>(null)
-  const { 
-    logs, 
-    isConnected, 
-    connect: connectWebSocket, 
-    disconnect: disconnectWebSocket 
-  } = useWebSocket(executionWebSocketUrl ? {
-    url: executionWebSocketUrl,
-    autoReconnect: true,
-    maxLogs: 200
-  } : {})
+  const getStatusBadge = (result: BrowserTestResult) => {
+    const variant = result.success ? 'default' : 'destructive'
+    return (
+      <Badge variant={variant}>
+        {result.success ? 'PASSED' : 'FAILED'}
+      </Badge>
+    )
+  }
 
-  const handleFileUpload = async (file: File | null) => {
-    if (!file) return
+  // YAML-related functions
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && (file.name.endsWith('.yaml') || file.name.endsWith('.yml'))) {
+      setYamlFile(file)
+      
+      // Read file content
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const content = e.target?.result as string
+        setYamlContent(content)
+      }
+      reader.readAsText(file)
+    } else {
+      setError('Please select a valid YAML file (.yaml or .yml)')
+    }
+  }
 
-    if (!file.name.endsWith('.yaml') && !file.name.endsWith('.yml')) {
-      setUploadError('Please upload a YAML file (.yaml or .yml)')
+  const handleYamlUploadAndExecute = async () => {
+    if (!yamlFile) {
+      setError('Please select a YAML file')
       return
     }
 
-    const content = await file.text()
+    setLoading(true)
+    setError(null)
 
-    // Upload to server
-    setUploadLoading(true)
-    setUploadError(null)
-    
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.BROWSER_TEST.UPLOAD_YAML}`, {
+      const formData = new FormData()
+      formData.append('file', yamlFile)
+      formData.append('provider', yamlProvider)
+      formData.append('headless', yamlHeadless.toString())
+      formData.append('execute_immediately', executeImmediately.toString())
+
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/browser-test/yaml/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        if (result.execution_results) {
+          setTestResults(result.execution_results)
+          setTestReport(result.report || '')
+          setTestSummary(result.summary || null)
+        } else {
+          // Just uploaded, show scenarios
+          setError(null)
+          console.log('YAML uploaded successfully:', result)
+        }
+      } else {
+        setError(result.error || 'Failed to upload YAML file')
+      }
+    } catch (err: any) {
+      console.error('YAML upload failed:', err)
+      setError(err.message || 'Failed to upload YAML file')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleYamlExecute = async () => {
+    if (!yamlContent.trim()) {
+      setError('Please provide YAML content')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/browser-test/yaml/execute`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          filename: file.name,
-          content: content
+          yaml_content: yamlContent,
+          provider: yamlProvider,
+          headless: yamlHeadless
         })
       })
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`)
-      }
+      const result = await response.json()
 
+      if (result.success) {
+        setTestResults(result.results)
+        setTestReport(result.report)
+        setTestSummary(result.summary)
+      } else {
+        setError(result.error || 'Failed to execute YAML scenarios')
+      }
+    } catch (err: any) {
+      console.error('YAML execution failed:', err)
+      setError(err.message || 'Failed to execute YAML scenarios')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const downloadYamlTemplate = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/browser-test/yaml/template`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const result = await response.json()
       
-      // Add to uploaded suites
-      const newSuite: UploadedTestSuite = {
-        fileId: result.file_id,
-        filename: file.name,
-        content: content,
-        parsedSuite: result.parsed_suite
-      }
-      
-      setUploadedSuites(prev => [...prev, newSuite])
-      setSelectedSuites(prev => [...prev, result.file_id])
-      setActiveTab("preview")
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload YAML'
-      setUploadError(errorMessage)
-      console.error('Failed to upload YAML:', error)
-    } finally {
-      setUploadLoading(false)
-    }
-  }
-
-  const handleMultipleFileUpload = async (files: FileList) => {
-    const yamlFiles = Array.from(files).filter(file => 
-      file.name.endsWith('.yaml') || file.name.endsWith('.yml')
-    )
-
-    if (yamlFiles.length === 0) {
-      setUploadError('Please upload at least one YAML file (.yaml or .yml)')
-      return
-    }
-
-    setUploadLoading(true)
-    setUploadError(null)
-    
-    const uploadResults: UploadedTestSuite[] = []
-    const newSelectedSuites: string[] = []
-
-    try {
-      for (const file of yamlFiles) {
-        const content = await file.text()
-        
-        const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.BROWSER_TEST.UPLOAD_YAML}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            filename: file.name,
-            content: content
-          })
-        })
-
-        if (!response.ok) {
-          throw new Error(`Upload failed for ${file.name}: ${response.statusText}`)
-        }
-
-        const result = await response.json()
-        
-        const newSuite: UploadedTestSuite = {
-          fileId: result.file_id,
-          filename: file.name,
-          content: content,
-          parsedSuite: result.parsed_suite
-        }
-        
-        uploadResults.push(newSuite)
-        newSelectedSuites.push(result.file_id)
-      }
-      
-      setUploadedSuites(prev => [...prev, ...uploadResults])
-      setSelectedSuites(prev => [...prev, ...newSelectedSuites])
-      setActiveTab("preview")
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload YAML files'
-      setUploadError(errorMessage)
-      console.error('Failed to upload YAML files:', error)
-    } finally {
-      setUploadLoading(false)
-    }
-  }
-
-  const handleExecuteTests = async () => {
-    if (selectedSuites.length === 0) return
-
-    setIsExecuting(true)
-    setTestExecutions([])
-    setExecuteLoading(true)
-
-    try {
-      setActiveTab("execution")
-
-      if (executionMode === 'sequential') {
-        await executeTestsSequentially()
+      if (result.template_content) {
+        const blob = new Blob([result.template_content], { type: 'application/x-yaml' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'browser_test_template.yaml'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        console.log('Template downloaded successfully')
       } else {
-        await executeTestsInParallel()
+        throw new Error('No template content received from server')
       }
-    } catch (error) {
-      console.error('Failed to execute tests:', error)
-    } finally {
-      setIsExecuting(false)
-      setExecuteLoading(false)
+    } catch (err: any) {
+      console.error('Failed to download template:', err)
+      setError(`Failed to download YAML template: ${err.message}`)
     }
-  }
-
-  const executeTestsSequentially = async () => {
-    const executions: TestExecution[] = []
-
-    for (const suiteId of selectedSuites) {
-      const suite = uploadedSuites.find(s => s.fileId === suiteId)
-      if (!suite) continue
-
-      const execution: TestExecution = {
-        executionId: '',
-        suiteId: suiteId,
-        suiteName: suite.parsedSuite.name,
-        status: 'pending'
-      }
-      
-      executions.push(execution)
-      setTestExecutions([...executions])
-
-      try {
-        // Update status to running
-        execution.status = 'running'
-        setTestExecutions([...executions])
-
-        const request: BrowserTestExecutionRequest = {
-          file_id: suiteId,
-          provider,
-          headless,
-          output_format: "json"
-        }
-
-        const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.BROWSER_TEST.EXECUTE_YAML}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(request)
-        })
-
-        if (!response.ok) {
-          throw new Error(`Execution failed: ${response.statusText}`)
-        }
-
-        const result = await response.json()
-        execution.executionId = result.execution_id
-        
-        // Set up WebSocket for this execution
-        const wsUrl = `${API_CONFIG.BASE_URL.replace('http', 'ws')}${API_ENDPOINTS.BROWSER_TEST.WS_BASE}/${result.execution_id}`
-        setExecutionWebSocketUrl(wsUrl)
-        connectWebSocket()
-        
-        // Poll for completion
-        const finalResult = await pollExecutionStatus(result.execution_id)
-        execution.status = 'completed'
-        execution.result = finalResult
-        setTestExecutions([...executions])
-        
-      } catch (error) {
-        execution.status = 'failed'
-        setTestExecutions([...executions])
-        console.error(`Failed to execute suite ${suite.parsedSuite.name}:`, error)
-      }
-    }
-    
-    setActiveTab("results")
-  }
-
-  const executeTestsInParallel = async () => {
-    const executionPromises = selectedSuites.map(async (suiteId) => {
-      const suite = uploadedSuites.find(s => s.fileId === suiteId)
-      if (!suite) return null
-
-      const execution: TestExecution = {
-        executionId: '',
-        suiteId: suiteId,
-        suiteName: suite.parsedSuite.name,
-        status: 'running'
-      }
-
-      try {
-        const request: BrowserTestExecutionRequest = {
-          file_id: suiteId,
-          provider,
-          headless,
-          output_format: "json"
-        }
-
-        const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.BROWSER_TEST.EXECUTE_YAML}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(request)
-        })
-
-        if (!response.ok) {
-          throw new Error(`Execution failed: ${response.statusText}`)
-        }
-
-        const result = await response.json()
-        execution.executionId = result.execution_id
-        
-        // Set up WebSocket for this execution
-        const wsUrl = `${API_CONFIG.BASE_URL.replace('http', 'ws')}${API_ENDPOINTS.BROWSER_TEST.WS_BASE}/${result.execution_id}`
-        setExecutionWebSocketUrl(wsUrl)
-        connectWebSocket()
-        
-        // Poll for completion
-        const finalResult = await pollExecutionStatus(result.execution_id)
-        execution.status = 'completed'
-        execution.result = finalResult
-        
-        return execution
-      } catch (error) {
-        execution.status = 'failed'
-        console.error(`Failed to execute suite ${suite.parsedSuite.name}:`, error)
-        return execution
-      }
-    })
-
-    // Initialize executions with pending status
-    const initialExecutions: TestExecution[] = selectedSuites.map(suiteId => {
-      const suite = uploadedSuites.find(s => s.fileId === suiteId)!
-      return {
-        executionId: '',
-        suiteId: suiteId,
-        suiteName: suite.parsedSuite.name,
-        status: 'pending'
-      }
-    })
-    setTestExecutions(initialExecutions)
-
-    // Wait for all executions to complete
-    const results = await Promise.all(executionPromises)
-    const completedExecutions = results.filter(Boolean) as TestExecution[]
-    setTestExecutions(completedExecutions)
-    setActiveTab("results")
-  }
-
-  const pollExecutionStatus = async (execId: string): Promise<BrowserTestReport | null> => {
-    const maxAttempts = 60 // 5 minutes max
-    let attempts = 0
-
-    return new Promise((resolve, reject) => {
-      const poll = async () => {
-        try {
-          const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.BROWSER_TEST.EXECUTION_STATUS}/${execId}`)
-          
-          if (!response.ok) {
-            throw new Error(`Status check failed: ${response.statusText}`)
-          }
-
-          const result = await response.json()
-
-          if (result.status === 'completed') {
-            resolve(result.report)
-          } else if (result.status === 'failed') {
-            reject(new Error(result.error || 'Execution failed'))
-          } else if (attempts < maxAttempts) {
-            attempts++
-            setTimeout(poll, 5000) // Poll every 5 seconds
-          } else {
-            reject(new Error('Execution timeout'))
-          }
-        } catch (error) {
-          reject(error)
-        }
-      }
-
-      setTimeout(poll, 2000) // Start polling after 2 seconds
-    })
-  }
-
-  const handleReset = () => {
-    setUploadedSuites([])
-    setSelectedSuites([])
-    setTestExecutions([])
-    setIsExecuting(false)
-    setActiveTab("upload")
-    disconnectWebSocket()
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
-  const handleSuiteSelection = (suiteId: string, selected: boolean) => {
-    if (selected) {
-      setSelectedSuites(prev => [...prev, suiteId])
-    } else {
-      setSelectedSuites(prev => prev.filter(id => id !== suiteId))
-    }
-  }
-
-  const handleSelectAllSuites = () => {
-    setSelectedSuites(uploadedSuites.map(suite => suite.fileId))
-  }
-
-  const handleDeselectAllSuites = () => {
-    setSelectedSuites([])
-  }
-
-  const removeSuite = (suiteId: string) => {
-    setUploadedSuites(prev => prev.filter(suite => suite.fileId !== suiteId))
-    setSelectedSuites(prev => prev.filter(id => id !== suiteId))
-  }
-
-  const renderUploadTab = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-lg font-semibold mb-2">Upload YAML Test Files</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Upload one or more YAML files containing your browser test scenarios
-        </p>
-      </div>
-
-      <FileUploader
-        accept=".yaml,.yml"
-        onChange={handleFileUpload}
-        disabled={uploadLoading}
-        className="max-w-md mx-auto"
-      />
-
-      <div className="text-center">
-        <p className="text-sm text-gray-500 mb-2">Or upload multiple files at once:</p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".yaml,.yml"
-          onChange={(e) => e.target.files && handleMultipleFileUpload(e.target.files)}
-          disabled={uploadLoading}
-          className="hidden"
-        />
-        <Button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadLoading}
-          variant="outline"
-        >
-          Select Multiple Files
-        </Button>
-      </div>
-      
-      {uploadLoading && (
-        <div className="text-center text-sm text-gray-600">
-          Uploading and parsing YAML files...
-        </div>
-      )}
-      
-      {uploadError && (
-        <div className="text-center text-sm text-red-600 bg-red-50 p-2 rounded">
-          {uploadError}
-        </div>
-      )}
-
-      {uploadedSuites.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Uploaded Test Suites ({uploadedSuites.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {uploadedSuites.map((suite) => (
-                <div key={suite.fileId} className="flex items-center justify-between p-3 border rounded">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{suite.parsedSuite.name}</h4>
-                    <p className="text-sm text-gray-600">{suite.filename}</p>
-                    <p className="text-xs text-gray-500">
-                      {suite.parsedSuite.scenarios.length} scenarios
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => removeSuite(suite.fileId)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-
-  const renderPreviewTab = () => (
-    <div className="space-y-6">
-      {uploadedSuites.length > 0 && (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Test Suite Selection</CardTitle>
-              <CardDescription>
-                Select which test suites to execute ({selectedSuites.length} of {uploadedSuites.length} selected)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={handleSelectAllSuites}>
-                    Select All
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleDeselectAllSuites}>
-                    Deselect All
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
-                  {uploadedSuites.map((suite) => (
-                    <div key={suite.fileId} className="flex items-start gap-3 p-3 border rounded">
-                      <input
-                        type="checkbox"
-                        checked={selectedSuites.includes(suite.fileId)}
-                        onChange={(e) => handleSuiteSelection(suite.fileId, e.target.checked)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium">{suite.parsedSuite.name}</h5>
-                          <Badge variant="outline">
-                            {suite.parsedSuite.scenarios.length} scenarios
-                          </Badge>
-                        </div>
-                        {suite.parsedSuite.description && (
-                          <p className="text-sm text-gray-600 mb-2">{suite.parsedSuite.description}</p>
-                        )}
-                        <p className="text-xs text-gray-500">{suite.filename}</p>
-                        
-                        <div className="mt-2 space-y-1">
-                          {suite.parsedSuite.scenarios.map((scenario: any, index: number) => (
-                            <div key={index} className="text-xs text-gray-600 pl-2 border-l-2 border-gray-200">
-                              <span className="font-medium">{scenario.name}</span> - {scenario.test_type}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Execution Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">LLM Provider</label>
-                    <select 
-                      value={provider} 
-                      onChange={(e) => setProvider(e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      <option value="openai">OpenAI</option>
-                      <option value="gemini">Google Gemini</option>
-                      <option value="ollama">Ollama</option>
-                      <option value="mistral">Mistral</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Browser Mode</label>
-                    <select 
-                      value={headless ? "headless" : "visible"} 
-                      onChange={(e) => setHeadless(e.target.value === "headless")}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      <option value="headless">Headless</option>
-                      <option value="visible">Visible</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Execution Mode</label>
-                  <select 
-                    value={executionMode} 
-                    onChange={(e) => setExecutionMode(e.target.value as 'sequential' | 'parallel')}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="sequential">Sequential (one after another)</option>
-                    <option value="parallel">Parallel (all at once)</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {executionMode === 'sequential' 
-                      ? 'Tests will run one after another, safer for resource usage'
-                      : 'Tests will run simultaneously, faster but uses more resources'
-                    }
-                  </p>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button 
-                    onClick={handleExecuteTests}
-                    disabled={executeLoading || selectedSuites.length === 0}
-                    className="flex-1"
-                  >
-                    {executeLoading 
-                      ? "Starting..." 
-                      : `Execute ${selectedSuites.length} Suite${selectedSuites.length !== 1 ? 's' : ''}`
-                    }
-                  </Button>
-                  <Button variant="outline" onClick={handleReset}>
-                    Reset All
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
-    </div>
-  )
-
-  const renderExecutionTab = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Execution Status
-            {isExecuting && (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"
-              />
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {testExecutions.length}
-                </div>
-                <div className="text-sm text-gray-600">Total Suites</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {testExecutions.filter(e => e.status === 'completed').length}
-                </div>
-                <div className="text-sm text-gray-600">Completed</div>
-              </div>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Execution Mode:</span>
-              <Badge variant="outline">{executionMode}</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span>WebSocket:</span>
-              <Badge variant={isConnected ? "default" : "destructive"}>
-                {isConnected ? "Connected" : "Disconnected"}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {testExecutions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Suite Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {testExecutions.map((execution) => (
-                <div key={execution.suiteId} className="flex items-center justify-between p-3 border rounded">
-                  <div className="flex-1">
-                    <h5 className="font-medium">{execution.suiteName}</h5>
-                    {execution.executionId && (
-                      <p className="text-xs text-gray-500">ID: {execution.executionId}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={
-                      execution.status === 'completed' ? 'default' :
-                      execution.status === 'failed' ? 'destructive' :
-                      execution.status === 'running' ? 'secondary' : 'outline'
-                    }>
-                      {execution.status}
-                    </Badge>
-                    {execution.status === 'running' && (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full"
-                      />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Real-time Execution Logs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {logs.length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                {isConnected ? 'Waiting for logs...' : 'Not connected to log stream'}
-              </div>
-            ) : (
-              logs.map((log, index) => (
-                <div key={index} className="text-sm p-2 bg-gray-50 rounded">
-                  <span className="text-gray-500">{log.timestamp}</span>: {log.message}
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-
-  const renderResultsTab = () => {
-    const completedExecutions = testExecutions.filter(e => e.result)
-    const totalTests = completedExecutions.reduce((sum, e) => sum + (e.result?.total_tests || 0), 0)
-    const totalPassed = completedExecutions.reduce((sum, e) => sum + (e.result?.passed_tests || 0), 0)
-    const totalFailed = completedExecutions.reduce((sum, e) => sum + (e.result?.failed_tests || 0), 0)
-    const overallSuccessRate = totalTests > 0 ? (totalPassed / totalTests * 100) : 0
-
-    return (
-      <div className="space-y-6">
-        {completedExecutions.length > 0 && (
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Overall Results Summary</CardTitle>
-                <CardDescription>
-                  Results from {completedExecutions.length} test suite{completedExecutions.length !== 1 ? 's' : ''}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {totalTests}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Tests</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
-                      {totalPassed}
-                    </div>
-                    <div className="text-sm text-gray-600">Passed</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">
-                      {totalFailed}
-                    </div>
-                    <div className="text-sm text-gray-600">Failed</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {overallSuccessRate.toFixed(1)}%
-                    </div>
-                    <div className="text-sm text-gray-600">Success Rate</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {completedExecutions.map((execution) => (
-              execution.result && (
-                <Card key={execution.suiteId}>
-                  <CardHeader>
-                    <CardTitle>{execution.suiteName}</CardTitle>
-                    <CardDescription>
-                      Suite execution results
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-blue-600">
-                          {execution.result.total_tests}
-                        </div>
-                        <div className="text-sm text-gray-600">Total Tests</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-green-600">
-                          {execution.result.passed_tests}
-                        </div>
-                        <div className="text-sm text-gray-600">Passed</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-red-600">
-                          {execution.result.failed_tests}
-                        </div>
-                        <div className="text-sm text-gray-600">Failed</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-purple-600">
-                          {execution.result.success_rate.toFixed(1)}%
-                        </div>
-                        <div className="text-sm text-gray-600">Success Rate</div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h5 className="font-medium">Scenario Results:</h5>
-                      {execution.result.results.map((result, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded">
-                          <div className="flex-1">
-                            <h6 className="font-medium">{result.scenario_name}</h6>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <p>Execution time: {result.execution_time.toFixed(2)}s</p>
-                              {result.error_message && (
-                                <p className="text-red-600">Error: {result.error_message}</p>
-                              )}
-                              {result.screenshot_path && (
-                                <p className="text-blue-600">Screenshot: {result.screenshot_path}</p>
-                              )}
-                            </div>
-                          </div>
-                          <Badge variant={result.success ? "default" : "destructive"}>
-                            {result.success ? "PASSED" : "FAILED"}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            ))}
-          </>
-        )}
-
-        {completedExecutions.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-gray-500">No test results available yet.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    )
   }
 
   return (
-    <div className={className}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Browser Testing Agent</CardTitle>
-          <CardDescription>
-            AI-powered browser testing using natural language scenarios
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="upload">Upload</TabsTrigger>
-              <TabsTrigger value="preview" disabled={uploadedSuites.length === 0}>
-                Preview ({uploadedSuites.length})
-              </TabsTrigger>
-              <TabsTrigger value="execution" disabled={testExecutions.length === 0}>
-                Execution
-              </TabsTrigger>
-              <TabsTrigger value="results" disabled={testExecutions.filter(e => e.result).length === 0}>
-                Results
-              </TabsTrigger>
-            </TabsList>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-blue-100 rounded-lg">
+          <Monitor className="h-6 w-6 text-blue-600" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold">Browser Testing Agent</h2>
+          <p className="text-gray-600">AI-powered automated browser testing with YAML scenarios</p>
+        </div>
+      </div>
 
-            <div className="mt-6">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <TabsContent value="upload" className="mt-0">
-                    {renderUploadTab()}
-                  </TabsContent>
-                  <TabsContent value="preview" className="mt-0">
-                    {renderPreviewTab()}
-                  </TabsContent>
-                  <TabsContent value="execution" className="mt-0">
-                    {renderExecutionTab()}
-                  </TabsContent>
-                  <TabsContent value="results" className="mt-0">
-                    {renderResultsTab()}
-                  </TabsContent>
-                </motion.div>
-              </AnimatePresence>
+
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              YAML Test Scenarios
+            </h3>
+            <Button variant="outline" onClick={downloadYamlTemplate} className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Download Template
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">LLM Provider</label>
+              <select
+                value={yamlProvider}
+                onChange={(e) => setYamlProvider(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="ollama">Ollama</option>
+                <option value="mistral">Mistral</option>
+              </select>
             </div>
-          </Tabs>
-        </CardContent>
+
+            <div className="flex items-center gap-4 pt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={yamlHeadless}
+                  onChange={(e) => setYamlHeadless(e.target.checked)}
+                />
+                <span className="text-sm">Headless Mode</span>
+                {yamlHeadless ? 
+                  <EyeOff className="h-4 w-4 text-gray-400" /> : 
+                  <Eye className="h-4 w-4 text-blue-500" />
+                }
+              </label>
+            </div>
+
+            <div className="flex items-center gap-4 pt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={executeImmediately}
+                  onChange={(e) => setExecuteImmediately(e.target.checked)}
+                />
+                <span className="text-sm">Execute Immediately</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="border rounded-lg p-4">
+            <h4 className="font-medium mb-3">Upload YAML File</h4>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept=".yaml,.yml"
+                  onChange={handleFileUpload}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {yamlFile && (
+                  <span className="text-sm text-green-600">
+                    ✓ {yamlFile.name}
+                  </span>
+                )}
+              </div>
+              
+              <Button
+                onClick={handleYamlUploadAndExecute}
+                disabled={loading || !yamlFile}
+                className="w-full"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {executeImmediately ? 'Uploading and Executing...' : 'Uploading...'}
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    {executeImmediately ? 'Upload and Execute' : 'Upload YAML'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="border rounded-lg p-4">
+            <h4 className="font-medium mb-3">Or Paste YAML Content</h4>
+            <div className="space-y-3">
+              <textarea
+                placeholder="Paste your YAML content here..."
+                value={yamlContent}
+                onChange={(e) => setYamlContent(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md h-40 font-mono text-sm resize-none"
+              />
+              
+              <Button
+                onClick={handleYamlExecute}
+                disabled={loading || !yamlContent.trim()}
+                className="w-full"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Executing YAML Scenarios...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Execute YAML Scenarios
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-800 mb-2">YAML Format</h4>
+            <p className="text-sm text-blue-700 mb-2">
+              Define test scenarios in YAML format with the following structure:
+            </p>
+            <div className="bg-white border rounded p-3 font-mono text-xs">
+              <pre>{`name: "Test Suite Name"
+scenarios:
+  - name: "Test Name"
+    requirement: "What to test"
+    url: "https://example.com"
+    test_type: "functional"
+    context: "Additional context"
+    take_screenshots: true`}</pre>
+            </div>
+          </div>
+        </div>
       </Card>
+
+      {/* Test Results */}
+      {testResults.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Test Results
+          </h3>
+
+          {testSummary && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">{testSummary.total_tests}</div>
+                  <div className="text-sm text-gray-600">Total Tests</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-600">{testSummary.passed_tests}</div>
+                  <div className="text-sm text-gray-600">Passed</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-red-600">{testSummary.failed_tests}</div>
+                  <div className="text-sm text-gray-600">Failed</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-purple-600">{testSummary.success_rate?.toFixed(1)}%</div>
+                  <div className="text-sm text-gray-600">Success Rate</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {testResults.map((result, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 border rounded-lg"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(result)}
+                    <span className="font-medium">{result.requirement}</span>
+                    {getStatusBadge(result)}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Clock className="h-4 w-4" />
+                    {result.timestamp ? new Date(result.timestamp * 1000).toLocaleString() : 'N/A'}
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-600 mb-2">
+                  <span className="font-medium">URL:</span> {result.url} | 
+                  <span className="font-medium ml-2">Type:</span> {result.test_type}
+                </div>
+
+                {result.execution_result && (
+                  <div className="mt-2">
+                    <OutputViewer outputText={result.execution_result} />
+                  </div>
+                )}
+
+                {result.errors.length > 0 && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                    <div className="flex items-center gap-2 text-red-700 font-medium mb-1">
+                      <AlertCircle className="h-4 w-4" />
+                      Errors
+                    </div>
+                    {result.errors.map((error, errorIndex) => (
+                      <div key={errorIndex} className="text-sm text-red-600">
+                        {error}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Test Report */}
+      {testReport && (
+        <Card className="p-6">
+          <h3 className="text-lg font-medium mb-4">Test Report</h3>
+          <OutputViewer outputText={testReport} />
+        </Card>
+      )}
+
+      {/* Real-time Logs */}
+      {isConnected && logs.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-medium mb-4">Live Logs</h3>
+          <LogViewer />
+        </Card>
+      )}
+
+      {/* Error Display */}
+      {error && (
+        <Card className="p-6 border-red-200 bg-red-50">
+          <div className="flex items-center gap-2 text-red-700">
+            <AlertCircle className="h-5 w-5" />
+            <span className="font-medium">Error</span>
+          </div>
+          <p className="text-red-600 mt-2">{error}</p>
+        </Card>
+      )}
     </div>
   )
 }
-
-export default BrowserTester

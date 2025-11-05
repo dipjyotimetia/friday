@@ -43,6 +43,8 @@ class HealthChecker:
             llm_providers.append("openai")
         if settings.google_api_key:
             llm_providers.append("google")
+        if settings.mistral_api_key:
+            llm_providers.append("mistral")
 
         services["llm_providers"] = "healthy" if llm_providers else "unhealthy"
 

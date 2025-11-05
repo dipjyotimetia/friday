@@ -1,1 +1,1 @@
-export { BrowserTester } from "./browser-tester"
+export { BrowserTester } from './browser-tester'

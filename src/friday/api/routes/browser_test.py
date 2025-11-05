@@ -1,444 +1,449 @@
-"""
-Browser Testing API Routes
-
-This module provides FastAPI routes for browser testing functionality.
-It supports YAML file uploads, test execution, and real-time monitoring.
-"""
-
 import asyncio
-import json
-import logging
-import uuid
-from typing import Dict, Optional
-
-from fastapi import APIRouter, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Path
+from fastapi.responses import JSONResponse, FileResponse
 
 from friday.api.schemas.browser_test import (
-    BrowserTestExecutionRequest,
-    BrowserTestExecutionResponse,
-    BrowserTestHealthResponse,
-    BrowserTestLogEntry,
-    BrowserTestWebSocketMessage,
-    YamlUploadRequest,
-    YamlUploadResponse,
+    BrowserTestResult,
+    YamlScenarioExecuteRequest,
+    YamlScenarioExecuteResponse,
+    YamlScenarioUploadResponse,
+    YamlTemplateSample,
 )
-from friday.services.browser_agent import BrowserTestingAgent, execute_yaml_content
+from friday.services.browser_agent import BrowserTestingAgent
 from friday.services.logger import get_logger
+from friday.services.yaml_scenarios import YamlScenariosParser
+from friday.services.screenshot_manager import screenshot_manager
+from friday.services.browser_session_manager import browser_session_manager
+from friday.services.browser_errors import browser_error_handler
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/api/v1/browser-test", tags=["browser-test"])
-
-# In-memory storage for uploaded files and execution results
-uploaded_files: Dict[str, str] = {}
-execution_results: Dict[str, dict] = {}
-active_websockets: Dict[str, WebSocket] = {}
+router = APIRouter(prefix="/browser-test", tags=["browser-testing"])
 
 
-@router.post("/yaml/upload", response_model=YamlUploadResponse)
-async def upload_yaml_file(request: YamlUploadRequest):
+@router.get("/health")
+async def browser_test_health():
     """
-    Upload a YAML test file for browser testing.
-    
-    Args:
-        request: YAML upload request with filename and content
-        
-    Returns:
-        Upload response with file ID and parsed suite
+    Health check endpoint for browser testing service
     """
     try:
-        logger.info(f"Uploading YAML file: {request.filename}")
-        
-        # Generate unique file ID
-        file_id = str(uuid.uuid4())
-        
-        # Store file content
-        uploaded_files[file_id] = request.content
-        
-        # Parse YAML to validate
-        agent = BrowserTestingAgent()
-        suite = await agent.load_yaml_suite(request.content)
-        
-        response = YamlUploadResponse(
-            message=f"Successfully uploaded {request.filename}",
-            file_id=file_id,
-            parsed_suite=suite,
+        # Basic health check - try to initialize the agent with default provider
+        BrowserTestingAgent(provider="openai")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "healthy",
+                "message": "Browser testing service is operational",
+                "service": "browser-testing",
+                "version": "1.0.0",
+            },
         )
-        
-        logger.info(f"YAML file uploaded successfully: {file_id}")
-        return response
-        
     except Exception as e:
-        logger.error(f"Failed to upload YAML file: {e}")
-        raise HTTPException(status_code=400, detail=f"Invalid YAML file: {e}")
+        error_message = str(e)
+        logger.error(
+            f"Browser testing service health check failed: {error_message}",
+            exc_info=True,
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "message": f"Browser testing service is not operational: {error_message}",
+                "service": "browser-testing",
+                "version": "1.0.0",
+            },
+        )
 
 
-@router.post("/yaml/execute", response_model=BrowserTestExecutionResponse)
-async def execute_yaml_test(
-    request: BrowserTestExecutionRequest,
-    background_tasks: BackgroundTasks,
+@router.post("/yaml/upload", response_model=YamlScenarioUploadResponse)
+async def upload_yaml_scenarios(
+    file: UploadFile = File(...),
+    provider: str = Form(default="openai"),
+    headless: bool = Form(default=True),
+    execute_immediately: bool = Form(default=False),
 ):
     """
-    Execute browser tests from uploaded YAML file or direct test suite.
-    
-    Args:
-        request: Test execution request
-        background_tasks: FastAPI background tasks
-        
-    Returns:
-        Execution response with execution ID
+    Upload YAML file containing test scenarios
     """
     try:
-        logger.info(f"Starting browser test execution")
-        
-        # Generate execution ID
-        execution_id = str(uuid.uuid4())
-        
-        # Get YAML content
-        yaml_content = None
-        if request.file_id:
-            if request.file_id not in uploaded_files:
-                raise HTTPException(status_code=404, detail="File not found")
-            yaml_content = uploaded_files[request.file_id]
-        elif request.test_suite:
-            # Convert test suite back to YAML
-            import yaml
-            suite_dict = request.test_suite.model_dump()
-            yaml_content = yaml.dump(suite_dict, default_flow_style=False)
-        else:
+        logger.info(f"Uploading YAML file: {file.filename}")
+
+        # Validate file type
+        if not file.filename.endswith((".yaml", ".yml")):
             raise HTTPException(
-                status_code=400, 
-                detail="Either file_id or test_suite must be provided"
+                status_code=400, detail="File must be a YAML file (.yaml or .yml)"
             )
-        
-        # Initialize execution result
-        execution_results[execution_id] = {
-            "status": "running",
-            "started_at": None,
-            "completed_at": None,
-            "report": None,
-            "error": None,
+
+        # Read file content
+        content = await file.read()
+        yaml_content = content.decode("utf-8")
+
+        # Parse YAML content
+        parser = YamlScenariosParser()
+        test_suite = parser.parse_yaml_content(yaml_content)
+
+        # Convert to browser test cases
+        test_cases = parser.convert_to_browser_test_cases(test_suite)
+
+        response_data = {
+            "success": True,
+            "message": f"Successfully uploaded YAML file with {len(test_cases)} scenarios",
+            "test_suite_name": test_suite.name,
+            "scenarios_count": len(test_cases),
+            "scenarios": test_cases,
         }
-        
-        # Execute tests in background
-        background_tasks.add_task(
-            _execute_browser_tests,
-            execution_id,
-            yaml_content,
-            request.provider,
-            request.headless,
-        )
-        
-        response = BrowserTestExecutionResponse(
-            message="Browser test execution started",
-            execution_id=execution_id,
-            status="running",
-        )
-        
-        logger.info(f"Browser test execution started: {execution_id}")
-        return response
-        
+
+        # Execute immediately if requested
+        if execute_immediately:
+            logger.info("Executing scenarios immediately after upload")
+
+            # Initialize browser testing agent
+            agent = BrowserTestingAgent(provider=provider)
+
+            # Run multiple browser tests
+            results = await agent.run_multiple_tests(
+                test_cases=test_cases, headless=headless
+            )
+
+            # Convert results to BrowserTestResult models
+            test_results = [BrowserTestResult(**result) for result in results]
+
+            # Generate test report
+            report = agent.generate_test_report(results)
+
+            # Create summary
+            total_tests = len(results)
+            passed_tests = sum(1 for r in results if r.get("success", False))
+            failed_tests = total_tests - passed_tests
+
+            summary = {
+                "total_tests": total_tests,
+                "passed_tests": passed_tests,
+                "failed_tests": failed_tests,
+                "success_rate": (passed_tests / total_tests) * 100
+                if total_tests > 0
+                else 0,
+            }
+
+            response_data.update(
+                {
+                    "execution_results": test_results,
+                    "report": report,
+                    "summary": summary,
+                    "message": f"Successfully uploaded and executed {len(test_cases)} scenarios. {passed_tests}/{total_tests} tests passed",
+                }
+            )
+
+        return YamlScenarioUploadResponse(**response_data)
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to start browser test execution: {e}")
-        raise HTTPException(status_code=500, detail=f"Execution failed: {e}")
-
-
-@router.get("/execution/{execution_id}")
-async def get_execution_status(execution_id: str):
-    """
-    Get the status of a browser test execution.
-    
-    Args:
-        execution_id: Unique execution identifier
-        
-    Returns:
-        Execution status and results
-    """
-    if execution_id not in execution_results:
-        raise HTTPException(status_code=404, detail="Execution not found")
-    
-    result = execution_results[execution_id]
-    return JSONResponse(content=result)
-
-
-@router.post("/report/{execution_id}")
-async def generate_report(execution_id: str, format: str = "json"):
-    """
-    Generate a formatted report for completed test execution.
-    
-    Args:
-        execution_id: Unique execution identifier
-        format: Report format (json, markdown, html)
-        
-    Returns:
-        Formatted test report
-    """
-    if execution_id not in execution_results:
-        raise HTTPException(status_code=404, detail="Execution not found")
-    
-    result = execution_results[execution_id]
-    
-    if result["status"] != "completed":
+        error_message = str(e)
+        logger.error(f"Error uploading YAML scenarios: {error_message}", exc_info=True)
         raise HTTPException(
-            status_code=400, 
-            detail="Execution not completed"
+            status_code=500, detail=f"Failed to upload YAML scenarios: {error_message}"
         )
-    
-    if not result["report"]:
-        raise HTTPException(status_code=404, detail="Report not found")
-    
-    report = result["report"]
-    
-    if format == "json":
-        return JSONResponse(content=report)
-    elif format == "markdown":
-        markdown_report = _generate_markdown_report(report)
-        return JSONResponse(content={"report": markdown_report})
-    elif format == "html":
-        html_report = _generate_html_report(report)
-        return JSONResponse(content={"report": html_report})
-    else:
+
+
+@router.post("/yaml/execute", response_model=YamlScenarioExecuteResponse)
+async def execute_yaml_scenarios(request: YamlScenarioExecuteRequest):
+    """
+    Execute test scenarios from YAML content
+    """
+    try:
+        logger.info("Executing YAML scenarios from content")
+
+        # Parse YAML content
+        parser = YamlScenariosParser()
+        test_suite = parser.parse_yaml_content(request.yaml_content)
+
+        # Convert to browser test cases
+        test_cases = parser.convert_to_browser_test_cases(test_suite)
+
+        logger.info(
+            f"Executing {len(test_cases)} scenarios from test suite: {test_suite.name}"
+        )
+
+        # Initialize browser testing agent
+        agent = BrowserTestingAgent(provider=request.provider)
+
+        # Run multiple browser tests
+        results = await agent.run_multiple_tests(
+            test_cases=test_cases, headless=request.headless
+        )
+
+        # Convert results to BrowserTestResult models
+        test_results = [BrowserTestResult(**result) for result in results]
+
+        # Generate test report
+        report = agent.generate_test_report(results)
+
+        # Create summary
+        total_tests = len(results)
+        passed_tests = sum(1 for r in results if r.get("success", False))
+        failed_tests = total_tests - passed_tests
+
+        summary = {
+            "total_tests": total_tests,
+            "passed_tests": passed_tests,
+            "failed_tests": failed_tests,
+            "success_rate": (passed_tests / total_tests) * 100
+            if total_tests > 0
+            else 0,
+        }
+
+        return YamlScenarioExecuteResponse(
+            success=True,
+            message=f"Successfully executed {len(test_cases)} scenarios. {passed_tests}/{total_tests} tests passed",
+            test_suite_name=test_suite.name,
+            scenarios_count=len(test_cases),
+            results=test_results,
+            report=report,
+            summary=summary,
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Error executing YAML scenarios: {error_message}", exc_info=True)
         raise HTTPException(
-            status_code=400, 
-            detail="Unsupported format. Use 'json', 'markdown', or 'html'"
+            status_code=500, detail=f"Failed to execute YAML scenarios: {error_message}"
         )
 
 
-@router.get("/health", response_model=BrowserTestHealthResponse)
-async def health_check():
+@router.get("/yaml/template", response_model=YamlTemplateSample)
+async def get_yaml_template():
     """
-    Check the health of browser testing service.
-    
-    Returns:
-        Health check response
+    Get a sample YAML template for test scenarios
     """
     try:
-        agent = BrowserTestingAgent()
-        health_data = await agent.health_check()
-        
-        return BrowserTestHealthResponse(**health_data)
-        
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {e}")
+        parser = YamlScenariosParser()
+        template_content = parser.generate_sample_yaml()
 
-
-@router.websocket("/ws/{execution_id}")
-async def websocket_endpoint(websocket: WebSocket, execution_id: str):
-    """
-    WebSocket endpoint for real-time test execution monitoring.
-    
-    Args:
-        websocket: WebSocket connection
-        execution_id: Execution ID to monitor
-    """
-    await websocket.accept()
-    active_websockets[execution_id] = websocket
-    
-    try:
-        logger.info(f"WebSocket connected for execution: {execution_id}")
-        
-        # Send initial status
-        if execution_id in execution_results:
-            status_msg = BrowserTestWebSocketMessage(
-                type="status_update",
-                execution_id=execution_id,
-                data=execution_results[execution_id],
-            )
-            await websocket.send_json(status_msg.model_dump())
-        
-        # Keep connection alive and send updates
-        while True:
-            try:
-                # Wait for messages or send heartbeat
-                await asyncio.sleep(1)
-                
-                # Send heartbeat
-                heartbeat_msg = BrowserTestWebSocketMessage(
-                    type="heartbeat",
-                    execution_id=execution_id,
-                    data={"timestamp": str(asyncio.get_event_loop().time())},
-                )
-                await websocket.send_json(heartbeat_msg.model_dump())
-                
-            except WebSocketDisconnect:
-                break
-                
-    except WebSocketDisconnect:
-        logger.info(f"WebSocket disconnected for execution: {execution_id}")
-    except Exception as e:
-        logger.error(f"WebSocket error for execution {execution_id}: {e}")
-    finally:
-        # Clean up
-        if execution_id in active_websockets:
-            del active_websockets[execution_id]
-
-
-async def _execute_browser_tests(
-    execution_id: str,
-    yaml_content: str,
-    provider: str,
-    headless: bool,
-):
-    """
-    Execute browser tests in background.
-    
-    Args:
-        execution_id: Unique execution identifier
-        yaml_content: YAML test content
-        provider: LLM provider
-        headless: Whether to run headless
-    """
-    from datetime import datetime
-    
-    try:
-        logger.info(f"Starting background execution: {execution_id}")
-        
-        # Update status
-        execution_results[execution_id]["status"] = "running"
-        execution_results[execution_id]["started_at"] = datetime.now().isoformat()
-        
-        # Send WebSocket update
-        await _send_websocket_update(execution_id, "execution_started", {
-            "message": "Browser test execution started"
-        })
-        
-        # Execute tests
-        report = await execute_yaml_content(
-            yaml_content=yaml_content,
-            provider=provider,
-            headless=headless,
+        return YamlTemplateSample(
+            template_content=template_content,
+            description="Sample YAML template for browser test scenarios with comprehensive examples",
         )
-        
-        # Update results
-        execution_results[execution_id]["status"] = "completed"
-        execution_results[execution_id]["completed_at"] = datetime.now().isoformat()
-        execution_results[execution_id]["report"] = report.model_dump()
-        
-        # Send WebSocket update
-        await _send_websocket_update(execution_id, "execution_completed", {
-            "message": "Browser test execution completed",
-            "report": report.model_dump(),
-        })
-        
-        logger.info(f"Background execution completed: {execution_id}")
-        
+
     except Exception as e:
-        logger.error(f"Background execution failed: {execution_id} - {e}")
-        
-        # Update results with error
-        execution_results[execution_id]["status"] = "failed"
-        execution_results[execution_id]["completed_at"] = datetime.now().isoformat()
-        execution_results[execution_id]["error"] = str(e)
-        
-        # Send WebSocket update
-        await _send_websocket_update(execution_id, "execution_failed", {
-            "message": "Browser test execution failed",
-            "error": str(e),
-        })
+        error_message = str(e)
+        logger.error(f"Error generating YAML template: {error_message}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate YAML template: {error_message}"
+        )
 
 
-async def _send_websocket_update(execution_id: str, message_type: str, data: dict):
+@router.post("/yaml/validate")
+async def validate_yaml_scenarios(request: YamlScenarioExecuteRequest):
     """
-    Send WebSocket update to connected clients.
-    
-    Args:
-        execution_id: Execution ID
-        message_type: Type of message
-        data: Message data
+    Validate YAML content without executing tests
     """
-    if execution_id in active_websockets:
-        try:
-            message = BrowserTestWebSocketMessage(
-                type=message_type,
-                execution_id=execution_id,
-                data=data,
+    try:
+        logger.info("Validating YAML scenarios")
+
+        # Parse YAML content
+        parser = YamlScenariosParser()
+        test_suite = parser.parse_yaml_content(request.yaml_content)
+
+        # Convert to browser test cases
+        test_cases = parser.convert_to_browser_test_cases(test_suite)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"YAML validation successful. Found {len(test_cases)} valid scenarios.",
+                "test_suite_name": test_suite.name,
+                "scenarios_count": len(test_cases),
+                "scenarios": [
+                    {
+                        "name": case.get("scenario_name", "Unnamed"),
+                        "requirement": case.get("requirement", ""),
+                        "url": case.get("url", ""),
+                        "test_type": case.get("test_type", "functional"),
+                    }
+                    for case in test_cases
+                ],
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"YAML validation failed: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=400,
+            content={
+                "success": False,
+                "message": f"YAML validation failed: {error_message}",
+                "errors": [error_message],
+            },
+        )
+
+
+@router.get("/sessions")
+async def get_browser_sessions():
+    """
+    Get information about active browser sessions
+    """
+    try:
+        if not hasattr(browser_session_manager, "sessions"):
+            await browser_session_manager.initialize()
+
+        stats = browser_session_manager.get_session_stats()
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Browser session information retrieved",
+                "stats": stats,
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get browser sessions: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to get browser sessions: {error_message}",
+            },
+        )
+
+
+@router.get("/screenshots/{test_id}")
+async def get_test_screenshots(test_id: str = Path(...)):
+    """
+    Get all screenshots for a specific test
+    """
+    try:
+        screenshots = screenshot_manager.get_test_screenshots(test_id)
+        metadata = screenshot_manager.get_test_metadata(test_id)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"Found {len(screenshots)} screenshots for test {test_id}",
+                "test_id": test_id,
+                "screenshots": screenshots,
+                "metadata": metadata,
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get screenshots: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to get screenshots: {error_message}",
+            },
+        )
+
+
+@router.get("/screenshots/{test_id}/{filename}")
+async def get_screenshot_file(test_id: str = Path(...), filename: str = Path(...)):
+    """
+    Get a specific screenshot file
+    """
+    try:
+        screenshot_path = screenshot_manager.get_screenshot_path(test_id, filename)
+
+        if screenshot_path and screenshot_path.exists():
+            return FileResponse(
+                path=str(screenshot_path), media_type="image/png", filename=filename
             )
-            await active_websockets[execution_id].send_json(message.model_dump())
-            
-        except Exception as e:
-            logger.error(f"Failed to send WebSocket update: {e}")
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Screenshot {filename} not found for test {test_id}",
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get screenshot file: {error_message}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get screenshot file: {error_message}"
+        )
 
 
-def _generate_markdown_report(report: dict) -> str:
+@router.get("/metrics")
+async def get_test_metrics():
     """
-    Generate markdown report from test results.
-    
-    Args:
-        report: Test report dictionary
-        
-    Returns:
-        Markdown formatted report
+    Get browser testing metrics and statistics
     """
-    md = []
-    md.append(f"# Browser Test Report: {report['suite_name']}")
-    md.append("")
-    md.append("## Summary")
-    md.append(f"- **Total Tests**: {report['total_tests']}")
-    md.append(f"- **Passed**: {report['passed_tests']}")
-    md.append(f"- **Failed**: {report['failed_tests']}")
-    md.append(f"- **Success Rate**: {report['success_rate']:.1f}%")
-    md.append(f"- **Execution Time**: {report['execution_time']:.2f}s")
-    md.append("")
-    
-    md.append("## Test Results")
-    for result in report['results']:
-        status_emoji = "✅" if result['success'] else "❌"
-        md.append(f"### {status_emoji} {result['scenario_name']}")
-        md.append(f"- **Status**: {result['status']}")
-        md.append(f"- **Execution Time**: {result['execution_time']:.2f}s")
-        
-        if result['error_message']:
-            md.append(f"- **Error**: {result['error_message']}")
-        
-        if result['screenshot_path']:
-            md.append(f"- **Screenshot**: {result['screenshot_path']}")
-        
-        md.append("")
-    
-    return "\n".join(md)
+    try:
+        # Get session statistics
+        session_stats = (
+            browser_session_manager.get_session_stats()
+            if hasattr(browser_session_manager, "sessions")
+            else {}
+        )
+
+        # Get storage statistics
+        storage_stats = screenshot_manager.get_storage_stats()
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Browser testing metrics retrieved",
+                "session_stats": session_stats,
+                "storage_stats": storage_stats,
+                "timestamp": asyncio.get_event_loop().time(),
+            },
+        )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to get metrics: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to get metrics: {error_message}",
+            },
+        )
 
 
-def _generate_html_report(report: dict) -> str:
+@router.delete("/screenshots/{test_id}")
+async def cleanup_test_screenshots(test_id: str = Path(...)):
     """
-    Generate HTML report from test results.
-    
-    Args:
-        report: Test report dictionary
-        
-    Returns:
-        HTML formatted report
+    Clean up screenshots for a specific test
     """
-    html = []
-    html.append(f"<h1>Browser Test Report: {report['suite_name']}</h1>")
-    html.append("<h2>Summary</h2>")
-    html.append("<ul>")
-    html.append(f"<li><strong>Total Tests</strong>: {report['total_tests']}</li>")
-    html.append(f"<li><strong>Passed</strong>: {report['passed_tests']}</li>")
-    html.append(f"<li><strong>Failed</strong>: {report['failed_tests']}</li>")
-    html.append(f"<li><strong>Success Rate</strong>: {report['success_rate']:.1f}%</li>")
-    html.append(f"<li><strong>Execution Time</strong>: {report['execution_time']:.2f}s</li>")
-    html.append("</ul>")
-    
-    html.append("<h2>Test Results</h2>")
-    for result in report['results']:
-        status_class = "success" if result['success'] else "failure"
-        status_symbol = "✅" if result['success'] else "❌"
-        
-        html.append(f"<div class='test-result {status_class}'>")
-        html.append(f"<h3>{status_symbol} {result['scenario_name']}</h3>")
-        html.append(f"<p><strong>Status</strong>: {result['status']}</p>")
-        html.append(f"<p><strong>Execution Time</strong>: {result['execution_time']:.2f}s</p>")
-        
-        if result['error_message']:
-            html.append(f"<p><strong>Error</strong>: {result['error_message']}</p>")
-        
-        if result['screenshot_path']:
-            html.append(f"<p><strong>Screenshot</strong>: <a href='{result['screenshot_path']}'>View</a></p>")
-        
-        html.append("</div>")
-    
-    return "\n".join(html)
+    try:
+        success = screenshot_manager.cleanup_test_screenshots(test_id)
+
+        if success:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": f"Screenshots cleaned up for test {test_id}",
+                },
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "success": False,
+                    "message": f"No screenshots found for test {test_id}",
+                },
+            )
+
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Failed to cleanup screenshots: {error_message}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"Failed to cleanup screenshots: {error_message}",
+            },
+        )

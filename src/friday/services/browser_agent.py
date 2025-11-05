@@ -1,626 +1,384 @@
-"""
-Browser Testing Agent
-
-This module implements AI-powered browser testing using the browser-use library.
-It provides natural language test execution, screenshot capture, and comprehensive
-reporting capabilities.
-"""
-
-import json
+import asyncio
 import uuid
-from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import yaml
-from browser_use import Agent, BrowserSession
-from browser_use.browser.profile import BrowserProfile
-from browser_use.llm import ChatGoogle, ChatOllama, ChatOpenAI
+from browser_use import Agent
+from langchain_core.prompts import PromptTemplate
 
-from friday.api.schemas.browser_test import (
-    BrowserTestReport,
-    BrowserTestResult,
-    BrowserTestScenario,
-    BrowserTestSuite,
-    TestStatus,
-    TestType,
-)
-from friday.config.config import Settings
+from friday.llm.llm import ModelProvider, get_llm_client
 from friday.services.logger import get_logger
+from friday.services.screenshot_manager import screenshot_manager
+from friday.services.browser_session_manager import browser_session_manager
+from friday.services.browser_errors import browser_error_handler, BrowserTestError
 
 logger = get_logger(__name__)
 
 
 class BrowserTestingAgent:
-    """
-    AI-powered browser testing agent using browser-use library.
+    """Browser testing agent using browser-use library for UI automation"""
 
-    This agent can execute browser tests described in natural language,
-    capture screenshots, and generate comprehensive reports.
-    """
-
-    def __init__(
-        self,
-        provider: str = "openai",
-        headless: bool = True,
-        screenshot_dir: str = "./screenshots",
-        timeout: int = 30,
-    ):
-        """
-        Initialize the browser testing agent.
-
-        Args:
-            provider: LLM provider (openai, gemini, ollama, mistral)
-            headless: Whether to run browser in headless mode
-            screenshot_dir: Directory to store screenshots
-            timeout: Default timeout for tests
-        """
+    def __init__(self, provider: ModelProvider = "openai"):
+        self.llm = get_llm_client(provider)
         self.provider = provider
-        self.headless = headless
-        self.screenshot_dir = Path(screenshot_dir)
-        self.timeout = timeout
-        self.settings = Settings()  # type: ignore
-        self.execution_id = str(uuid.uuid4())
+        self.screenshot_manager = screenshot_manager
+        self.session_manager = browser_session_manager
+        self.error_handler = browser_error_handler
 
-        # Create screenshot directory
-        self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+        # Template for generating browser automation tasks
+        self.template = """
+        Based on the following test requirements, generate a comprehensive browser automation task:
+        
+        Test Requirement: {requirement}
+        Target URL: {url}
+        Test Type: {test_type}
+        
+        Additional Context:
+        {context}
+        
+        Generate a detailed browser automation task description that includes:
+        1. Clear step-by-step actions to perform
+        2. Elements to interact with (buttons, forms, links, etc.)
+        3. Data to input or verify
+        4. Expected outcomes and assertions
+        5. Screenshots or evidence to capture
+        
+        Format the task as a clear, actionable instruction for an AI browser agent.
+        """
 
-        # Initialize LLM
-        self.llm = self._init_llm()
+        self.prompt = PromptTemplate(
+            input_variables=["requirement", "url", "test_type", "context"],
+            template=self.template,
+        )
 
-        # Track execution state
-        self.current_browser_session = None
-        self.current_agent = None
-        self.test_results: List[BrowserTestResult] = []
+    async def run_multiple_tests(
+        self,
+        test_cases: List[Dict[str, Any]],
+        headless: bool = True,
+        max_parallel: int = 1,
+        respect_prerequisites: bool = True,
+    ) -> List[Dict[str, Any]]:
+        """
+        Run multiple browser tests with enhanced features
 
-    def _init_llm(self):
-        """Initialize the LLM based on provider."""
-        logger.info(f"Initializing LLM provider: {self.provider}")
+        Args:
+            test_cases: List of test case dictionaries with requirement, url, etc.
+            headless: Run browser in headless mode
+            max_parallel: Maximum number of parallel tests
+            respect_prerequisites: Whether to respect test prerequisites
 
-        if self.provider == "openai":
-            return ChatOpenAI(
-                model="gpt-4o-mini",
-                temperature=0.1,
-                api_key=self.settings.openai_api_key,
+        Returns:
+            List of test results
+        """
+        logger.info(
+            f"Starting enhanced batch testing with {len(test_cases)} test cases"
+        )
+
+        # Initialize session manager if needed
+        if (
+            not hasattr(self.session_manager, "playwright")
+            or self.session_manager.playwright is None
+        ):
+            await self.session_manager.initialize()
+
+        results = []
+        completed_tests = set()
+
+        if respect_prerequisites and max_parallel == 1:
+            # Sequential execution with prerequisite handling
+            results = await self._run_tests_sequential_with_prerequisites(
+                test_cases, headless
             )
-        elif self.provider == "gemini":
-            return ChatGoogle(
-                model="gemini-1.5-flash",
-                temperature=0.1,
-                api_key=self.settings.google_api_key,
-            )
-        elif self.provider == "ollama":
-            return ChatOllama(
-                model="llama3.1:8b",
-                host="http://localhost:11434",
-            )
+        elif max_parallel > 1:
+            # Parallel execution
+            results = await self._run_tests_parallel(test_cases, headless, max_parallel)
         else:
-            raise ValueError(f"Unsupported provider: {self.provider}")
+            # Simple sequential execution
+            results = await self._run_tests_sequential(test_cases, headless)
 
-    async def load_yaml_suite(self, yaml_content: str) -> BrowserTestSuite:
-        """
-        Load and parse a YAML test suite.
+        logger.info(f"Completed batch testing with {len(results)} results")
+        return results
 
-        Args:
-            yaml_content: YAML content as string
-
-        Returns:
-            Parsed BrowserTestSuite object
-        """
-        try:
-            data = yaml.safe_load(yaml_content)
-            logger.info(f"Loading test suite: {data.get('name', 'Unknown')}")
-
-            # Parse scenarios
-            scenarios = []
-            for scenario_data in data.get("scenarios", []):
-                scenario = BrowserTestScenario(**scenario_data)
-                scenarios.append(scenario)
-
-            # Create test suite
-            suite = BrowserTestSuite(
-                version=data.get("version", "1.0"),
-                name=data.get("name", "Test Suite"),
-                description=data.get("description"),
-                scenarios=scenarios,
-                global_timeout=data.get("global_timeout", 300),
-                global_take_screenshots=data.get("global_take_screenshots", True),
-            )
-
-            logger.info(f"Loaded {len(scenarios)} scenarios")
-            return suite
-
-        except Exception as e:
-            logger.error(f"Failed to parse YAML: {e}")
-            raise ValueError(f"Invalid YAML format: {e}")
-
-    async def execute_test_suite(self, suite: BrowserTestSuite) -> BrowserTestReport:
-        """
-        Execute a complete test suite.
-
-        Args:
-            suite: Test suite to execute
-
-        Returns:
-            Complete test execution report
-        """
-        logger.info(f"Starting test suite execution: {suite.name}")
-        start_time = datetime.now()
-
-        try:
-            # Initialize browser
-            await self._init_browser()
-
-            # Execute each scenario
-            for scenario in suite.scenarios:
-                logger.info(f"Executing scenario: {scenario.name}")
-
-                try:
-                    result = await self._execute_scenario(scenario)
-                    self.test_results.append(result)
-
-                except Exception as e:
-                    logger.error(f"Scenario failed: {scenario.name} - {e}")
-
-                    # Create failed result
-                    result = BrowserTestResult(
-                        scenario_name=scenario.name,
-                        status=TestStatus.FAILED,
-                        execution_time=0.0,
-                        success=False,
-                        error_message=str(e),
-                        started_at=datetime.now(),
-                        completed_at=datetime.now(),
-                        screenshot_path=None,
-                    )
-                    self.test_results.append(result)
-
-            # Generate report
-            report = await self._generate_report(suite, start_time)
+    async def _run_tests_sequential(
+        self, test_cases: List[Dict[str, Any]], headless: bool
+    ) -> List[Dict[str, Any]]:
+        """Run tests sequentially without prerequisite handling"""
+        results = []
+        for i, test_case in enumerate(test_cases):
             logger.info(
-                f"Test suite completed: {report.success_rate:.1f}% success rate"
+                f"Running test case {i + 1}/{len(test_cases)}: {test_case.get('scenario_name', 'Unknown')}"
             )
 
-            return report
+            result = await self.run_single_test(test_case=test_case, headless=headless)
+            results.append(result)
 
-        finally:
-            # Clean up browser
-            await self._cleanup_browser()
+            # Add delay between tests
+            await asyncio.sleep(2)
 
-    async def _init_browser(self):
-        """Initialize browser and agent."""
-        logger.info("Initializing browser...")
+        return results
 
-        # Configure browser profile
-        browser_profile = BrowserProfile(
-            headless=self.headless,
-        )
+    async def _run_tests_sequential_with_prerequisites(
+        self, test_cases: List[Dict[str, Any]], headless: bool
+    ) -> List[Dict[str, Any]]:
+        """Run tests sequentially while respecting prerequisites"""
+        results = []
+        completed_tests = set()
+        remaining_tests = test_cases.copy()
 
-        # Create browser session
-        self.current_browser_session = BrowserSession(
-            browser_profile=browser_profile,
-        )
+        while remaining_tests:
+            runnable_tests = []
 
-        # Start browser session
-        await self.current_browser_session.start()
+            for test_case in remaining_tests:
+                prerequisites = test_case.get("prerequisites", [])
+                if all(prereq in completed_tests for prereq in prerequisites):
+                    runnable_tests.append(test_case)
 
-        # Note: Agent will be created per scenario with specific task
+            if not runnable_tests:
+                # No tests can run due to unmet prerequisites
+                logger.warning(
+                    "Circular dependencies or missing prerequisites detected"
+                )
+                # Run remaining tests anyway
+                runnable_tests = remaining_tests
 
-        logger.info("Browser initialized successfully")
+            for test_case in runnable_tests:
+                logger.info(
+                    f"Running test: {test_case.get('scenario_name', 'Unknown')}"
+                )
 
-    async def _execute_scenario(
-        self, scenario: BrowserTestScenario
-    ) -> BrowserTestResult:
+                result = await self.run_single_test(
+                    test_case=test_case, headless=headless
+                )
+                results.append(result)
+                completed_tests.add(test_case.get("scenario_name", ""))
+                remaining_tests.remove(test_case)
+
+                # Add delay between tests
+                await asyncio.sleep(1)
+
+        return results
+
+    async def _run_tests_parallel(
+        self, test_cases: List[Dict[str, Any]], headless: bool, max_parallel: int
+    ) -> List[Dict[str, Any]]:
+        """Run tests in parallel batches"""
+        results = []
+
+        # Filter tests that can run in parallel
+        parallel_tests = [tc for tc in test_cases if tc.get("parallel", False)]
+        sequential_tests = [tc for tc in test_cases if not tc.get("parallel", False)]
+
+        # Run parallel tests in batches
+        if parallel_tests:
+            for i in range(0, len(parallel_tests), max_parallel):
+                batch = parallel_tests[i : i + max_parallel]
+                logger.info(f"Running parallel batch of {len(batch)} tests")
+
+                tasks = [
+                    self.run_single_test(test_case=test_case, headless=headless)
+                    for test_case in batch
+                ]
+
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+                for result in batch_results:
+                    if isinstance(result, Exception):
+                        # Handle exceptions from parallel execution
+                        error_result = {
+                            "status": "failed",
+                            "success": False,
+                            "error": str(result),
+                            "timestamp": asyncio.get_event_loop().time(),
+                        }
+                        results.append(error_result)
+                    else:
+                        results.append(result)
+
+        # Run sequential tests normally
+        if sequential_tests:
+            sequential_results = await self._run_tests_sequential(
+                sequential_tests, headless
+            )
+            results.extend(sequential_results)
+
+        return results
+
+    async def run_single_test(
+        self, test_case: Dict[str, Any], headless: bool = True
+    ) -> Dict[str, Any]:
         """
-        Execute a single test scenario.
-
+        Run a single browser test case
+        
         Args:
-            scenario: Test scenario to execute
-
+            test_case: Dictionary containing test case details
+            headless: Whether to run browser in headless mode
+            
         Returns:
-            Test execution result
+            Dictionary with test result details
         """
-        start_time = datetime.now()
-        execution_time = 0.0
-        logs = []
-        actions_taken = []
-        error_message = None
-        success = False
-        screenshot_path = None
-
+        test_id = str(uuid.uuid4())
+        scenario_name = test_case.get("scenario_name", "Unknown Test")
+        
+        logger.info(f"Starting single test: {scenario_name} (ID: {test_id})")
+        
         try:
-            logger.info(f"Navigating to {scenario.url}")
-            logs.append(f"Navigating to {scenario.url}")
-
-            # Navigate to URL
-            await self.current_browser_session.navigate_to(scenario.url)  # type: ignore
-            actions_taken.append(f"Navigated to {scenario.url}")
-
-            # Take initial screenshot if enabled
-            should_take_screenshots = getattr(scenario, "take_screenshots", True)
-            if should_take_screenshots:
-                initial_screenshot = await self._capture_screenshot(
-                    f"{scenario.name}_initial"
-                )
-                if initial_screenshot:
-                    logs.append(f"Initial screenshot captured: {initial_screenshot}")
-
-            # Build test instruction
-            instruction = self._build_test_instruction(scenario)
-            logs.append(f"Executing: {instruction}")
-
-            # Log detailed steps if provided
-            if hasattr(scenario, "steps") and scenario.steps:
-                logs.append(f"Following {len(scenario.steps)} detailed steps:")
-                for i, step in enumerate(scenario.steps, 1):
-                    logs.append(f"Step {i}: {step}")
-
-            # Create agent for this specific scenario
-            scenario_agent = Agent(
-                task=instruction,
-                llm=self.llm,
-                browser_session=self.current_browser_session,
+            # Extract test case details
+            requirement = test_case.get("requirement", "")
+            url = test_case.get("url", "")
+            test_type = test_case.get("test_type", "functional")
+            context = test_case.get("context", "")
+            
+            # Generate browser automation task using LLM prompt
+            prompt_input = {
+                "requirement": requirement,
+                "url": url,
+                "test_type": test_type,
+                "context": context,
+            }
+            
+            # Generate task description
+            chain = self.prompt | self.llm
+            automation_task = await chain.ainvoke(prompt_input)
+            
+            # Clean up task text
+            if hasattr(automation_task, 'content'):
+                task_description = automation_task.content
+            else:
+                task_description = str(automation_task)
+            
+            logger.info(f"Generated automation task for {scenario_name}: {task_description[:100]}...")
+            
+            # Initialize browser session if needed
+            if not hasattr(self.session_manager, 'playwright') or self.session_manager.playwright is None:
+                await self.session_manager.initialize()
+            
+            # Create browser context
+            browser_context = await self.session_manager.create_browser_context(
+                test_id=test_id,
+                headless=headless
             )
-
-            # Execute test using browser-use agent
-            logger.info(f"Executing test: {scenario.name}")
-            result = await scenario_agent.run(max_steps=20)
-
-            # Take final screenshot if enabled
-            if should_take_screenshots:
-                screenshot_path = await self._capture_screenshot(
-                    f"{scenario.name}_final"
-                )
-                if screenshot_path:
-                    logs.append(f"Final screenshot captured: {screenshot_path}")
-
-            # Determine success based on result
-            success = self._evaluate_test_success(result, scenario)
-
-            # Log expected outcomes check
-            if hasattr(scenario, "expected_outcomes") and scenario.expected_outcomes:
-                logs.append(
-                    f"Checking {len(scenario.expected_outcomes)} expected outcomes:"
-                )
-                for i, outcome in enumerate(scenario.expected_outcomes, 1):
-                    logs.append(f"Expected outcome {i}: {outcome}")
-
-            logs.append(f"Test completed with result: {success}")
-            logger.info(f"Test completed: {scenario.name} - Success: {success}")
-
+            
+            # Create browser-use agent
+            agent = Agent(
+                task=task_description,
+                llm=self.llm,
+                browser_context=browser_context,
+                use_vision=True,
+                save_conversation_path=f"logs/browser_test_{test_id}.json",
+                max_failures=3,
+                retry_delay=10
+            )
+            
+            # Execute the browser automation task
+            result = await agent.run(max_steps=50)
+            
+            # Take final screenshot
+            screenshot_path = await self.screenshot_manager.capture_screenshot(
+                context=browser_context,
+                test_id=test_id,
+                step_name="final_result"
+            )
+            
+            # Close browser context
+            await browser_context.close()
+            
+            # Extract result information
+            success = len(result) > 0 and not any(step.is_error for step in result)
+            result_summary = f"Completed {len(result)} steps"
+            if result:
+                last_step = result[-1]
+                if hasattr(last_step, 'output') and last_step.output:
+                    result_summary += f". Final result: {str(last_step.output)[:200]}"
+            
+            # Prepare success result
+            test_result = {
+                "test_id": test_id,
+                "scenario_name": scenario_name,
+                "requirement": requirement,
+                "url": url,
+                "test_type": test_type,
+                "status": "completed",
+                "success": success,
+                "execution_result": result_summary,
+                "task_description": task_description,
+                "screenshot_path": str(screenshot_path) if screenshot_path else None,
+                "timestamp": asyncio.get_event_loop().time(),
+                "steps_executed": len(result) if result else 0,
+            }
+            
+            logger.info(f"Successfully completed test: {scenario_name}")
+            return test_result
+            
         except Exception as e:
             error_message = str(e)
-            success = False
-            logs.append(f"Test failed: {error_message}")
-            logger.error(f"Test failed: {scenario.name} - {error_message}")
-
-            # Take error screenshot if enabled
-            should_take_screenshots = getattr(scenario, "take_screenshots", True)
-            if should_take_screenshots:
-                try:
-                    error_screenshot = await self._capture_screenshot(
-                        f"{scenario.name}_error"
-                    )
-                    if error_screenshot:
-                        screenshot_path = error_screenshot
-                        logs.append(f"Error screenshot captured: {error_screenshot}")
-                except Exception as screenshot_error:
-                    logs.append(
-                        f"Failed to capture error screenshot: {screenshot_error}"
-                    )
-
-        finally:
-            end_time = datetime.now()
-            execution_time = (end_time - start_time).total_seconds()
-
-        # Create result
-        result = BrowserTestResult(
-            scenario_name=scenario.name,
-            status=TestStatus.COMPLETED if success else TestStatus.FAILED,
-            execution_time=execution_time,
-            success=success,
-            error_message=error_message,
-            screenshot_path=screenshot_path,
-            logs=logs,
-            actions_taken=actions_taken,
-            started_at=start_time,
-            completed_at=end_time,
-        )
-
-        return result
-
-    def _build_test_instruction(self, scenario: BrowserTestScenario) -> str:
-        """
-        Build natural language instruction for the agent.
-
-        Args:
-            scenario: Test scenario
-
-        Returns:
-            Natural language instruction
-        """
-        instruction = f"""
-        Perform the following test:
-        - **Requirement**: {scenario.requirement}
-        """
-
-        if scenario.context:
-            instruction += f"- **Context**: {scenario.context}\n"
-
-        if scenario.steps:
-            instruction += "- **Detailed Steps**:\n"
-            for i, step in enumerate(scenario.steps, 1):
-                instruction += f"  {i}. {step}\n"
-
-        if scenario.expected_outcomes:
-            instruction += "- **Expected Outcomes**:\n"
-            for i, outcome in enumerate(scenario.expected_outcomes, 1):
-                instruction += f"  {i}. {outcome}\n"
-        elif scenario.expected_outcome:
-            instruction += f"- **Expected Outcome**: {scenario.expected_outcome}\n"
-
-        if scenario.take_screenshots:
-            instruction += (
-                "- **Note**: Capture screenshots at key steps and upon completion.\n"
+            logger.error(f"Test failed for {scenario_name}: {error_message}", exc_info=True)
+            
+            # Handle error with error handler
+            handled_error = await self.error_handler.handle_test_error(
+                test_id=test_id,
+                error=e,
+                test_case=test_case
             )
+            
+            # Prepare failure result
+            test_result = {
+                "test_id": test_id,
+                "scenario_name": scenario_name,
+                "requirement": test_case.get("requirement", ""),
+                "url": test_case.get("url", ""),
+                "test_type": test_case.get("test_type", "functional"),
+                "status": "failed",
+                "success": False,
+                "error": error_message,
+                "error_details": handled_error,
+                "timestamp": asyncio.get_event_loop().time(),
+            }
+            
+            return test_result
 
-        # Add test type specific instructions
-        if scenario.test_type == TestType.FUNCTIONAL:
-            instruction += "- **Test Type**: Functional - Focus on core functionality and user workflows.\n"
-        elif scenario.test_type == TestType.UI:
-            instruction += "- **Test Type**: UI - Focus on user interface elements and visual components.\n"
-        elif scenario.test_type == TestType.INTEGRATION:
-            instruction += "- **Test Type**: Integration - Focus on component interactions and integrations.\n"
-        elif scenario.test_type == TestType.ACCESSIBILITY:
-            instruction += "- **Test Type**: Accessibility - Focus on accessibility features and compliance.\n"
-        elif scenario.test_type == TestType.PERFORMANCE:
-            instruction += "- **Test Type**: Performance - Focus on performance and responsiveness.\n"
-
-        return instruction
-
-    def _evaluate_test_success(
-        self, result: Any, _scenario: BrowserTestScenario
-    ) -> bool:
+    def generate_test_report(self, results: List[Dict[str, Any]]) -> str:
         """
-        Evaluate if the test was successful.
+        Generate a comprehensive test report from browser test results
 
         Args:
-            result: Browser agent execution result
-            _scenario: Test scenario (unused)
+            results: List of test results
 
         Returns:
-            Whether the test was successful
+            Formatted test report string
         """
-        try:
-            # Check if result indicates success
-            if hasattr(result, "success"):
-                return result.success
+        total_tests = len(results)
+        passed_tests = sum(1 for r in results if r.get("success", False))
+        failed_tests = total_tests - passed_tests
 
-            # Check if result has status
-            if hasattr(result, "status"):
-                return result.status == "success"
+        report = f"""
+# Browser Test Execution Report
 
-            # Check if result has error
-            if hasattr(result, "error"):
-                return result.error is None
+## Summary
+- **Total Tests**: {total_tests}
+- **Passed**: {passed_tests}
+- **Failed**: {failed_tests}
+- **Success Rate**: {(passed_tests / total_tests) * 100:.1f}%
 
-            # Default to True if no clear failure indication
-            return True
+## Test Results
 
-        except Exception:
-            # If evaluation fails, assume failure
-            return False
+"""
 
-    async def _capture_screenshot(self, scenario_name: str) -> str:
-        """
-        Capture screenshot of current browser state.
+        for i, result in enumerate(results, 1):
+            status_icon = "✅" if result.get("success", False) else "❌"
+            report += f"""
+### Test Case {i}: {status_icon}
+- **Requirement**: {result.get("requirement", "N/A")}
+- **URL**: {result.get("url", "N/A")}
+- **Test Type**: {result.get("test_type", "N/A")}
+- **Status**: {"PASSED" if result.get("success", False) else "FAILED"}
 
-        Args:
-            scenario_name: Name of the scenario
+"""
 
-        Returns:
-            Screenshot file path
-        """
-        try:
-            # Create unique filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{scenario_name}_{timestamp}.png"
-            filepath = self.screenshot_dir / self.execution_id / filename
+            if not result.get("success", False):
+                report += f"- **Error**: {result.get('error', 'Unknown error')}\n"
 
-            # Create directory if needed
-            filepath.parent.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Capturing screenshot: {filepath}")
-            screenshot_b64 = await self.current_browser_session.take_screenshot()  # type: ignore
-
-            # Save base64 screenshot as PNG
-            import base64
-
-            with open(filepath, "wb") as f:
-                f.write(base64.b64decode(screenshot_b64))
-
-            logger.info(f"Screenshot captured: {filepath}")
-            return str(filepath)
-
-        except Exception as e:
-            logger.error(f"Failed to capture screenshot: {e}")
-            return None  # type: ignore
-
-    async def _generate_report(
-        self, suite: BrowserTestSuite, start_time: datetime
-    ) -> BrowserTestReport:
-        """
-        Generate comprehensive test report.
-
-        Args:
-            suite: Test suite that was executed
-            start_time: Suite start time
-
-        Returns:
-            Complete test report
-        """
-        end_time = datetime.now()
-        execution_time = (end_time - start_time).total_seconds()
-
-        # Calculate statistics
-        total_tests = len(self.test_results)
-        passed_tests = sum(1 for r in self.test_results if r.success)
-        failed_tests = sum(1 for r in self.test_results if not r.success)
-        skipped_tests = 0  # Currently not implemented
-
-        success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
-
-        # Get browser info
-        browser_info = {
-            "provider": self.provider,
-            "headless": self.headless,
-            "execution_id": self.execution_id,
-        }
-
-        # Create report
-        report = BrowserTestReport(
-            suite_name=suite.name,
-            total_tests=total_tests,
-            passed_tests=passed_tests,
-            failed_tests=failed_tests,
-            skipped_tests=skipped_tests,
-            execution_time=execution_time,
-            success_rate=success_rate,
-            results=self.test_results,
-            started_at=start_time,
-            completed_at=end_time,
-            browser_info=browser_info,
-        )
+            if result.get("execution_result"):
+                report += (
+                    f"- **Details**: {result.get('execution_result', '')[:200]}...\n"
+                )
 
         return report
-
-    async def _cleanup_browser(self):
-        """Clean up browser resources."""
-        try:
-            if self.current_browser_session:
-                await self.current_browser_session.stop()
-                self.current_browser_session = None
-
-            if self.current_agent:
-                self.current_agent = None
-
-            logger.info("Browser cleanup completed")
-
-        except Exception as e:
-            logger.error(f"Error during browser cleanup: {e}")
-
-    async def health_check(self) -> Dict[str, Any]:
-        """
-        Perform health check for browser testing.
-
-        Returns:
-            Health check status
-        """
-        try:
-            # Check if browser-use is available
-            try:
-                import importlib.metadata
-
-                browser_use_version = importlib.metadata.version("browser-use")
-            except Exception:
-                browser_use_version = "unknown"
-
-            # Check if playwright is available
-            try:
-                import importlib.metadata
-
-                playwright_version = importlib.metadata.version("playwright")
-            except Exception:
-                playwright_version = "unknown"
-
-            # Test browser initialization
-            browser_available = True
-            try:
-                test_profile = BrowserProfile(headless=True)
-                test_browser = BrowserSession(browser_profile=test_profile)
-                await test_browser.start()
-                await test_browser.stop()
-            except Exception:
-                browser_available = False
-
-            return {
-                "status": "healthy" if browser_available else "unhealthy",
-                "browser_available": browser_available,
-                "playwright_version": playwright_version,
-                "browser_use_version": browser_use_version,
-                "supported_providers": ["openai", "gemini", "ollama", "mistral"],
-            }
-
-        except Exception as e:
-            logger.error(f"Health check failed: {e}")
-            return {
-                "status": "unhealthy",
-                "error": str(e),
-                "browser_available": False,
-                "playwright_version": "unknown",
-                "browser_use_version": "unknown",
-                "supported_providers": [],
-            }
-
-
-# Utility functions for CLI and API usage
-async def execute_yaml_file(
-    yaml_file_path: str,
-    provider: str = "openai",
-    headless: bool = True,
-    output_file: Optional[str] = None,
-) -> BrowserTestReport:
-    """
-    Execute browser tests from YAML file.
-
-    Args:
-        yaml_file_path: Path to YAML test file
-        provider: LLM provider
-        headless: Whether to run headless
-        output_file: Optional output file for report
-
-    Returns:
-        Test execution report
-    """
-    # Read YAML file
-    with open(yaml_file_path, "r") as f:
-        yaml_content = f.read()
-
-    # Create agent
-    agent = BrowserTestingAgent(provider=provider, headless=headless)
-
-    # Load and execute test suite
-    suite = await agent.load_yaml_suite(yaml_content)
-    report = await agent.execute_test_suite(suite)
-
-    # Save report if requested
-    if output_file:
-        with open(output_file, "w") as f:
-            json.dump(report.model_dump(), f, indent=2, default=str)
-
-    return report
-
-
-async def execute_yaml_content(
-    yaml_content: str,
-    provider: str = "openai",
-    headless: bool = True,
-) -> BrowserTestReport:
-    """
-    Execute browser tests from YAML content.
-
-    Args:
-        yaml_content: YAML content as string
-        provider: LLM provider
-        headless: Whether to run headless
-
-    Returns:
-        Test execution report
-    """
-    # Create agent
-    agent = BrowserTestingAgent(provider=provider, headless=headless)
-
-    # Load and execute test suite
-    suite = await agent.load_yaml_suite(yaml_content)
-    report = await agent.execute_test_suite(suite)
-
-    return report

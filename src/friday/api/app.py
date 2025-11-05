@@ -153,7 +153,7 @@ app.include_router(generate.router, prefix="/api/v1", tags=["Test Generation"])
 app.include_router(crawl.router, prefix="/api/v1", tags=["Web Crawling"])
 app.include_router(health.router, prefix="/api/v1", tags=["Health Check"])
 app.include_router(api_test.router, prefix="/api/v1", tags=["API Testing"])
-app.include_router(browser_test.router, tags=["Browser Testing"])
+app.include_router(browser_test.router, prefix="/api/v1", tags=["Browser Testing"])
 app.include_router(ws.router, prefix="/api/v1", tags=["WebSocket"])
 
 

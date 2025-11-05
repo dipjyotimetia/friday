@@ -1,173 +1,211 @@
-"""
-Browser Testing API Schemas
-
-This module defines Pydantic models for browser testing API endpoints.
-It includes schemas for test scenarios, YAML uploads, test execution,
-and result reporting.
-"""
-
-from datetime import datetime
-from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
-
-
-class TestType(str, Enum):
-    """Test type enumeration."""
-    FUNCTIONAL = "functional"
-    UI = "ui"
-    INTEGRATION = "integration"
-    ACCESSIBILITY = "accessibility"
-    PERFORMANCE = "performance"
-
-
-class TestStatus(str, Enum):
-    """Test execution status."""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    SKIPPED = "skipped"
-
-
-class BrowserTestScenario(BaseModel):
-    """Individual test scenario definition."""
-    name: str = Field(..., description="Test scenario name")
-    requirement: str = Field(..., description="Test requirement in plain English")
-    url: str = Field(..., description="Target URL for testing")
-    test_type: TestType = Field(default=TestType.FUNCTIONAL, description="Type of test")
-    context: Optional[str] = Field(None, description="Additional context for the test")
-    expected_outcome: Optional[str] = Field(None, description="Expected test outcome")
-    timeout: Optional[int] = Field(30, description="Test timeout in seconds")
-    take_screenshots: Optional[bool] = Field(True, description="Whether to take screenshots during test")
-    steps: Optional[List[str]] = Field(None, description="Detailed test steps to follow")
-    expected_outcomes: Optional[List[str]] = Field(None, description="List of expected outcomes")
-    
-    @field_validator('url')
-    @classmethod
-    def validate_url(cls, v: str) -> str:
-        """Validate URL format."""
-        if not v.startswith(('http://', 'https://')):
-            raise ValueError('URL must start with http:// or https://')
-        return v
-
-
-class BrowserTestSuite(BaseModel):
-    """Complete test suite definition."""
-    version: Optional[str] = Field("1.0", description="YAML schema version for backward compatibility")
-    name: str = Field(..., description="Test suite name")
-    description: Optional[str] = Field(None, description="Test suite description")
-    scenarios: List[BrowserTestScenario] = Field(..., description="List of test scenarios")
-    global_timeout: Optional[int] = Field(300, description="Global timeout for entire suite")
-    global_take_screenshots: Optional[bool] = Field(True, description="Global screenshot setting for all scenarios")
-    
-    @field_validator('scenarios')
-    @classmethod
-    def validate_scenarios(cls, v: List[BrowserTestScenario]) -> List[BrowserTestScenario]:
-        """Validate scenarios list."""
-        if not v:
-            raise ValueError('At least one scenario is required')
-        return v
-    
-    @field_validator('version')
-    @classmethod
-    def validate_version(cls, v: str) -> str:
-        """Validate version format."""
-        if not v or not v.replace('.', '').isdigit():
-            raise ValueError('Version must be in format like "1.0", "2.1", etc.')
-        return v
+from pydantic import BaseModel, Field
 
 
 class BrowserTestResult(BaseModel):
-    """Individual test result."""
-    scenario_name: str = Field(..., description="Test scenario name")
-    status: TestStatus = Field(..., description="Test execution status")
-    execution_time: float = Field(..., description="Execution time in seconds")
-    success: bool = Field(..., description="Whether test passed")
-    error_message: Optional[str] = Field(None, description="Error message if failed")
-    screenshot_path: Optional[str] = Field(None, description="Screenshot file path")
-    logs: List[str] = Field(default_factory=list, description="Test execution logs")
-    actions_taken: List[str] = Field(default_factory=list, description="Actions performed")
-    started_at: datetime = Field(..., description="Test start time")
-    completed_at: Optional[datetime] = Field(None, description="Test completion time")
+    """Result model for browser test execution"""
+
+    status: str = Field(..., description="Test execution status")
+    requirement: str = Field(..., description="Test requirement that was executed")
+    url: str = Field(..., description="URL that was tested")
+    test_type: str = Field(..., description="Type of test that was executed")
+    test_id: Optional[str] = Field(None, description="Unique test identifier")
+    task_description: Optional[str] = Field(
+        None, description="Generated task description"
+    )
+    execution_result: Optional[str] = Field(
+        None, description="Detailed execution result"
+    )
+    screenshots: List[str] = Field(
+        default=[], description="List of screenshot paths/URLs"
+    )
+    timestamp: Optional[float] = Field(None, description="Execution timestamp")
+    success: bool = Field(..., description="Whether the test was successful")
+    errors: List[str] = Field(default=[], description="List of errors if any")
+    detailed_errors: List[Dict[str, Any]] = Field(
+        default=[], description="Detailed error information with categorization"
+    )
+    browser_type: Optional[str] = Field(
+        default="chromium", description="Browser type used for testing"
+    )
+    session_id: Optional[str] = Field(None, description="Browser session identifier")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "status": "completed",
+                "requirement": "Test user login functionality",
+                "url": "https://example.com/login",
+                "test_type": "functional",
+                "test_id": "20241219_143022_a1b2c3d4",
+                "task_description": "Navigate to login page and test authentication",
+                "execution_result": "Successfully logged in user and navigated to dashboard",
+                "screenshots": [
+                    "20241219_143022_a1b2c3d4/initial_page_20241219_143022_123.png",
+                    "20241219_143022_a1b2c3d4/final_result_20241219_143025_456.png",
+                ],
+                "timestamp": 1640995200.0,
+                "success": True,
+                "errors": [],
+                "detailed_errors": [],
+                "browser_type": "chromium",
+                "session_id": "session_123",
+            }
+        }
 
 
-class BrowserTestReport(BaseModel):
-    """Complete test execution report."""
-    suite_name: str = Field(..., description="Test suite name")
-    total_tests: int = Field(..., description="Total number of tests")
-    passed_tests: int = Field(..., description="Number of passed tests")
-    failed_tests: int = Field(..., description="Number of failed tests")
-    skipped_tests: int = Field(..., description="Number of skipped tests")
-    execution_time: float = Field(..., description="Total execution time")
-    success_rate: float = Field(..., description="Success rate percentage")
-    results: List[BrowserTestResult] = Field(..., description="Individual test results")
-    started_at: datetime = Field(..., description="Suite start time")
-    completed_at: datetime = Field(..., description="Suite completion time")
-    browser_info: Dict[str, Any] = Field(default_factory=dict, description="Browser information")
+class YamlScenarioUploadRequest(BaseModel):
+    """Request model for uploading YAML test scenarios"""
+
+    provider: Optional[str] = Field(default="openai", description="LLM provider to use")
+    headless: bool = Field(default=True, description="Run browser in headless mode")
+    execute_immediately: bool = Field(
+        default=False, description="Execute tests immediately after upload"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "provider": "openai",
+                "headless": True,
+                "execute_immediately": False,
+            }
+        }
 
 
-class YamlUploadRequest(BaseModel):
-    """YAML file upload request."""
-    filename: str = Field(..., description="Original filename")
-    content: str = Field(..., description="YAML file content")
+class YamlScenarioUploadResponse(BaseModel):
+    """Response model for YAML scenario upload"""
+
+    success: bool = Field(..., description="Whether the upload was successful")
+    message: str = Field(..., description="Response message")
+    test_suite_name: Optional[str] = Field(
+        None, description="Name of the uploaded test suite"
+    )
+    scenarios_count: Optional[int] = Field(
+        None, description="Number of scenarios found"
+    )
+    scenarios: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Parsed scenarios"
+    )
+    execution_results: Optional[List[BrowserTestResult]] = Field(
+        None, description="Test results if executed immediately"
+    )
+    report: Optional[str] = Field(
+        None, description="Test report if executed immediately"
+    )
+    summary: Optional[Dict[str, Any]] = Field(
+        None, description="Test summary if executed immediately"
+    )
+    error: Optional[str] = Field(None, description="Error message if any")
 
 
-class YamlUploadResponse(BaseModel):
-    """YAML file upload response."""
-    message: str = Field(..., description="Upload status message")
-    file_id: str = Field(..., description="Unique file identifier")
-    parsed_suite: BrowserTestSuite = Field(..., description="Parsed test suite")
+class YamlScenarioExecuteRequest(BaseModel):
+    """Request model for executing YAML scenarios"""
+
+    yaml_content: str = Field(..., description="YAML content containing test scenarios")
+    provider: Optional[str] = Field(default="openai", description="LLM provider to use")
+    headless: bool = Field(default=True, description="Run browser in headless mode")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "yaml_content": "name: 'Test Suite'\nscenarios:\n  - name: 'Homepage Test'\n    requirement: 'Test homepage loads'\n    url: 'https://example.com'",
+                "provider": "openai",
+                "headless": True,
+            }
+        }
 
 
-class BrowserTestExecutionRequest(BaseModel):
-    """Browser test execution request."""
-    file_id: Optional[str] = Field(None, description="Uploaded file ID")
-    test_suite: Optional[BrowserTestSuite] = Field(None, description="Direct test suite")
-    provider: str = Field(default="openai", description="LLM provider")
-    headless: bool = Field(default=True, description="Run in headless mode")
-    output_format: str = Field(default="json", description="Output format")
-    
-    @field_validator('provider')
-    @classmethod
-    def validate_provider(cls, v: str) -> str:
-        """Validate LLM provider."""
-        valid_providers = ['openai', 'gemini', 'ollama', 'mistral']
-        if v not in valid_providers:
-            raise ValueError(f'Provider must be one of: {valid_providers}')
-        return v
+class YamlScenarioExecuteResponse(BaseModel):
+    """Response model for YAML scenario execution"""
+
+    success: bool = Field(..., description="Whether the execution was successful")
+    message: str = Field(..., description="Response message")
+    test_suite_name: str = Field(..., description="Name of the executed test suite")
+    scenarios_count: int = Field(..., description="Number of scenarios executed")
+    results: List[BrowserTestResult] = Field(..., description="Test execution results")
+    report: str = Field(..., description="Generated test report")
+    summary: Dict[str, Any] = Field(..., description="Test execution summary")
+    error: Optional[str] = Field(None, description="Error message if any")
 
 
-class BrowserTestExecutionResponse(BaseModel):
-    """Browser test execution response."""
-    message: str = Field(..., description="Execution status message")
-    execution_id: str = Field(..., description="Unique execution identifier")
-    status: TestStatus = Field(..., description="Current execution status")
-    report: Optional[BrowserTestReport] = Field(None, description="Test execution report")
+class BrowserSessionStats(BaseModel):
+    """Browser session statistics"""
+
+    total_sessions: int = Field(..., description="Total number of sessions")
+    active_sessions: int = Field(..., description="Number of active sessions")
+    max_sessions: int = Field(..., description="Maximum allowed sessions")
+    total_tests_executed: int = Field(
+        ..., description="Total tests executed across all sessions"
+    )
+    browser_types: Dict[str, int] = Field(..., description="Breakdown by browser type")
+    session_timeout: int = Field(..., description="Session timeout in seconds")
 
 
-class BrowserTestHealthResponse(BaseModel):
-    """Browser testing health check response."""
-    status: str = Field(..., description="Health status")
-    browser_available: bool = Field(..., description="Browser availability")
-    playwright_version: str = Field(..., description="Playwright version")
-    browser_use_version: str = Field(..., description="Browser-use library version")
-    supported_providers: List[str] = Field(..., description="Supported LLM providers")
+class StorageStats(BaseModel):
+    """Storage statistics for screenshots and test data"""
+
+    total_size_bytes: int = Field(..., description="Total storage size in bytes")
+    total_size_mb: float = Field(..., description="Total storage size in MB")
+    total_files: int = Field(..., description="Total number of files")
+    test_count: int = Field(..., description="Number of test directories")
+    base_path: str = Field(..., description="Base storage path")
 
 
-class BrowserTestLogEntry(BaseModel):
-    """Browser test log entry."""
-    timestamp: datetime = Field(..., description="Log timestamp")
-    level: str = Field(..., description="Log level")
-    message: str = Field(..., description="Log message")
-    execution_id: Optional[str] = Field(None, description="Execution ID")
-    scenario_name: Optional[str] = Field(None, description="Scenario name")
+class TestMetricsResponse(BaseModel):
+    """Response model for test metrics"""
+
+    success: bool = Field(..., description="Whether the request was successful")
+    message: str = Field(..., description="Response message")
+    session_stats: BrowserSessionStats = Field(..., description="Session statistics")
+    storage_stats: StorageStats = Field(..., description="Storage statistics")
+    timestamp: float = Field(..., description="Response timestamp")
 
 
-class BrowserTestWebSocketMessage(BaseModel):
-    """WebSocket message for real-time updates."""
-    type: str = Field(..., description="Message type")
-    execution_id: str = Field(..., description="Execution ID")
-    data: Dict[str, Any] = Field(..., description="Message data")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Message timestamp")
+class ScreenshotInfo(BaseModel):
+    """Screenshot information model"""
+
+    filename: str = Field(..., description="Screenshot filename")
+    path: str = Field(..., description="Relative path to screenshot")
+    size: int = Field(..., description="File size in bytes")
+    created_at: str = Field(..., description="Creation timestamp")
+    url: str = Field(..., description="API URL to access screenshot")
+
+
+class TestScreenshotsResponse(BaseModel):
+    """Response model for test screenshots"""
+
+    success: bool = Field(..., description="Whether the request was successful")
+    message: str = Field(..., description="Response message")
+    test_id: str = Field(..., description="Test identifier")
+    screenshots: List[ScreenshotInfo] = Field(..., description="List of screenshots")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Test metadata")
+
+
+class ValidationResponse(BaseModel):
+    """Response model for YAML validation"""
+
+    success: bool = Field(..., description="Whether validation was successful")
+    message: str = Field(..., description="Validation message")
+    test_suite_name: Optional[str] = Field(None, description="Name of test suite")
+    scenarios_count: Optional[int] = Field(None, description="Number of scenarios")
+    scenarios: Optional[List[Dict[str, str]]] = Field(
+        None, description="Scenario summaries"
+    )
+    errors: Optional[List[str]] = Field(None, description="Validation errors")
+
+
+class YamlTemplateSample(BaseModel):
+    """Sample YAML template for test scenarios"""
+
+    template_content: str = Field(..., description="Sample YAML template content")
+    description: str = Field(..., description="Template description")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "template_content": "name: 'Sample Test Suite'\nscenarios: []",
+                "description": "Sample YAML template for browser test scenarios",
+            }
+        }

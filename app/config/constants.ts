@@ -46,12 +46,6 @@ export const DEFAULT_VALUES = {
   MAX_PAGES: 10,
   OUTPUT_FILENAME: 'test_cases.md',
   API_OUTPUT_FILENAME: 'api_test_report.md',
+  BROWSER_TEST_OUTPUT_FILENAME: 'browser_test_report.md',
   CRAWL_PERSIST_DIR: './data/chroma',
-} as const;
-
-// UI Configuration
-export const UI_CONFIG = {
-  ANIMATION_DURATION: 300,
-  DEBOUNCE_DELAY: 500,
-  TOAST_DURATION: 3000,
 } as const;

@@ -146,6 +146,136 @@
           }
         }
       }
+    },
+    "/api/v1/browser-test/health": {
+      "get": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Browser Test Health",
+        "description": "Health check endpoint for browser testing service",
+        "operationId": "browser_test_health_api_v1_browser_test_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/yaml/upload": {
+      "post": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Upload Yaml Scenarios",
+        "description": "Upload YAML file containing test scenarios",
+        "operationId": "upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YamlScenarioUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/yaml/execute": {
+      "post": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Execute Yaml Scenarios",
+        "description": "Execute test scenarios from YAML content",
+        "operationId": "execute_yaml_scenarios_api_v1_browser_test_yaml_execute_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/YamlScenarioExecuteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YamlScenarioExecuteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/browser-test/yaml/template": {
+      "get": {
+        "tags": [
+          "Browser Testing",
+          "browser-testing"
+        ],
+        "summary": "Get Yaml Template",
+        "description": "Get a sample YAML template for test scenarios",
+        "operationId": "get_yaml_template_api_v1_browser_test_yaml_template_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YamlTemplateSample"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -249,6 +379,128 @@
           "base_url"
         ],
         "title": "Body_test_api_api_v1_testapi_post"
+      },
+      "Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "default": "openai"
+          },
+          "headless": {
+            "type": "boolean",
+            "title": "Headless",
+            "default": true
+          },
+          "execute_immediately": {
+            "type": "boolean",
+            "title": "Execute Immediately",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_yaml_scenarios_api_v1_browser_test_yaml_upload_post"
+      },
+      "BrowserTestResult": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Test execution status"
+          },
+          "requirement": {
+            "type": "string",
+            "title": "Requirement",
+            "description": "Test requirement that was executed"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "URL that was tested"
+          },
+          "test_type": {
+            "type": "string",
+            "title": "Test Type",
+            "description": "Type of test that was executed"
+          },
+          "task_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Description",
+            "description": "Generated task description"
+          },
+          "execution_result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Result",
+            "description": "Detailed execution result"
+          },
+          "screenshots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Screenshots",
+            "description": "List of screenshot paths/URLs",
+            "default": []
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp",
+            "description": "Execution timestamp"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the test was successful"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors",
+            "description": "List of errors if any",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "requirement",
+          "url",
+          "test_type",
+          "success"
+        ],
+        "title": "BrowserTestResult",
+        "description": "Result model for browser test execution"
       },
       "CrawlRequest": {
         "properties": {
@@ -396,6 +648,250 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "YamlScenarioExecuteRequest": {
+        "properties": {
+          "yaml_content": {
+            "type": "string",
+            "title": "Yaml Content",
+            "description": "YAML content containing test scenarios"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider",
+            "description": "LLM provider to use",
+            "default": "openai"
+          },
+          "headless": {
+            "type": "boolean",
+            "title": "Headless",
+            "description": "Run browser in headless mode",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "yaml_content"
+        ],
+        "title": "YamlScenarioExecuteRequest",
+        "description": "Request model for executing YAML scenarios",
+        "example": {
+          "headless": true,
+          "provider": "openai",
+          "yaml_content": "name: 'Test Suite'\nscenarios:\n  - name: 'Homepage Test'\n    requirement: 'Test homepage loads'\n    url: 'https://example.com'"
+        }
+      },
+      "YamlScenarioExecuteResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the execution was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Response message"
+          },
+          "test_suite_name": {
+            "type": "string",
+            "title": "Test Suite Name",
+            "description": "Name of the executed test suite"
+          },
+          "scenarios_count": {
+            "type": "integer",
+            "title": "Scenarios Count",
+            "description": "Number of scenarios executed"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BrowserTestResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "Test execution results"
+          },
+          "report": {
+            "type": "string",
+            "title": "Report",
+            "description": "Generated test report"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary",
+            "description": "Test execution summary"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "test_suite_name",
+          "scenarios_count",
+          "results",
+          "report",
+          "summary"
+        ],
+        "title": "YamlScenarioExecuteResponse",
+        "description": "Response model for YAML scenario execution"
+      },
+      "YamlScenarioUploadResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the upload was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Response message"
+          },
+          "test_suite_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Suite Name",
+            "description": "Name of the uploaded test suite"
+          },
+          "scenarios_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenarios Count",
+            "description": "Number of scenarios found"
+          },
+          "scenarios": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenarios",
+            "description": "Parsed scenarios"
+          },
+          "execution_results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BrowserTestResult"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Results",
+            "description": "Test results if executed immediately"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report",
+            "description": "Test report if executed immediately"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "Test summary if executed immediately"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "YamlScenarioUploadResponse",
+        "description": "Response model for YAML scenario upload"
+      },
+      "YamlTemplateSample": {
+        "properties": {
+          "template_content": {
+            "type": "string",
+            "title": "Template Content",
+            "description": "Sample YAML template content"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Template description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_content",
+          "description"
+        ],
+        "title": "YamlTemplateSample",
+        "description": "Sample YAML template for test scenarios",
+        "example": {
+          "description": "Sample YAML template for browser test scenarios",
+          "template_content": "name: 'Sample Test Suite'\nscenarios: []"
+        }
       }
     }
   }

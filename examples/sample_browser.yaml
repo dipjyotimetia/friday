@@ -1,0 +1,46 @@
+# Enhanced Browser Test Scenarios YAML File
+# This file demonstrates comprehensive test scenarios with advanced features
+
+name: "Demo Booking App Testing Suite"
+description: "Advanced test suite for validating demo app"
+version: "2.0"
+provider: "openai"
+headless: false
+base_url: "https://phptravels.com/demo/"
+global_context: "Testing demo travel app with browser automation features"
+
+# Global configuration settings
+global_config:
+  max_parallel_tests: 1
+  default_timeout: 30
+  default_retry_count: 1
+  default_viewport:
+    width: 1920
+    height: 1080
+  setup_scripts:
+    - "Clear browser cache"
+    - "Initialize test session"
+  teardown_scripts:
+    - "Cleanup test data"
+    - "Generate performance report"
+  environment_variables:
+    TEST_ENV: "development"
+    API_BASE_URL: "https://httpbin.org"
+  reporting:
+    generate_html_report: true
+    include_screenshots: true
+
+# Test scenarios - required field
+scenarios:
+  - name: "Basic Navigation Test"
+    requirement: "Verify the demo booking app homepage loads correctly"
+    url: "https://phptravels.com/demo/"
+    test_type: "functional"
+    context: "Test basic page loading and navigation elements"
+    
+  - name: "Search Functionality Test"
+    requirement: "Test hotel search functionality with sample data"
+    url: "https://phptravels.com/demo/"
+    test_type: "functional"
+    context: "Search for hotels in a specific location and verify results"
+
