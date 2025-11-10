@@ -75,7 +75,7 @@ cffi==1.17.1
     #   gevent
     #   pynacl
     #   zstandard
-charset-normalizer==3.4.2
+charset-normalizer==3.4.4
     # via
     #   reportlab
     #   requests
