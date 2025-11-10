@@ -1369,7 +1369,7 @@ pyparsing==3.2.3
     # via
     #   httplib2
     #   pip-requirements-parser
-pypdf==5.7.0
+pypdf==6.2.0
     # via browser-use
 pypika==0.48.9
     # via chromadb
