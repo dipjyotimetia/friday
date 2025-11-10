@@ -101,7 +101,7 @@ coloredlogs==15.0.1
     # via onnxruntime
 constantly==23.10.4
     # via twisted
-coverage==7.9.2
+coverage==7.11.3
     # via pytest-cov
 cryptography==45.0.5
     # via
